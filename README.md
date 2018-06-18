@@ -94,6 +94,13 @@ Outline annotated with expected effort and length:
 ### chunked alignment
 *1p 1h*
 
+## finding the alignment
+*0.5p 0.5h*
+### surjection
+*1p 1h*
+### mapping quality
+*2p 2h*
+
 ## visualization
 *0.5p 0.5h*
 ### hierarchical layout
