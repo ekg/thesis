@@ -12,44 +12,127 @@
 \fi
 
 
-\section{Genome sequencing and inference}
+All life on our planet is connected through a shared history recorded in its DNA.
+Over time, the genomes of organisms are duplicated, sometimes with error or recombination.
+Mutations give rise to genetic, and ultimately phenotypic diversity.
+Through isolation and drift, genetic diversity enables and defines the generation of new species.
 
-\subsection{DNA sequencing techniques}
+Although easily stated, this core dogma of genomics is often forgotten at the level of the most common analysis patterns used in the field.
+When considering the genomes of many individuals, we frequently pluck a single genome from the tree of life to use as a reference.
+Using alignment, we express our sequencing data in terms of positions and edits to the reference sequence.
+We then use variant calling and phasing algorithms to filter and structure these edits into an estimate of the underlying haplotypes in a given sample.
+We can then proceed to use the inferred genotypes and haplotypes to answer biological questions that may be better understood using the genome.
+We have not fully sequenced the new genomes, but \emph{resequenced} them against the reference genome.
 
-\subsection{}
+Resequencing has arisen in response to the technical properties of the most commonly-used DNA sequencing technologies.
+These ``second generation'' sequencing by synthesis technologies produce abundant and inexpensive short reads of up to 250 base pairs, and in the past decade have achieved total dominance of the DNA sequencing market.
+Higher sequencing costs previously motivated the application of expensive computational approaches to analyze all the sequences of interest simultaneously.
+The decades prior to the development of cheap sequencing saw the use of multiple sequence alignment algorithms with greater than quadratic costs in terms of the number and length of input sequences.
+However, such approaches became completely inconceivable as new sequencing technologies allowed the generation of tens and then hundreds of gigabytes of data in a single run.
+These low cost techniques allowed joint analyses of thousands of genomes from a single species.
+Resequencing provided a practical means to complete these analyses.
+The alignment phase could be completed out of core, with each sample compared only to the common reference genome, and only in a final phase of analysis might all the genome data be collected together for the inference of alleles at a given genetic locus.
+By enabling the analysis of genomes an a previously unthinkable scale, resequencing became the core genome inference pattern in genomics.
+The standardization of data formats promulgated in large genome sequencing projects allowed for the separation of different phases of analysis, which in turn supported a rich ecosystem of interacting tools.
+
+In resequencing, the reference sequence shapes the observable space in a process that is often called \emph{reference bias}.
+DNA sequencing reads that contain sequence which is divergent from or not present in the reference sequence are likely to be unmapped or mismapped.
+This results in lower coverage for non-reference alleles, in effect forcing new samples to appear more similar to the reference than they actually are.
+Divergence itself frustrates the genome inference process, as alignment may produce different descriptions of diverged sequences depending on the relative position of the read.
+Alignment works best when the sequences we are aligning are similar to the reference.
+Increasing divergence requires greater computational expenditure to overcome reference bias.
+
+We can avoid reference bias by working on pure assemblies generated only from the sequencing data in our experiment and unguided by any prior information.
+Doing so can be rigorous, but comes at a significant cost, especially when the assembly algorithm requires us to load all the sequencing data into memory simultaneously.
+We will require much higher coverage to obtain the same level of accuracy in our assembly as we will have when resequencing, and our read lengths will limit hte length of contiguous sequences we can infer.
+Virtually all assembly algorithms lose information about their source reads through the process of assembly, and this information must be somehow reconstituted if we wish to apply downstream algorithms to the output of the assembler.
+Although many approximations exist, no practical algorithm allows us to jointly consider all the samples in a large sequencing experiment in the context of an assembly generated from their reads.
+
+Genome assemblers frequently use a compacted graphical representation of their inputs to support the algorithms they used to derive contiguous sequences from the fragmented input they are given.
+These data structures are typically bidirectional graphs in which nodes are labeled by sequences and edges represent observed linkages between sequences.
+If constructed from a set of reads that fully cover the genome, it can be shown that such a graph contains the genome which has been sequenced.
+In effect, the assembler works to filter the edges from the graph and un-collapse repeats in order to establish a sequence assembly.
+
+My contribution in this work is to resolve the problem of reference bias by repurposing and extending this data model to build a pangenomic reference system.
+By patterning its structure on the data structures used in assembly, I resolve the issue of reference bias by enabling the construction of reference systems that fully incorporate data from all the samples in our analysis without bias towards any particular sample.
+This suppotrs a uniform and coherent basis space for sequence analysis.
+By building a conceptual framework and data structures that enable resequencing against this structure, we can mirror the patterns and workflows that have already been explored in resequencing.
+This allows us to retain the benefits of out of core and distributed analysis even while we resolve the issue of reference bias.
+By recording reference sequences, or other sequences of interest as paths through this graph I provide anchors for existing annotations and positional systems within the pangenome.
+I term these bidirectional sequence graphs with paths \emph{variation graphs}.
+
+In this chapter I will provide background context for my work.
+I will cover in detail DNA sequencing and the development of reference genomes and their use in resequencing.
+Finally I will review similar data models, both proceeding and contemporary in development to mine.
+In the remainder of the work I will describe the development of data structures and algorithms that allow the use of variation graphs as a universal reference system for unbiased genome inference, and I will describe a series of experimental results that support their utility as such.
+
+\section{Genome inference}
+
+\subsection{DNA observation}
 % Genome sequencing techniques
-% Sanger (1st gen), illumina (2nd gen), single molecule ONT/PacBio (3rd gen)
 
-\subsection{Reference genomes}
+\subsubsection{The old school}
+
+%\subsection{Second generation}
+\subsubsection{Second generation}
+% illumina (2nd gen), single molecule ONT/PacBio (3rd gen)
+
+\subsubsection{Single molecules}
+%\subsubsection{Flourescently-inferred DNA polymerization}
+%\subsubsection{Nanopore}
+
+\subsection{Genome assembly}
+
+\section{Reference genomes}
 
 % history of reference sequences
 % use of the reference sequence in analysis
 
-\subsubsection{The reference bias problem}
+\subsection{Resequencing}
+
+
+
+\subsection{Variant calling}
+
+% ``reference guided assembly''
+
+\subsection{The reference bias problem}
 
 % it is necessarily harder to see things when the become more divergent
 % literature review of examples
 
-\subsubsection{Solutions to reference bias}
+\section{Pangenomes}
+
+% history of the concept (summarize computational pangenomics paper)
+%Pangenomes cool \cite{computational2016computational}.
+% various approaches to encoding the pangenome
 
 % think through, with references, the various ways we can resolve reference bias
 % extended 
 
-\section{Graphical applications in sequence analysis}
+\section{Graphical techniques in sequence analysis}
 
 \subsection{Multiple sequence alignment}
 
 \subsection{Assembly graphs}
 
-\subsection{deBruijn graphs}
+\subsubsection{deBruijn graphs}
 
-\subsection{Overlap graphs}
+\subsubsection{Overlap graphs}
 
-\subsection{String graphs}
+\subsubsection{String graphs}
 
 \subsection{RNA splicing graphs}
 
-\subsection{Variant representation with DAGs (VCF)}
+\subsection{Variant representation with DAGs}
+
+\subsubsection{The variant call format}
+
+\subsubsection{Bwbble}
+
+\subsubsection{Population reference graphs}
+
+\subsubsection{The vBWT}
 
 \section{Overview of this work}
 
