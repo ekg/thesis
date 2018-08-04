@@ -18,18 +18,25 @@ Mutations give rise to genetic, and ultimately phenotypic diversity.
 Through isolation and drift, genetic diversity enables and defines the generation of new species.
 
 Although easily stated, this core dogma of genomics is often forgotten at the level of the most common analysis patterns used in the field.
-When considering the genomes of many individuals, we frequently pluck a single genome from the tree of life to use as a reference.
-Using alignment, we express our sequencing data in terms of positions and edits to the reference sequence.
-We then use variant calling and phasing algorithms to filter and structure these edits into an estimate of the underlying haplotypes in a given sample.
-We can then proceed to use the inferred genotypes and haplotypes to answer biological questions that may be better understood using the genome.
+When considering the genomes of many individuals, we frequently pluck a single related genome from the tree of life to use as a reference.
+Using alignment, we express our sequencing data from the collection of samples in terms of positions and edits to the reference sequence.
+We then use variant calling and phasing algorithms to filter and structure these edits into a reconstruction of the underlying haplotypes in the set of non-reference samples which we have sequenced.
+We can then proceed to use the inferred genotypes and haplotypes to answer biological questions of interest.
+
 We have not fully sequenced the new genomes, but \emph{resequenced} them against the reference genome.
+Pieces of the new genomes which could not be mapped to the reference may be left out of our analysis.
+Resequencing may thus distort the genomes which we are attempting to reconstruct.
+It may yield an uncertain and incomplete perspective on the total genomic complexity of the system we are assaying.
 
 Resequencing has arisen in response to the technical properties of the most commonly-used DNA sequencing technologies.
 These ``second generation'' sequencing by synthesis technologies produce abundant and inexpensive short reads of up to 250 base pairs, and in the past decade have achieved total dominance of the DNA sequencing market.
+
 Higher sequencing costs previously motivated the application of expensive computational approaches to analyze all the sequences of interest simultaneously.
-The decades prior to the development of cheap sequencing saw the use of multiple sequence alignment algorithms with greater than quadratic costs in terms of the number and length of input sequences.
+The decades prior to the development of cheap sequencing saw the use of multiple sequence alignment algorithms with cubic costs in terms of the number and length of input sequences.
+Analyzing hundreds or thousands of sequences with such techniques is expensive but justifiable given the costs of acquiring them.
+
 However, such approaches became completely inconceivable as new sequencing technologies allowed the generation of tens and then hundreds of gigabytes of data in a single run.
-These low cost techniques allowed joint analyses of thousands of genomes from a single species.
+The new, low cost techniques allowed joint analyses of thousands of genomes from a single species.
 Resequencing provided a practical means to complete these analyses.
 The alignment phase could be completed out of core, with each sample compared only to the common reference genome, and only in a final phase of analysis might all the genome data be collected together for the inference of alleles at a given genetic locus.
 By enabling the analysis of genomes an a previously unthinkable scale, resequencing became the core genome inference pattern in genomics.
@@ -64,21 +71,93 @@ I term these bidirectional sequence graphs with paths \emph{variation graphs}.
 In this chapter I will provide background context for my work.
 I will cover in detail DNA sequencing and the development of reference genomes and their use in resequencing.
 Finally I will review similar data models, both proceeding and contemporary in development to mine.
-In the remainder of the work I will describe the development of data structures and algorithms that allow the use of variation graphs as a universal reference system for unbiased genome inference, and I will describe a series of experimental results that support their utility as such.
+In the remainder of the work I will describe the development of data structures and algorithms that allow the use of variation graphs as a universal reference system for unbiased genome inference, and finally, I will describe a series of experimental results that support their utility as such.
 
 \section{Genome inference}
 
-\subsection{DNA observation}
+% What do we mean by genome inference
+% half page
+Not two centuries have passed since the first experiments that conclusively demonstrated the existence of genetic material \cite{mendel1866versuche} and hinted at the deeper the structure of the genome.
+In the first part of the twentieth century, these ideas about heredity grew into the core of a modern sythesis linking biological micro and macroevolutionary theory into the quantitative basis of genetics \cite{huxley1942evolution}.
+It was understood that DNA encoded the information that gave rise to biological structures \cite{avery1944studies}.
+The discovery of the structure of DNA in the 1950s \cite{watson1953molecular} made clear that the information stored in the genome was of significant and transmitted faithfully from generation to generation.
+This, coupled with the sequencing and synthesis of proteins, which demonstrated that they had distinct polymeric chemical identities \cite{sanger1951amino} led to Crick's postulation of the ``central dogma'' of biology \cite{crick1958protein}.
+Simply stated, the ``dogma'' argues that in living systems information is transcribed from DNA to RNA and ultimately translated into proteins, which then guide and structure the cell and thus living organisms.
+The central dogma made the need to determine the specific sequence of the genome clear, and over the following decades a series of projects scaled up the throughput and fidelity of DNA sequencing until \emph{genome inference} became a practical and everyday reality in biology.
+
+\subsection{Reading and assembling DNA}
 % Genome sequencing techniques
+% half page
+
+The quest to sequence genomes began with arduous and sometimes dangerously radioactive experimental techniques, in which years of researcher time could be spent in obtaining sequences of tens of bases from partly-characterized sources.
+It has then progressed through three distinct phases.
+In the first, these early laboratory techniques gave way to automated sequencing using chain terminator chemistry, and related techniques were ultimately used to generate genome sequences for many model organisms, albeit at high costs.
+In the second phase, \emph{multiplex} sequencing reactions were used to miniaturize the chain terminator reaction and observe its progression using fluorescent imaging or electrical sensing, evoking a drop in cost per sequenced base of many orders of magnitude, and simplifying library preparation steps dramatically by sequencing \emph{in vitro} clones of individual molecules.
+The third wave of development has been characterized by two techniques which allow realtime observation of DNA molecules.
+These produce enormously long read lengths that are limited by the molecular weight of input DNA, but produce readouts with extremely high per-base error rates.
+In theory, DNA could be directly input into such systems, obviating the need for library preparation, but in practice this has yet to be realized.
+Supporting the third wave are methods that allow for haplotype-specific sequencing and the observation of long range structures in the genome.
 
 \subsubsection{The old school}
+% Sanger sequencing, BACs, etc.
 
-%\subsection{Second generation}
-\subsubsection{Second generation}
-% illumina (2nd gen), single molecule ONT/PacBio (3rd gen)
+In the 1970s a group led by Walter Fiers published the first complete gene \cite{jou1972nucleotide}, and then genome sequence \cite{fiers1976complete} from the MS2 bacteriophage using early and extremely laborious digestion and 2-dimensional gel electrophoresis techniques to sequence RNA based on work by Fredrick Sanger and colleagues \cite{sanger1965two, adams1969nucleotide}.
+To avoid the limitations of digestion based assays, Ray Wu and colleagues developed a sequencing technique based on the blockage of DNA polymerization with radiolabeled nucleotides, which allowed them to sequence short fragments of lambda phade DNA \cite{wu1972nucleotide, padmanabhan1974chemical}.
+Subsequently, Sanger, who at this point had developed techniques for sequencing RNA, protein, and DNA, developed a reliable DNA sequencing method based on the same DNA polymerization chain-termination concept \cite{sanger1977dna}.
+By dividing the sequencing into four reactions, one for each DNA base, and running the results in parallel on a acrylamide gel, this sequencing method allows for a linear readout of DNA sequence.
+This approach, now known as Sanger sequencing, became the foundation of the first commercial sequencing machines in the 1980s, which automated DNA sequencing and allowed for dramatically higher throughput, enabling the establishment of the first large genome assemblies in the 1990s.
+
+Sanger sequencing was the workhorse standard of biology for nearly 30 years, from the late 1970s until the mid 2000s.
+Its read length is limited by the reaction efficiency required to obtain a fraction of terminations at every base in the sequence.
+In practice, reads of 500 to 1000 base pairs can be reliably obtained, which are sufficient to cover a large portion of a gene.
+With clonal DNA as input the per base accuracy of the method is expected to be extremely high, as each base readout reflects the termination of large numbers of molecules \cite{castiblanco2013primer}.
+This high accuracy ensures that it remains important for validation despite the development of many new, and often cheaper sequencing methods \cite{sikkema2013targeted}.
+
+Sanger sequencing requires clonal input DNA to perform accurately, as heterogeneity in the input DNA library can produce muddled signals that rapidly become uninterpretable.
+With single nucleotide polymorphisms (SNPs) the problem is minimal, and SNPs my be readily called from the sequencing traces produced by automated dye-terminator sequencers.
+However, insertions and deletions (indels) will cause a loss of phase in the sequencing and ultimately a failure to readout the DNA sequence from the trace \cite{tenney2007tale}, a problem which was still encouraging algorithm development nearly 40 years after the initial publication of the sequencing method \cite{hill2014poly}.
+Consequently, in order to sequence whole genomes, which are often heterozygous, certain laboratory techniques were developed to allow the segregation of clonal DNA as a substrate for sequencing.
+The most common methods used as the technique was applied to sequencing large genomes are bacterial artificial chromosomes (BACs) and their equivalent in yeast (YACs) \cite{monaco1994yacs}.
+By isolating and clonally propagating DNA fragments of tens to hundreds of kilobases, these techniques allowed Sanger sequencing to be used to sequence genomes much larger than its maximum read lengths.
+However, to do so would require the development of computational techniques to automatically assemble the resulting sequence fragments into the BACs and ultimately chromosomes from which they were derived \cite{myers2000whole}.
+
+\subsubsection{``Next'' generation sequencing}
+
+In the late 1990s and early 2000s, several groups began exploring an alternative sequencing modalities.
+In the ultimately dominant one, clonal DNA arrayed on a surface are be directly sequenced using fluorescent imaging.
+Sequencing progresses through the sythesis of the second strand of each of the molecules, and so these techniques are typically called ``sequencing by sythesis.''
+This modality allowed for a massive parallelization of the sequencing reaction, and has resulted in a dramatic reduction of cost.
+
+In 2003 George Church and colleagues demonstrated that individual sequences could be read from polymerase colonies or ``polonies'' suspended in an acrylamide gel \cite{mitra2003fluorescent}.
+These polonies were generated as the acrylamide gel prevents the diffusion of the PCR reaction used to amplify single DNA fragments embedded within it.
+Subsequently the sequence of each polony could be read out by synthesizing the second strand using fluorescently labeled blocking dNTPs, imaging in four colors with the fluorophores attached to determine the current base, and then unblocking the reaction with UV light or a reducing agent.
+A related technique, also dependent on the ``sequencing by synthesis'' principle, was patented and greatly refined by Shankar Balasubramanian and Solexa (now Illumina) \cite{balasubramanian2004arrayed, bentley2008accurate}.
+Rather than polymerase colonies embedded in an emulsion or gel, Solexa's technology relied on ``bridging PCR'', in which the polymerized clones of a particular fragment were locally hybdridized to an adapter-bearing surface of a flowcell.
+Through successive PCR steps, a micrometer-wide spot of clonal DNA is cloned around the original position of its base molecule.
+Reversible terminator chemistry and fluorescently labeled dNTPs are used to observe the sequence of the DNA molecule.
+
+Similar efforts to reduce sequencing costs yielded a series of technologies, most of which have seen little use.
+Church's group focused on a hybridization based sequencing protocol and an emulsion based polony PCR step \cite{shendure2005accurate}, technology that was ultimately further developed by Applied Biosystems in their SOLiD (Sequencing by Oligo Ligation Detection) sequencing device.
+In ion semiconductor sequencing (as implemented in the IonTorrent platform) direct observation of pH changes at a fixed spot rather than fluorescent imaging were used to determine DNA sequences \cite{rusk2010torrents}.
+It continues to see use in some diagnostic laboratories due to its rapid turnaround.
+454 Life Sciences' ``pyrosequencing'' implementation allowed for a different kind of sequencing by synthesis in which a luciferase reporter assay could be used to track the progression of synthesis \cite{margulies2005genome}.
+This technology was subsequently used to generate the first whole genome human sequence using massively parallel sequencing techniques \cite{wheeler2008complete}.
+
+Despite these developments, the cost and practicality of Illumina sequencing has been overwhelming, and it has comprised the vast majority of sequencing completed in the 2010s.
+Illumina's sequencing technology is characterized by short reads (<250bp) with lower (>99\%) per-base accuracy than Sanger sequencing.
+Although the read length has been increased by optimization of the technology, physical limits prevent obtaining longer read lengths, as the per-base reaction efficiency of the sequencing by sythesis reaction causes a de-phasing of the reaction and thus degredation of the fluorescent signal.
+As each read is derived from a single input template, problems with heterozygosity seen with Sanger sequencing can be resolved, and whole genomes may be directly sequenced and assembled.
+However, the short read length places fundamental limits on the utility of the method for this purpose, and it is most commonly analyzed via resequencing.
+
+% polony / solid
+% IonTorrent, 454 pyrosequencing
+% solexa / illumina
+% Flourescently-inferred DNA polymerization
 
 \subsubsection{Single molecules}
-%\subsubsection{Flourescently-inferred DNA polymerization}
+
+
+%, single molecule ONT/PacBio (3rd gen)
 %\subsubsection{Nanopore}
 
 \subsection{Genome assembly}
