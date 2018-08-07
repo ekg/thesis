@@ -343,12 +343,12 @@ This is done by the augmentation of the data structure with array $C$ such that 
 Now, $LF(i)$ may be defined as $C[L[i]] + rank(L[i], i)$.
 By allowing the traversal of equivalencies between the suffix array and the BWT, $LF$ mapping enables ``backward search''.
 Because rotations of $S$ have been ordered in $M$, a given pattern will occur as the prefix of a particular contiguous range of $M$.
-We can find all occurances of a given pattern by maintaining a range in the suffix array within which a given pattern occurs, beginning at $s$ and ending at $e$.
+We can find all occurances of a given pattern by maintaining a range in the suffix array within which a given pattern occurs, beginning at $s$ and ending at $e$, which we initially set as $s=0$ and $e=|L|-1$.
 To search for a pattern, we obtain $s' = C[c] + rank(s,c) + 1$ and $e' = C[c] + rank(e,c)$, walking backwards through the characters $c$ in our query $q$.
 Our search terminates when we complete our query or $s - e \leq 0$, which indicates that the previous step in the search did not match our target $S$.
 The various matches of $q$ in $S$ may now be obtained by the positions in $SA[s \ldots e]$.
 The addition of the longest common prefix (LCP) array on the sorted suffixes can be used to emulate all algorithms on suffix trees in this context \cite{abouelhoda2004replacing}, and in turn this enables $O(|q|)$ search of queries against $S$.
-Of particular relevance to this work, when completing a phase of backward search we could use the LCP to traverse the suffix links in the suffix tree and continue with the next maximal exact match.
+Of particular relevance to this work, when completing a phase of backward search we could use the LCP to traverse the suffix links in the suffix tree and continue with the next (partially overlapping) maximal exact match.
 
 The FM-index became one of the core data structures used in modern short-read aligners such as BWA \cite{li2009fast} and BOWTIE \cite{langmead2009ultrafast}, which used backtracing alignment to directly align sequences to the suffix array encoded in the FM-index.
 This backtracking search was impressively fast, and perfectly matched the needs of aligning short human sequencing reads to the reference genome, but they had problems detecting indels (as these require exponentially more backtracks to infer) and did not perform well with increasing read length.
@@ -363,11 +363,46 @@ There, project participants formalized the resequencing process by generating a 
 
 \subsection{Variant calling}
 
-%\cite{marth1999general}
+As we have seen, DNA sequencing reads of all types contain errors, and genomes contain diversity.
+This means we cannot infer a genome directly from a single read, and must aggregate sequencing information to infer the genomic state at a given locus.
+In the context of resequencing, techniques to do this have come to be known as \emph{variant calling}.
+The simplest methods for this process resemble the consensus step in OLC assembly, and could be implemented as heuristic filters on the mutually gapped alignment matrix of a set of homologous sequence reads \cite{koboldt2009varscan}.
+A natural framework in which to do so is a Bayesian one, in which prior expectations about the genomic state are combined with the available data to generate a posterior probability that allows the propagation of information about uncertainty to downstream analyses.
+Such a model allows the integration of various sources of information in addition to the sequence of the reads themselves, including the base quality (BQ), or machine-estimated probability of an erroneous base call, and mapping quality (MQ), which represents the aligner's estimate that the given alignment is a mismapping or ambiguous \cite{li2011statistical}.
+Furthermore, collections of genomes could be modeled at the same time using expectations of population genetic and combinatoric patterns, for instance in a panmictic population under neutral selection the pattern of observed genotypes should match Hardy-Wineberg Equilibrium (HWE), and to have confidence in a given genotyping call, the evidence for variation should be stronger than our expectation of the rate of haplotype diversity in a given sample.
 
-% ``reference guided assembly''
+The earliest implementations of this technique focused on genotyping samples using expressed sequence transcripts (ESTs) \cite{marth1999general}, which were promoted by Celera and others as a techinque to focus genome analysis on coding sequences.
+The efforts in the 1000GP generated strong competition to develop the best methods to work on short read data, yielding variant calling algorithms based on a variety of principles.
+The simplest method would detect variation given pointwise SNP and indel descriptions directly from the alignments \cite{li2009sequence,gatk2011}.
+However, this technique was shown to be susceptible to inconsistencies in the alignment process, and several groups developed methods that would reevaluate the alignments in a reference-independent manner in order to homogenize the representation of small variation.
+These techniques became known as ``local assembly'' variant detection algorithms, and include the windowed haplotype detection implemented in freebayes \cite{garrison2012haplotype} as well as full local \emph{de novo} assembly based on deBruijn graphs as implemented in Dindel \cite{albers2010dindel}, Platypus \cite{rimmer2014integrating} and the GATK's HaplotypeCaller.
+In parallel, several whole genome \emph{de novo} assembly methods, including SGA and Cortex, were applied to the full data set, yielding variant calls that were expected to be unbiased due to the reference genome.
+The final project results were merged into a jointly inferred population genome assembly using statistical phasing techniques \cite{browning2007,howie2011,delaneau2012}, which were themselves guided by genotype patterns presented in a number of data sources, not limited to sequencing and including genotyping arrays \cite{1000g2015}.
+
+Due to the absence of a reliable truth set, traditional algorithmic design rather than machine learning had to be used to develop most of the algorithms.
+The complexity of the problem and its relatively low computational cost relative to alignment encouraged the development of many competing solutions.
+Subsequently, projects at Illumina (Platinum genomes) and NIST (Genome in a Bottle) have generated ``truth sets'' for variant calls matched to cell lines for which large amounts of sequencing data is publicly-available \cite{eberle2013platinum,zook2014integrating}.
+These truth sets have then enabled the devolpment of ``universal'' variant callers using machine learning techniques \cite{poplin2017creating}.
+It may be expected that this trend will continue as the number of fully sequenced genomes increases.
 
 \subsection{The reference bias problem}
+
+When inferring genomes using resequencing, the reference can be thought of as a kind of prior.
+Short reads are insufficient to generate \emph{de novo} assemblies of reference quality, and this issue is exacerbated when they are used in resequencing, as the prior information provided by the reference is relatively strong and can distort our perspective on the genome we wish to infer \cite{sudmant2015integrated}.
+Contemprary aligners operate on the principle of matching each sequence read to the linear reference, and differences between the read and the reference induced by both error and variation will tend to reduce the success of mapping.
+As I will demonstrate later in this work, reference bias is most severe for larger variants.
+However the bias towards the reference is relevant even for SNPs, a fact which adds great complexity to experimental contexts sensitive to slight changes in allele observation count, such as allele specific expression (ASE) quantification from RNA sequencing \cite{stevenson2013sources}, or in the context of short and high error reads as are common in the sequencing of ancient DNA \cite{zhou2017antcaller}.
+
+Advances in sequencing technology can reduce reference bias in some contexts where long reads can be obtained.
+For instance, a long read aligned against the reference will much more easily represent a structural variation than a short read.
+However, as long as the reference is used as a basis space for analysis, it will be impossible to develop coherent representations of all sequences in a given cohort.
+In effect, we cannot observe variation in sequences which are not in the reference unless we bring these sequences into communication with each other, and even the problem of establishing if large variants represent the same entity becomes complicated \cite{chaisson2018multi}.
+We can use improvements in assembly methods, such as the linked DBG \cite{turner2018integrating}, to build space-efficient joint assemblies of populations of genomes.
+But these approaches will not allow out of core analysis processes like those implemented in resequencing pipelines.
+The reference is a prior guide to resequencging.
+If it could represent variation within itself, then we could build a resequencing model that avoided the traditional problem of reference bias.
+
+%Using two passes over the data, we can allow full communication between all DNA sequences without 
 
 % it is necessarily harder to see things when the become more divergent
 % literature review of examples
