@@ -345,19 +345,19 @@ By allowing the traversal of equivalencies between the suffix array and the BWT,
 Because rotations of $S$ have been ordered in $M$, a given pattern will occur as the prefix of a particular contiguous range of $M$.
 We can find all occurances of a given pattern by maintaining a range in the suffix array within which a given pattern occurs, beginning at $s$ and ending at $e$, which we initially set as $s=0$ and $e=|L|-1$.
 To search for a pattern, we obtain $s' = C[c] + rank(s,c) + 1$ and $e' = C[c] + rank(e,c)$, walking backwards through the characters $c$ in our query $q$.
-Our search terminates when we complete our query or $s - e \leq 0$, which indicates that the previous step in the search did not match our target $S$.
+Our search terminates when we complete our query or $e' - s' \leq 0$, which indicates that the previous step in the search did not match our target $S$.
 The various matches of $q$ in $S$ may now be obtained by the positions in $SA[s \ldots e]$.
 The addition of the longest common prefix (LCP) array on the sorted suffixes can be used to emulate all algorithms on suffix trees in this context \cite{abouelhoda2004replacing}, and in turn this enables $O(|q|)$ search of queries against $S$.
 Of particular relevance to this work, when completing a phase of backward search we could use the LCP to traverse the suffix links in the suffix tree and continue with the next (partially overlapping) maximal exact match.
 
 The FM-index became one of the core data structures used in modern short-read aligners such as BWA \cite{li2009fast} and BOWTIE \cite{langmead2009ultrafast}, which used backtracing alignment to directly align sequences to the suffix array encoded in the FM-index.
-This backtracking search was impressively fast, and perfectly matched the needs of aligning short human sequencing reads to the reference genome, but they had problems detecting indels (as these require exponentially more backtracks to infer) and did not perform well with increasing read length.
+This backtracking search was impressively fast, and perfectly matched the needs of aligning short human sequencing reads to the reference genome, but had problems detecting indels (as these require exponentially more backtracks to infer) and did not perform well with increasing read length.
 In response, the authors merged initial exact matching with a final DP step to yield ``long read'' capable aligners like BWA-SW \cite{li2010fast} and BOWTIE2 \cite{langmead2012fast}.
 Further refinements of this concept yielded BWA MEM \cite{li2013aligning}, which uses a heuristic algorithm to determine ``supermaximal exact matches'' (SMEMs) and reseed ``sub matches'' within them using a bidirectional FM-index (the FMD index).
 Due to its relative robustness to error and variation, the MEM concept has ultimately prevailed and as of the time of this writing BWA MEM could be seen as the industry standard method for aligning short reads to the genome.
 
 Much of the new sequencing data was being generated for humans in medically-motivated genome wide assocation studies \cite{uk10k2015uk10k} or population survey projects like the 1000 Genomes Project (1000GP) \cite{1000Gphase1,1000g2015}.
-The development of these methods was accelerated by an open, competitive spirit fostered during the 1000GP, whose primary sequencing data set remains the largest completely publicly available data set, with more than 100TB of sequence data available for download from public URLs without any authentication.
+The development of these methods was accelerated by an open, competitive spirit fostered during the 1000GP, whose primary sequencing data remains the largest completely publicly available data set, with more than 100TB of sequence data available for download from public URLs without any authentication.
 There, project participants formalized the resequencing process by generating a series of data formats linking the various stages of analysis, including the sequence alignmen/map format (SAM) and its binary equivalent (BAM) \cite{li2009sequence} that is the standard output format for contemporary aligners.
 
 
@@ -395,12 +395,15 @@ However the bias towards the reference is relevant even for SNPs, a fact which a
 
 Advances in sequencing technology can reduce reference bias in some contexts where long reads can be obtained.
 For instance, a long read aligned against the reference will much more easily represent a structural variation than a short read.
-However, as long as the reference is used as a basis space for analysis, it will be impossible to develop coherent representations of all sequences in a given cohort.
+As costs have continued to reduce in both second and third generation sequencing, it seems likely that such reads will continue to cost more per base than shorter reads from second generation technologies, and there will be a cost advantage to resequencing with short reads for the near future.
+Nonetheless, reference bias remains even in a future in which all sequencing was completed with long, low-error reads.
+As long as the reference is used as a basis space for analysis, it will be impossible to develop coherent representations of all sequences in a given cohort.
 In effect, we cannot observe variation in sequences which are not in the reference unless we bring these sequences into communication with each other, and even the problem of establishing if large variants represent the same entity becomes complicated \cite{chaisson2018multi}.
 We can use improvements in assembly methods, such as the linked DBG \cite{turner2018integrating}, to build space-efficient joint assemblies of populations of genomes.
-But these approaches will not allow out of core analysis processes like those implemented in resequencing pipelines.
-The reference is a prior guide to resequencging.
-If it could represent variation within itself, then we could build a resequencing model that avoided the traditional problem of reference bias.
+But these approaches will not allow out of core analysis processes like those implemented in resequencing pipelines, and are unlikely to improve in efficiency by the many orders of magnitude required to consider applying them directly to sequencing from hundreds of thousands or millions of genomes.
+
+%By laying out the history of the field in detail, I hope to have built a case that such a change is justified and likely to be useful in any likely future state of sequencing and genome inference.
+%We have seen that no sequencing method is perfect, and techniques retain utility for long periods of time due to the numerous tradeoffs inherent in all sequencing methods.
 
 %Using two passes over the data, we can allow full communication between all DNA sequences without 
 
@@ -408,6 +411,23 @@ If it could represent variation within itself, then we could build a resequencin
 % literature review of examples
 
 \section{Pangenomes}
+
+The reference is a prior guide to resequencging.
+If it could represent variation within itself, then we could build a resequencing model that avoided the traditional problem of reference bias.
+Following the completion of the 1000GP, participants have sought to use the population reference established by that project as an input to genome inference processes.
+Rather than establishing a single linear reference genome, these methods base their analysis on a representation that contains some or all of the known variation in the species of interest.
+In these approaches, the reference system becomes a \emph{pangenome}.
+The reference thus contains all useful prior information required in the current analysis.
+
+Pangenomics is by no means a new concept, and has arisen several times in bioinformatics.
+Historically, most interest in this conceptual model has been limited to microbiology, where smaller, simpler, and dramatically more plastic genomes led to the need to consider all genomes together, in an aggregate fashion.
+But in recent years the concept has gained traction as a general basis for genome inference.
+The applicability of the idea is wide, as few experiments in genomics operate on a single genome.
+Almost all work requires comparison and contextualization of inferred genomes.
+
+%far before the issue became the most pressing for those analyzing large eukaryotic genomes.
+%but until second generation sequencing allowed the exploration the genomes of
+
 
 % history of the concept (summarize computational pangenomics paper)
 %Pangenomes cool \cite{computational2016computational}.
