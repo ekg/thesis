@@ -289,19 +289,81 @@ The relation is designed such that a match corresponds to the shortest (diagonal
 This implementation of dynamic programming (DP) \cite{bellman1952theory} breaks the alignment problem into the successive application of all the sub-alignment problems.
 For each cell, the score is given as the maximum of: the score of cell to the diagonal plus a bonus if the corresponding sequence characters are the same and minus a penalty if they are different; and the scores of the cells above and below minus a penalty corresponding to the weight given to an insertion or deletion.
 Finally, we determine the optimal path beginning from the opposite extreme cell of the matrix from where the scoring began, in which we walk back through the successive maximum scores until reaching the opposite extreme corner of the matrix.
-This traceback encodes the alignment, which is most-simply represented as a vector of pairs of homologous bases in each sequence.
+This traceback encodes the alignment, which is most-simply represented as a vector of pairs of matched bases in each sequence.
 It can be shown that provided full evaluation of the dynamic programming problem, the optimal alignment is obtained given a set of scores parameterizing the recurrence relation.
 
 This alignment algorithm is known as a ``global'' alignment algorithm, in that the alignment covers all bases of both sequences.
 In practice, this level of comparison is not always needed, and it can be advantageous to obtain only the optimal sub alignments between sequences.
 Smith and Waterman provided a clean formalization of the algorithm of Needleman and Wunsch, modifying it to prevent negative scores, a step which allowed them to produce the optimal ``local'' alignments \cite{smith1981comparison}, ignoring regions unlikely to contain significant homology.
-The algorithm, further refined by Gotoh \cite{gotoh1982improved}, is today one of the most important in genome analysis.
-Numerous works over the subsequent decades have offered improved implementations, using vectorized instructions to improve the runtime of the algorithm \cite{farrar2007striped} and heuristics to selectively evaluate only part of the DP matrix \cite{suzuki2017acceleration}.
+The algorithm, further refined by Gotoh \cite{gotoh1982improved} to enable affine gaps\footnote{In affine gap schemes the cost of a gap per base decreases as its length increases. Such a scheme approximates the $\zeta$-distributed excursions of a particle under brownian motion, which structure the length of insertions and deletion mutations observed in nature.} and computation in $O(MN)$ time, is today one of the most important in genome analysis.
+The amount of work on this topic is considerable, and the subsequent decade yielded numerous modifications of the basic alignment concept, for instance reducing the memory bounds to $O(N)$ through a divide and conquer approach \cite{myers1988optimal}, and further explorations of affine gap scoring schemes \cite{altschul1986optimal,gotoh1990optimal}.
+Numerous following works have offered improved implementations, using vectorized instructions to improve the runtime of the algorithm \cite{farrar2007striped} and heuristics to selectively evaluate only part of the DP matrix \cite{suzuki2017acceleration}.
+However, such changes were not sufficient to enable alignment against large sequence databases.
 
 $O(MN)$ algorithms for sequence alignment are impractical when either $M$ or $N$ becomes large.
-So, as sequence databases grew and the size of sequenced genomes increased, heuristic strategies to efficiently reduce the alignment problem size were introduced.
+Naturally, as sequence databases grew and the size of sequenced genomes increased, heuristic strategies to efficiently reduce the alignment problem size were introduced.
+When aligning a short sequence against a large database we expect to obtain a sensitive alignment, but provided sufficient homology between the sequence and the database it is unlikely that we need to evaluate the full problem using an algorithm like Smith-Waterman-Gotoh (SWG).
+By indexing either the query or target set of sequences to efficiently obtain patterns of exact matches, candidate sub-regions of both can be isolated and submitted to more sensitive alignment.
+
+This strategy was implemented in the mid to late 1980s in the FASTA \cite{pearson1988improved} and BLAST \cite{altschul1990basic} alignment algorithms.
+FASTA greatly accelerates pairwise alignment by a pattern which remains common in the current generation of sequence aligners.
+It first uses a seeding step that simulates the full DP matrix between the query and target, using short $k$mer seeds to establish the longest matching subsequences.
+A small number of candidates are enumerated and evaluated using a banded SWG algorithm.
+In contrast, by default BLAST implements a fully heuristic alignment process based solely on the $k$mer seeds and ungapped alignment.
+This is much faster than FASTA but can perform slightly worse in the context of highly divergent sequences.
+BLAST's heuristic alignment comprises a speedup of many orders of magnitude over full DP based algoritms at a minor cost to accuracy.
+The popularity of BLAST in biology\footnote{The BLAST1 paper has been cited more than 70 thousand times as of August 2018.} is clear evidence of the importance of the alignment problem to all kinds of genomic analysis.
+It is also evidence that minor losses in accuracy are acceptable given the cost of sequence analysis in large data sets.
+Jim Kent's Blast-like alignment tool (BLAT) indexes the target set with non-overlapping $k$mers and queries all $k$mers in the reads, yielding a method that is less sensitive but several orders of magnitude faster than BLAST \cite{kent2002blat}.
+The increased performance was a necessity when working with the scale of data generated in the HGP.
+
+As reliable commercial second-generation sequencing systems became available the rate of sequence data acquisition growth rapidly outstripped the rate of improvement in computing performance \cite{leinonen2010sequence,kodama2011sequence}.
+This necessitated further improvements in the computational cost of sequence alignment.
+The most-widely used of these methods focused on the increasingly prevalent problem of aligning short reads to reference genome type sequence databases.
+Due to the high quality of the reference sequence, low error rate of the short ($\leq$100bp) reads, and low nucleotide diversity of humans (where $\theta \approx 1^{-3}$), algorithms that focused on exact string matching had great success in tackling the resequencing problem in this context.
+Much like BLAST and BLAT, the first wave of aligners capable of indexing the human reference genome and aligning short reads to it efficiently utilized exact $k$mer matching via hash tables followed by local alignment via heuristic or DP methods \cite{li2008soap,lee2014mosaik,li2008mapping}.
+Substantial improvements would be yielded by the development of aligners based on contemporary developments in compressed data structures.
+
+The suffix tree \cite{weiner1973linear} encodes all suffixes of a sequence in the structure of a tree such that the suffixes may be enumerated by a depth first search (DFS) of the tree.
+This structure can be used to determine if a given sequence $q = c_{1}c_{2}\ldots c_{|q|}$ is present in the sequence from which the tree was built in $O(|q|)$ time.
+Search begins at the root, progressing across the topology (edge or node) of the tree which is labeled with the next character until no further matches may be found.
+By augmenting the tree with the sequence positions corresponding to each node, the search may also yield the positions of the exact matches detected within the target sequence from which the tree was built.
+Suffix trees may be built in linear time and space relative to their input \cite{ukkonen1995line}, and support diverse algorithms for string comparison \cite{apostolico1985myriad}, such as whole genome alignment \cite{delcher1999alignment}, but they require relatively large amounts of memory per input base.
+In practice they were superceded by equivalent data structures with better memory bounds such as the suffix array (which represents the tree in a linear array of suffix sort ranks) \cite{manber1993suffix}, and its compressible and dual sibling the BWT \cite{burrows1994block}.
+
+By augmenting the BWT to enable the exact matching via emulation of the suffix tree, Paolo Ferragina and Giovanni Manzini developed the FM-index \cite{ferragina2000opportunistic,ferragina2004alphabet}.
+Given a string $S$, the FM-index may be built using a series of transformations and auxiliary data structures that induce the suffix tree in the context of the highly-compressible BWT.
+First, we add marker characters for the start and end with lexicographic order less and greater than the rest of the characters in the alphabet, e.g. $\#,S,\$$.
+Then, we take all rotations of the sequence and sort them, yielding matrix $M$.
+This sort has many similarities to the suffix tree, and for instance it can be seen that a lexicographically-ordered DFS through the suffix tree would enumerate the prefixes of the rotations of the sequence preceeding the terminal character $\#$ in the same order as they are sorted.
+The suffix array $SA$ is given by the vector by the suffix ranks in the sorted order they occur in $M$, and is related to the ordering of characters in the first column $F$, while the BWT is given as the last column, $L$.
+If the input text has repetitive patterns, then these will tend to result in runs in the BWT of the string that may be compressed using various schemes.
+To emulate traversal of the suffix tree, it is sufficient to construct a function $LF(i)$ which maps between indexes $L[i] = F[j]$ which represent the same character.
+This is done by the augmentation of the data structure with array $C$ such that $C[c]$ returns the number of characters in the text that are lexicographically smaller than $c$, and a function $rank(c,k)$ that yields the number of instances of $c$ in the prefix $L[1 \ldots k]$.
+Now, $LF(i)$ may be defined as $C[L[i]] + rank(L[i], i)$.
+By allowing the traversal of equivalencies between the suffix array and the BWT, $LF$ mapping enables ``backward search''.
+Because rotations of $S$ have been ordered in $M$, a given pattern will occur as the prefix of a particular contiguous range of $M$.
+We can find all occurances of a given pattern by maintaining a range in the suffix array within which a given pattern occurs, beginning at $s$ and ending at $e$.
+To search for a pattern, we obtain $s' = C[c] + rank(s,c) + 1$ and $e' = C[c] + rank(e,c)$, walking backwards through the characters $c$ in our query $q$.
+Our search terminates when we complete our query or $s - e \leq 0$, which indicates that the previous step in the search did not match our target $S$.
+The various matches of $q$ in $S$ may now be obtained by the positions in $SA[s \ldots e]$.
+The addition of the longest common prefix (LCP) array on the sorted suffixes can be used to emulate all algorithms on suffix trees in this context \cite{abouelhoda2004replacing}, and in turn this enables $O(|q|)$ search of queries against $S$.
+Of particular relevance to this work, when completing a phase of backward search we could use the LCP to traverse the suffix links in the suffix tree and continue with the next maximal exact match.
+
+The FM-index became one of the core data structures used in modern short-read aligners such as BWA \cite{li2009fast} and BOWTIE \cite{langmead2009ultrafast}, which used backtracing alignment to directly align sequences to the suffix array encoded in the FM-index.
+This backtracking search was impressively fast, and perfectly matched the needs of aligning short human sequencing reads to the reference genome, but they had problems detecting indels (as these require exponentially more backtracks to infer) and did not perform well with increasing read length.
+In response, the authors merged initial exact matching with a final DP step to yield ``long read'' capable aligners like BWA-SW \cite{li2010fast} and BOWTIE2 \cite{langmead2012fast}.
+Further refinements of this concept yielded BWA MEM \cite{li2013aligning}, which uses a heuristic algorithm to determine ``supermaximal exact matches'' (SMEMs) and reseed ``sub matches'' within them using a bidirectional FM-index (the FMD index).
+Due to its relative robustness to error and variation, the MEM concept has ultimately prevailed and as of the time of this writing BWA MEM could be seen as the industry standard method for aligning short reads to the genome.
+
+Much of the new sequencing data was being generated for humans in medically-motivated genome wide assocation studies \cite{uk10k2015uk10k} or population survey projects like the 1000 Genomes Project (1000GP) \cite{1000Gphase1,1000g2015}.
+The development of these methods was accelerated by an open, competitive spirit fostered during the 1000GP, whose primary sequencing data set remains the largest completely publicly available data set, with more than 100TB of sequence data available for download from public URLs without any authentication.
+There, project participants formalized the resequencing process by generating a series of data formats linking the various stages of analysis, including the sequence alignmen/map format (SAM) and its binary equivalent (BAM) \cite{li2009sequence} that is the standard output format for contemporary aligners.
+
 
 \subsection{Variant calling}
+
+%\cite{marth1999general}
 
 % ``reference guided assembly''
 
