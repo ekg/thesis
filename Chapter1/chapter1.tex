@@ -416,25 +416,75 @@ The reference is a prior guide to resequencging.
 If it could represent variation within itself, then we could build a resequencing model that avoided the traditional problem of reference bias.
 Following the completion of the 1000GP, participants have sought to use the population reference established by that project as an input to genome inference processes.
 Rather than establishing a single linear reference genome, these methods base their analysis on a representation that contains some or all of the known variation in the species of interest.
-In these approaches, the reference system becomes a \emph{pangenome}.
-The reference thus contains all useful prior information required in the current analysis.
+In these approaches, the reference system becomes a \emph{pangenome}\footnote{``pan-'' from Greek $\pi\alpha\nu-$, meaning ``all'' or ``every''}, or data space representing all the genomes and their interrelationships.
+The term was first used to describe the sequence information obtained from DNA and RNA for a cancer sample \cite{sigaux2000cancer}, but later became an important concept in microbiology as results from bacterial genome sequencing indicated extensive diversity between bacterial genomes \cite{tettelin2005genome,medini2005microbial}.
+Due to horizontal gene transfer (driven in large part by the permissive sex lives of bacteria), mobile DNA in the form of viruses and transposable elements, and their enormous population sizes, the genome diversity of many prokaryotes is much greater than that seen in larger, complex organisms.
+In microbial pangenomic theory, the main object of interest is the open reading frame (ORF) and its distribution across species in a clade\cite{vernikos2015ten}, with particular interest to classification of ORFs or genes into a gradient between those that are essential and found in every species (the ``core'' pangenome) to those that are found infrequently (the ``dispensable'' pangenome).
+With reducing sequencing costs, the levels of diversity in eukaryotic genomes could be more easily appreciated, and in the 2010s evidence has rapidly accumulated that significant levels of large-scale variation occur in the genomes of many species, including humans \cite{sudmant2010,sudmant2015integrated,chaisson2018multi}, brewer's yeast \cite{yue2017contrasting}, and the fruit fly \cite{chakraborty2018hidden}.
+%  Computational Pan-Genomics Consortium formed at a workshop held from 8 to 12 June 2015, at the Lorentz Center in Leiden
 
-Pangenomics is by no means a new concept, and has arisen several times in bioinformatics.
-Historically, most interest in this conceptual model has been limited to microbiology, where smaller, simpler, and dramatically more plastic genomes led to the need to consider all genomes together, in an aggregate fashion.
-But in recent years the concept has gained traction as a general basis for genome inference.
-The applicability of the idea is wide, as few experiments in genomics operate on a single genome.
-Almost all work requires comparison and contextualization of inferred genomes.
+The increasing evidence that the non-reference genomic variation mattered even in a human or medical context motivated extensive discussion within a sub-project of the Global Alliance for Genomics and Health (GA4GH)\footnote{The GA4GH is an international consortium of researchers and genomics professionals chartered with the development of new genomics data formats and interchange systems \url{https://www.ga4gh.org/}.}.
+At the beginning of my studies I participated in the GA4GH's reference variation task team (RefVar), which was led by Benedict Paten, David Haussler, and Richard Durbin.
+The group had regular meetings where its members entertained proposals for new variation-aware genomic data models and discussed results obtained with software implementations of them.
+By chance, a meeting of the GA4GH in June, 2015 in Leiden overlapped a conference held at the Lorentz Centre on ``Future Perspectives in Computational Pan-Genomics''\footnote{\url{https://www.lorentzcenter.nl/lc/web/2015/698/info.php3?wsid=698\&venue=Oort}}, whose participants were discussing ways to apply the concept of pangenomics to many problems in genomics.
+Can Alkan, who had been invited to both meetings, brought members of the GA4GH's RefVar group to the concurrent workshop, where both groups presented on their work and ultimately joined efforts.
+This exchange motivated members of the RefVar group to consider many alternative resequencing and genome modeling problems.
+For the consortium, our software {\tt vg} became a template for the pangenomic resequencing concept that it would present in the paper resulting from the meeting \cite{computational2016computational}.
+And in turn, the consortium imagined the missing pieces that would be required to fully enable a pangenomic reference system and allow common genome inference patterns using it.
+Much of the work I will present in the latter chapters of this thesis follows the design developed by this group.
 
-%far before the issue became the most pressing for those analyzing large eukaryotic genomes.
-%but until second generation sequencing allowed the exploration the genomes of
-
-
-% history of the concept (summarize computational pangenomics paper)
-%Pangenomes cool \cite{computational2016computational}.
 % various approaches to encoding the pangenome
 
 % think through, with references, the various ways we can resolve reference bias
-% extended 
+% extended
+\subsection{On pangenomic models}
+
+Much of this work relates to a particular model for encoding a pangenome. Here, I will briefly describe alternative models and justify the use of a graphical one which I present, while the remainder of the chapter will provide background on more-closely related graphical approaches related to my work.
+
+Traditional techniques from microbial pangenomics have focused on cataloging the distribution of ORFs across bacterial species \cite{page2015roary}.
+In this sense the pangenome is not so much a sequence-based object, but a matrix encoding the presence or absence of genes across the species of a given clade.
+If we want to use pangenomic principles to resolve issues with resequencing, then we must take the concept of pangenome more literally, and build a representation that losslessly encodes genomes together with a focus on their sequence content.
+In this perspective, the classical pangenome becomes a derivative product that we can produce using analyses on our sequence-oriented pangenomic reference.
+
+We could then describe a sequence-aware pangenome with the whole genome assemblies of many species or individuals, in an unfolded pangenome in which all sequence homologies and relationships are implicit.
+This naturalistic design is the simplest possible for a sequence-aware pangenome.
+In principle the unfolded pangenome could resolve reference bias and allow simple augmentation of the pangenome with new data by adding new genome sequences, although this operation already exposes a weakness, which is that adding a new genome always adds all the sequence in that genome to our system.
+Techniques from compressed data structures have been used to resequence short reads against the unfolded pangenome, as implemented in the CHIC aligner \cite{valenzuela2017chic}, but numerous problems have prevented the exploration of this modality.
+We can use this work to understand some of the limitations of this approach.
+The CHIC aligner employs an indexing strategy which uses Lempel-Ziv (LZ77) \cite{ziv1977universal} parsing of the pangenome to generate a ``kernel'' sequence encoding the pangenome that may be indexed and used by a standard short read aligner (the authors use BOWTIE2).
+In effect, the seeding step is aware of alternative sequences embedded in the pangenome, but the local alignment step is ultimately run against the linear reference.
+It is worth noting that an approach which aligned directly to the unfolded pangenome would not be able to correctly estimate MQ, as the reference does not encode any model about the relationships between the genomes that comprise the pangenome and consequently we cannot determine when multiple alignments match to homologs in different genomes or paralagous copies dispersed across one or many genomes.
+The linear growth in data scale can add algorithmic complexity when sequencing many genomes, and so it is understandable that experiments using the CHIC aligner only used up to 100 genomes at a time.
+Because it does not model homologies between sequences, an unfolded pangenome cannot represent novel recombination between known sequences.
+Finally, by relying on the linear reference to report alignments, CHIC gains the ability to hook into standard resequencing workflows, but it loses the ability to describe variation in sequence that is not contained in the reference.
+
+\subsection{The variation graph}
+
+The implication of these examples is that we need a data model for the reference that losslessly encodes sequence-level relationships between genomes, in effect representing a kind of all-versus-all alignment between the sequences in the pangenome.
+If the data model is to allow recombination between known sequences (a key contributor to genomic diversity) and linear copy number variation (which occurs readily in genomes), then it could naturally be represented as a regular language, and thus could be represented using a graphical model like a nondeterministic finite automaton.
+
+We can adjust the regular language model slightly so that it has properties similar to those of DNA.
+Traditionally, NFAs are represented graphically with states (in our case, pangenomic coordinates) as nodes connected by edges labeled by characters (e.g. DNA bases) in the alphabet of strings that the language recognizes.
+In DNA the essential component is the DNA base, which is represented as a character in a string.
+Strings are thus often regarded as an essential object in bioinformatics, and graphical models with nodes labeled by sequences and edges representing allowed transitions between them are a straightforward generalization of the linear string and have often been employed in bioinformatics.
+As maintaining identifiable positions requires the storage of auxiliary information such as their identity, compression can be achieved by allowing the labels on the nodes to have more than a single character on them.
+This also allows the model to represent de Bruijn graphs, whose nodes are labeled with $k$mer strings.
+Because DNA is double-stranded, any such a language implies a reverse complement language which recognizes the reverse complement of any sequence in the first.
+Formalizing this by allowing edges to transition between different strands of the graph allows the model to directly represent sequence inversions.
+
+If we combine these adjustments, we arrive at a kind of regular language model that resembles DNA and allows the representation of collections of related sequences in a compressed manner by allowing us to represent homologous sequences and all kinds of natural polymorphism\footnote{Note that the model does not encode } between them.
+Formally, this structure is often referred to as a \emph{bidirectional DNA sequence graph}, indicating that the graph is sequence-centric, directed, stranded, and allows transitions between strands.
+\emph{Sequence graph}, then implies a simpler concept in which the graph is meant to model sequences but only one strand is considered.
+Assembly and multiple sequence alignment methods have employed sequence graphs of both types since the earliest computational analyses of biosequences, and it is sensible that we might employ them to represent collections of genomes.
+
+The conceptual basis of the work I present here is the extension of the bidirectional DNA sequence graph with \emph{paths} that may be used to describe sequences as walks through the graph.
+In this way, the panel of reference genomes or sequences used to construct the graph may be formally related to the graph itself, and the relationships between them made evident in the structure of the graph.
+Existing knowledge expressed in terms of known sequences may thus be projected into the graphical pangenome model.
+Similarly, entities within the graph may be surjected out into the space of a given reference.
+These properties ensure the pangenome fully encompases existing reference technologies.
+In addition, maintaining the sequences in the space of the graph makes the graph lossless, and it fully represents the input sequences without additional information.
+I term this combination of a bidirectional sequence graph and paths a \emph{variation graph}, as it represents sequences and the variation between them.
+In the subsequent chapter I will formalize the variation graph model and important auxiliary data structures that enable its modification and use in resequencing.
 
 \section{Graphical techniques in sequence analysis}
 
