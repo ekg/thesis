@@ -502,6 +502,7 @@ My work draws on the idea that a population of genomes can be represented in suc
 The {\tt vg} data model can be understood as an extension of this sequence DAG so that it becomes equivalent with assembly graphs without losing the ability to represent phase, haplotype, and other sequence based genomic entities within it.
 
 \subsection{(Multiple) sequence alignment}
+\label{sec:MSA}
 
 Optimal multiple sequence alignment generalizes the problem of pairwise sequence alignment from a 2D matrix to an $N$-dimensional lattice, where the optimal mutual alignment of $N$ sequences of average length $L$ can be determined in $O(L^{N})$ time \cite{carrillo1988multiple}.
 In the early days of sequencing, when only a handful of sequences might be considered in one analysis, such costs could nearly be accepted, even if they limited the number of sequences in the MSA to only 3.
@@ -540,9 +541,37 @@ Its structure maps into finite automata, regular expressions, HMMs, and other mo
 
 \subsection{Assembly graphs}
 
-\subsubsection{deBruijn graphs}
+The problem of assembling large genomes is not dissimilar from that of multiple sequence alignment.
+MSA algorithms tend to be applied to the alignment of a single coherent genomic locus.
+Their input sequences might be expected to have approximately the same length, and maintain synteny between them.
+Whole genome shotgun assembly methods cannot rely on such assumptions, as reads of a large genome rarely overlap, and both strands of DNA will be sampled, yielding ambiguity about relative orientation.
+Thus the graphical models used in assembly must maintain bidirectional structure, and are most-generally bidirectional sequence graphs as previously defined.
+OLC assembly methods in some sense began their evolution with the set of compromises that MSA algorithms ended theirs, with thrifty heuristic methods being used to establish the overlaps between all pairs of sequence reads from a given genome, and the resulting overlap set subsequently represented in a graphical fashion.
+As we saw, early assemblers would enforce a linear ordering, in a way forcing a form of overlap DAG.
+This approach makes sense only for very short genomes with minimal repeats and reads long enough to be uniquely localized in the reference genome.
+As overlap alignments can occur between any pair of sequence strands, assembly methods must implement a full biridectional graph model if they hope to represent ambiguity in the overlap set, and so by default must be more generic than linear MSA models.
 
 \subsubsection{Overlap graphs}
+
+One interesting feature of these graphs is that their efficient genesis tends to yield a representation in which sequences attached to nodes partially overlap with the nodes in their neighborhood in the graph.
+This follows from the fact that most of the graph induction algorithms require a kind of pairwise alignmen, and so retain relationships between different sequences in a pairwise rather than compacted N-wise form.
+In the case of DBGs and the FM-index based string graph assemblers, an iterative pairwise sequence comparison where unitigs (unbranching sequences in the graph) are inferred from the compressed sequence graph yields a similar overlap graph output.
+It is thus standard to think of the edges in an assembly graph as representing the overlaps between the nodes they connect and their length.
+This feature represents an incomplete compression of the information in the graph, which typically is not important to the use of these methods as they are judged by the quality of the set of contiguous sequences (contigs) they output rather than their raw assembly graph.
+The overlaps add complexity to the use and representation of these graphs by differentating them from regular languages.
+
+In their most correct form, overlaps are themselves alignments, and as we have seen in section \ref{sec:MSA} have a natural encoding in graph form.
+This means that assembly data models often encode multiple kinds of graph structures in a layered way, a fact which is reflected in the complexity and redundancy of the GFA version 2 specification\footnote{\url{https://github.com/GFA-spec/GFA-spec/blob/master/GFA2.md}}.
+In general this overlap representation makes it difficult to work directly with such graphs using the algorithms we will introduce, but these graphs remain relevant to my work as they may be reduced any overlap graph into a ``blunt-ended'' bidirectional graph using relatively efficient algorithms.
+
+Assembly graphs, like MSA graphs, may be converted into variation graphs and used as a basis for resequencing.
+It is also possible to directly induce a bidirectional string graph from a set of pairwise alignments, sidestepping this issue.
+Later, I will present my design and implementation of an external memory algorithm that transforms the alignments into a graph through a transitive closure of the equivalencies implied by the alignments.
+This directly transforms the alignments which might be used by an assembler into a blunt-ended assembly graph.
+
+\subsubsection{deBruijn graphs}
+
+
 
 \subsubsection{String graphs}
 
