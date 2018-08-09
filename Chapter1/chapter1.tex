@@ -564,33 +564,75 @@ In their most correct form, overlaps are themselves alignments, and as we have s
 This means that assembly data models often encode multiple kinds of graph structures in a layered way, a fact which is reflected in the complexity and redundancy of the GFA version 2 specification\footnote{\url{https://github.com/GFA-spec/GFA-spec/blob/master/GFA2.md}}.
 In general this overlap representation makes it difficult to work directly with such graphs using the algorithms we will introduce, but these graphs remain relevant to my work as they may be reduced any overlap graph into a ``blunt-ended'' bidirectional graph using relatively efficient algorithms.
 
-Assembly graphs, like MSA graphs, may be converted into variation graphs and used as a basis for resequencing.
+% mention miniasm and friends, bit of grounding
+
+Overlap assembly graphs, like MSA graphs, may be converted into variation graphs and used as a basis for resequencing.
 It is also possible to directly induce a bidirectional string graph from a set of pairwise alignments, sidestepping this issue.
 Later, I will present my design and implementation of an external memory algorithm that transforms the alignments into a graph through a transitive closure of the equivalencies implied by the alignments.
 This directly transforms the alignments which might be used by an assembler into a blunt-ended assembly graph.
 
 \subsubsection{deBruijn graphs}
 
-
+% define DBG clearly, show why it is a special case of overlap graph in which overlaps can be computed implicitly
+% list all the methods in DBG space
 
 \subsubsection{String graphs}
+
+% recap on string graph concept
+% implementations
+% it's an overlap graph yep
 
 %The string graph can be understood as the graph implied by the mutual alignment of all the sequence fragments input into the assembly.
 %Each position in two reads that aligns as a match becomes a single node in the graph.
 
 \subsection{RNA splicing graphs}
 
+% could be developed by an assembly algorithm directly
+% in model organisms we can use curated gene models to build
+% not assembly graph as derived from gene model
+% which algorithms have used these methods?
+
 \subsection{Variant representation with DAGs}
+
+% reference + variant alleles = sequence DAG
+% ``if we could'' describe SVs it might be not DAG like, but the reference would still be its backbone
 
 \subsubsection{The variant call format}
 
+% what is the variant call format?
+
 \subsubsection{Bwbble}
+
+% a way of encoding the VCF data into a sequence index
 
 \subsubsection{Population reference graphs}
 
-\subsubsection{The vBWT}
+% another fun way, now using DBGs and possibly MSA sequence alignments rather than VCF
+% but definitely into the reference, focused on a small area rather than the whole problem
+
+\subsubsection{Gramtools and the vBWT}
+
+% write the DAG into the index provided a number of structural limitations
+% problems with nesting (yes could be corrected) and cost of large alphabet WT based FM-index
+
+\subsubsection{1000GP indel genotyping}
+
+% quick summary with citation of supplement describing it 
+
+\subsubsection{GraphTyper}
+
+% uses VCF to construct a graph to which reads mapped into a given reference window
+% like 1000GP indel genotyper
+
+\subsubsection{Seven Bridges Genomics' graph tool}
+
+% whole genome alignment to particular kinds of graphs
+% local alignment method (based on path enumeration) limits variant density that can be allowed
+% results in highly variable runtime given graph structure
+% DAG only
 
 \section{Overview of this work}
 
-% text
+% nothing out there meets all the variation graph model needs
+% boom
  
