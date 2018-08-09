@@ -32,7 +32,7 @@ Resequencing has arisen in response to the technical properties of the most comm
 These ``second generation'' sequencing by synthesis technologies produce abundant and inexpensive short reads of up to 250 base pairs, and in the past decade have become the largest source of data in the DNA sequencing market.
 
 Higher sequencing costs previously motivated the application of expensive computational approaches to analyze all the sequences of interest simultaneously.
-The decades prior to the development of cheap sequencing saw the use of multiple sequence alignment algorithms with cubic costs in terms of the number and length of input sequences.
+The decades prior to the development of cheap sequencing saw the use of multiple sequence alignment algorithms with high computational complexity.
 Analyzing hundreds or thousands of sequences with such techniques is expensive but justifiable given the costs of acquiring them.
 
 However, such approaches became completely inconceivable as new sequencing technologies allowed the generation of tens and then hundreds of gigabytes of data in a single run.
@@ -503,7 +503,31 @@ The {\tt vg} data model can be understood as an extension of this sequence DAG s
 
 \subsection{(Multiple) sequence alignment}
 
+Optimal multiple sequence alignment generalizes the problem of pairwise sequence alignment from a 2D matrix to an $N$-dimensional lattice, where the optimal mutual alignment of $N$ sequences of average length $L$ can be determined in $O(L^{N})$ time \cite{carrillo1988multiple}.
+In the early days of sequencing, when only a handful of sequences might be considered in one analysis, such costs could nearly be accepted, even if they limited the number of sequences in the MSA to only 3.
+By pruning regions of the lattice in which no optimal alignments could occur, the authors of the tool ``MSA'' increased the number of sequences which could be optimally aligned into an MSA to 6 \cite{lipman1989tool}.
+As the number of sequences to be compared increased, algorithms allowing MSAs to be generated from less than 10 sequences
+In contrast to the optimal alignment approach, CLUSTAL builds a guide tree based on alignment of all sequences to all others in $O(NL^{2})$ time, and then generates the MSA progressively using the guide tree in $O(L^{2}\log N)$ time, resulting in a polynomial time algorithm capable of generating MSAs for hundreds of sequences contemporary computers \cite{higgins1988clustal}.
+In this form of progressive alignment, the MSA is extended with alignments between closest pairs of sequences within the guide tree, then extended to produce the mutually gapped MSA matrix linking the two branches that have been aligned together with the pair of most-closely related sequences.
+The progressive approach is fundamentally greedy, and susceptible to errors that propagate along the guide tree, although such errors can be mitigated by structuring the alignment using biological priors \cite{thompson1994clustal}.
+Further improvements to the quality of the MSA can be gained by guiding the progressive alignment with a limited kind of global information about the relationships of all the sequences, as in T-COFFEE \cite{notredame2000t}, but this popular method exhibits a worst-case computational complexity of $(O)N^{3}L^{2}$.
 
+The progressive alignment in MSA algorithms like CLUSTAL may be represented graphically.
+In the late 1980s Eugene Myers and Webb Miller developed algorithms to optimally align sequences to sequence graphs, and sequence graphs (in the form of regular expressions) to each other in $O(MN)$ time (where $M$ and $N$ are the sequence length of the graphs) \cite{myers1989approximate}.
+These algorithms provide a solution to the generic problem of aligning bidirectional sequence graphs to each other using DP, but to my knowledge were never implemented in publicly available software for sequence analysis\footnote{Myers was unable to provide related source code on request.}.
+Christopher Lee later provided the first implementation of an MSA algorithm based on sequence to graph alignment \cite{lee2002POA}.
+Apparently unaware of the work of Myers and Miller, he observed that MSAs could be represented as partial order graphs (directed acyclic graphs or DAGs) in which characters would label nodes and edges would label observed linkages between them in sequences embedded in the MSA.
+Lee demonstrated that a straightforward generalization of the recurrence relations used in Smith-Waterman-Gotoh would allow the alignment of sequences of length $N$ to the DAG of sequence length $M$ in approximately $O(MN)$ time.
+To determine the score at a given position, POA considers matches and deletions relative to all the characters that immediately preceed the current one in the partial order.
+Later, POA was extended to allow the direct alignment of pairs of MSAs using partial order to partial order alignment (PO-POA) \cite{grasso2004combining}.
+Like CLUSTAL-W and other progressive methods, POA would build its MSA using pairwise alignments across a guide tree.
+But, rather than aligning the last pair of sequences, PO-POA alignment would be used to align the MSAs from each branch together.
+The improved information made available to the alignment inference resolved problems with order dependence, yielding a method with nearly the same performance\footnote{Here goodness is quantified using a sum of pairs score (SPS) metric representing the goodness of the alignment.} as T-COFFEE across a range of problems.
+Similar sets of sequences will tend to compress when aligned with POA, and beacuse PO-POA complexity is in the order of the length of the pairs of aligned sequences.
+As the MSA algorithm proceeds over a neighbor joining guide tree, the overall complexity of the resulting MSA algorithm is approximately $O(N\log{N})$, which the authors confirm by measurements that show their implementation scales subquadratically in the size of its input.
+In result it was several orders of magnitude faster than popular methods.
+
+%\cite{morgenstern1996multiple} earlier use of something similar to a POA
 
 \subsection{Assembly graphs}
 
