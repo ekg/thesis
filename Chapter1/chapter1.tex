@@ -515,19 +515,28 @@ Further improvements to the quality of the MSA can be gained by guiding the prog
 The progressive alignment in MSA algorithms like CLUSTAL may be represented graphically.
 In the late 1980s Eugene Myers and Webb Miller developed algorithms to optimally align sequences to sequence graphs, and sequence graphs (in the form of regular expressions) to each other in $O(MN)$ time (where $M$ and $N$ are the sequence length of the graphs) \cite{myers1989approximate}.
 These algorithms provide a solution to the generic problem of aligning bidirectional sequence graphs to each other using DP, but to my knowledge were never implemented in publicly available software for sequence analysis\footnote{Myers was unable to provide related source code on request.}.
+
 Christopher Lee later provided the first implementation of an MSA algorithm based on sequence to graph alignment \cite{lee2002POA}.
-Apparently unaware of the work of Myers and Miller, he observed that MSAs could be represented as partial order graphs (directed acyclic graphs or DAGs) in which characters would label nodes and edges would label observed linkages between them in sequences embedded in the MSA.
+Apparently unaware of the work of Myers and Miller, he instead built on the concept of ``consistent equivalence relations'' that DIALIGN used to represent the MSA \cite{morgenstern1996multiple}.
+Where DIALIGN's authors appear to consider the MSA in the space of the $N$-dimensional lattice, Lee encoded the equivalence relations in a partial order graph, which is often referred to as a directed acyclic graph (DAG).
+In this DAG, characters label nodes and edges label observed linkages between them in sequences embedded in the MSA.
 Lee demonstrated that a straightforward generalization of the recurrence relations used in Smith-Waterman-Gotoh would allow the alignment of sequences of length $N$ to the DAG of sequence length $M$ in approximately $O(MN)$ time.
 To determine the score at a given position, POA considers matches and deletions relative to all the characters that immediately preceed the current one in the partial order.
 Later, POA was extended to allow the direct alignment of pairs of MSAs using partial order to partial order alignment (PO-POA) \cite{grasso2004combining}.
 Like CLUSTAL-W and other progressive methods, POA would build its MSA using pairwise alignments across a guide tree.
 But, rather than aligning the last pair of sequences, PO-POA alignment would be used to align the MSAs from each branch together.
 The improved information made available to the alignment inference resolved problems with order dependence, yielding a method with nearly the same performance\footnote{Here goodness is quantified using a sum of pairs score (SPS) metric representing the goodness of the alignment.} as T-COFFEE across a range of problems.
-Similar sets of sequences will tend to compress when aligned with POA, and beacuse PO-POA complexity is in the order of the length of the pairs of aligned sequences.
-As the MSA algorithm proceeds over a neighbor joining guide tree, the overall complexity of the resulting MSA algorithm is approximately $O(N\log{N})$, which the authors confirm by measurements that show their implementation scales subquadratically in the size of its input.
-In result it was several orders of magnitude faster than popular methods.
+Similar sets of sequences will tend to compress when aligned with POA, and PO-POA complexity is in the order of the length of the pairs of aligned sequences.
+It follows that as the MSA algorithm proceeds over a neighbor joining guide tree, the overall complexity of the resulting MSA algorithm has a lower bound of approximately $O(N\log{N})$.
+Grasso and Lee confirm this bound is followed in practice by demonstrating that their implementation scales subquadratically in the size of its input.
 
-%\cite{morgenstern1996multiple} earlier use of something similar to a POA
+Given that it could be three orders of magnitude faster that other popular when computing the MSA of only a few hundred sequences, it may be surprising that POA did not become the dominant MSA method.
+A cubic algorithm, T-COFFEE, which Grasso and Lee showed to slightly but consistently outperform POA, has been cited ten times more.
+As I discussed earlier in the opening of this chapter, the importance of obtaining the optimal alignment of a limited number of expensive sequences meant that even three orders of magnitude faster performance offered by POA did not matter for most users.
+The low rate of use meant that the same alignment concept was ``rediscovered'' by participants in the 1000GP who became interested in the problem of aligning sequences to the sequence DAGs represented in VCF\footnote{Sequence to graph DAG alignment was one of Deniz Kural's main PhD projects. I worked with him in Gabor Marth's laboratory, and we applied his implementation of POA to generate accurate genotype likelihoods for indels and complex variation in the final phase of the 1000GP. We learned of the prior work later, when a reviewer pointed out that the algorithm was roughly equivalent to POA.}.
+
+Lee's POA model provides a simple pattern for thinking about pangenomes, and its simplicity (it contains only node/characters and edges) in some ways differentiates it from others that have seen popularity in assembly, which I will describe in detail in the following section.
+Its structure maps into finite automata, regular expressions, HMMs, and other models while erasing the conceptual barrier between sequences and sequence graphs.
 
 \subsection{Assembly graphs}
 
