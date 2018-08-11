@@ -152,16 +152,18 @@ As such it is necessary to infer the number of identical bases that have been in
 In contrast, Illumina's sequencing protocol has a superior error profile, with low overall per base error rates and only a handful of context specific error types, virtually all of which may be detected when sequencing both DNA strands \cite{allhoff2013discovering}.
 In retrospect, it is unsurprising that it has achieved near total dominance in the field.
 The vast majority of sequencing data produced in the 2010s comes from Illumina sequencers.
-Illumina's sequencing technology is characterized by short reads (<250bp) with lower (>99\%) per-base accuracy than Sanger sequencing.
+Illumina's sequencing technology is characterized by short reads (<250bp) with lower ($\approx 99.5\%$) per-base accuracy than Sanger sequencing.
 Although the read length has been increased by optimization of the technology, physical limits prevent obtaining longer read lengths, as the per-base reaction efficiency of the sequencing by sythesis reaction causes a de-phasing of the reaction and thus degredation of the fluorescent signal with the progression of the cycles of second strand base addition.
 As each read is derived from a single input template, problems with heterozygosity seen with Sanger sequencing can be resolved, and whole genomes may be directly sequenced and assembled.
-However, the short read length places fundamental limits on the utility of the method for this purpose, and it is most-commonly analyzed via resequencing.
+However, the short read length places fundamental limits on the utility of the method for this purpose as even when using pair-end sequencing it is unable to resolve repeats greater than the read length \cite{alkan2010limitations}, and it is most-commonly analyzed via resequencing.
 
 Alongside the development of second generation sequencing methods, an array of laboratory techniques and library preparation protocols have developed that augment the information that may be obtained solely from shotgun DNA sequences.
 These methods can allow for the direct observation of large haplotypes and three-dimensional structures in the DNA, both of which are relevant for inferring whole genomes.
 Shortly after Illumina released its sequencing technology, Moleculo developed an emusion-PCR based chemistry in which specific tags would be added to DNA sequences from a given haplotype.
 By collecting short reads from a given tag together and assembling them, a set of synthetic long reads could be established.
 10X Genomics commercialized a similar library preparation step, and focused on providing raw tag information that could be used downstream by an array of haplotype-resolution and assembly tools \cite{mostovoy2016hybrid}.
+The single template aspect of Illumina paired end sequencing allows longer contiguous DNA reads to be obtained by merging partly-overlapping read pairs computationally \cite{magovc2011flash}.
+Although this introduces error it can improve assembly contiguity and is often used when the library design permits it.
 Single-cell DNA template strand sequencing (strand-seq) can be used to obtain reads from only one half of the chromatids in a single cell \cite{falconer2012dna}.
 In strand-seq, a cell culture is treated with treated with bromodeoxyuridine (BrdU) and arrested after a single cell division.
 The newly-synthesized strand of each chromosome will have incorporated BrdU, which can be cleaved using UV induced photolysis.
@@ -209,9 +211,12 @@ Nanopore sequencing also obtains the longest reads of any sequencing technology,
 %, single molecule ONT/PacBio (3rd gen)
 
 \subsection{Genome assembly}
+\label{sec:genome_assembly}
 
-In whole genome ``shotgun'' sequencing, the genome is fragmented by sonication or enzymatic digestion, and the resulting fragments are sequenced and then reassembled using computer programs \cite{gardner1981complete, sanger1982nucleotide}.
-When we are interested in a DNA sequence that is longer than a single read length, we will need to take multiple reads which each cover a portion of the genome and order them to reconstruct the underlying genome.
+Due to technical limits that are unlikely to ever be fully eliminated, DNA sequence reads are rarely able to cover the entire genome of an organism.
+This means that in many cases, the best sequencing data possible is a set of random reads sampled across the genome. 
+The standard response to this limitation is whole genome ``shotgun'' sequencing, wherein the genome is fragmented, perhaps by sonication or enzymatic digestion, and the resulting fragments are sequenced and then reassembled using computer programs \cite{gardner1981complete, sanger1982nucleotide}.
+This process necessitates a reconstructive step in which the information obtained from the sequenced fragments is reassembled into the whole genome from which they arose.
 This process is known as \emph{assembly}, and computer algorithms implementing it have been used when inferring genome sequences since the generation of the first whole genome sequence for bacteriophage $\varphi$X174 in 1977 \cite{sanger1977nucleotide, staden1979strategy}.
 
 The earliest assembly algorithms have come to be known as ``overlap-layout-consensus'' (OLC) algorithms, due to their three-phase strategy.
@@ -234,10 +239,10 @@ If not using compressed data structures and low-error reads, the repeats are oft
 Canu and FALCON, which to some extent stand as contemporary implementations of the Celera assembly process, are among the best-performing assemblers for noisy single-molecule sequencing data that is the mainstay of current genome assembly projects \cite{chin2016phased,koren2017canu}.
 These and other similar methods have shown that recent long reads can be used to fully assemble genomes directly from shotgun sequencing and without human finishing \cite{loman2015complete,jain2018nanopore}.
 
-The repeat problem has been tackled in various ways, but one of the most enduring solutions resolves the issue through the reduction of the assembly overlap graph to a deBruijn graph (DBG) \cite{pevzner2001eulerian}.
+The repeat problem has been tackled in various ways, but one of the most enduring solutions resolves the issue through the reduction of the assembly overlap graph to a de Bruijn graph (DBG) \cite{pevzner2001eulerian}.
 In this approach, the read set is fragmented into all subsequences of reads of a given length $k$, and a graph is constructed where $k$mers label nodes and overlaps of $k-1$ between successive $k$mers induce edges representing linkages between them.
 By reducing the complexity of the representation of the read set, this model greatly improves the runtime and memory requirements of assembly and has been essential to modern assembly methods \cite{zerbino2008velvet,simpson2009abyss,iqbal2012novo}.
-Still, significant effort has been required to improve the memory usage of these methods, which ultimately has generated the most memory-efficient assembly methods for short read sequencing data, with the best-performing using techniques like bloom filters \cite{chikhi2012space}, succinct DBGs \cite{bowe2012succinct,li2015megahit}, and minimizer partitioning \cite{chikhi2016compacting} to generate a compressed representation of the DBG.
+Still, significant effort has been required to improve the memory usage of these methods, which ultimately has generated the most memory-efficient assembly methods for short read sequencing data, with the best-performing using techniques like bloom filters \cite{chikhi2013space}, succinct DBGs \cite{bowe2012succinct,li2015megahit}, and minimizer partitioning \cite{chikhi2016compacting} to generate a compressed representation of the DBG.
 DBG based assemblies suffer from the loss of information induced through the $k$merization of their input, causing a reduction in assembly contiguity \cite{earl2011assemblathon}, although in practice this can be mitigated by reconsideration of the input reads and read pairs \cite{butler2008allpaths}.
 They also are applicable only where the sequence error rate is low enough for overlapping reads to be expected to have exact matching $k$mers of the appropriate size (typically, $k \in [20 \ldots 50]$ base pairs), and as such cannot be applied to third generation single molecule sequencing due to its inherently high error rate.
 
@@ -376,7 +381,7 @@ The earliest implementations of this technique focused on genotyping samples usi
 The efforts in the 1000GP generated strong competition to develop the best methods to work on short read data, yielding variant calling algorithms based on a variety of principles.
 The simplest method would detect variation given pointwise SNP and indel descriptions directly from the alignments \cite{li2009sequence,gatk2011}.
 However, this technique was shown to be susceptible to inconsistencies in the alignment process, and several groups developed methods that would reevaluate the alignments in a reference-independent manner in order to homogenize the representation of small variation.
-These techniques became known as ``local assembly'' variant detection algorithms, and include the windowed haplotype detection implemented in freebayes \cite{garrison2012haplotype} as well as full local \emph{de novo} assembly based on deBruijn graphs as implemented in Dindel \cite{albers2010dindel}, Platypus \cite{rimmer2014integrating} and the GATK's HaplotypeCaller.
+These techniques became known as ``local assembly'' variant detection algorithms, and include the windowed haplotype detection implemented in freebayes \cite{garrison2012haplotype} as well as full local \emph{de novo} assembly based on de Bruijn graphs as implemented in Dindel \cite{albers2010dindel}, Platypus \cite{rimmer2014integrating} and the GATK's HaplotypeCaller.
 In parallel, several whole genome \emph{de novo} assembly methods, including SGA and Cortex, were applied to the full data set, yielding variant calls that were expected to be unbiased due to the reference genome.
 The final project results were merged into a jointly inferred population genome assembly using statistical phasing techniques \cite{browning2007,howie2011,delaneau2012}, which were themselves guided by genotype patterns presented in a number of data sources, not limited to sequencing and including genotyping arrays \cite{1000g2015}.
 As they did for alignments, members of the 1000GP also developed a standard format for describing collections of resequenced genomes, including their genotypes and inferred haplotypes, which is known as the variant call format (VCF) \cite{danecek2011variant}.
@@ -538,6 +543,10 @@ The low rate of use meant that the same alignment concept was ``rediscovered'' b
 
 Lee's POA model provides a simple pattern for thinking about pangenomes, and its simplicity (it contains only node/characters and edges) in some ways differentiates it from others that have seen popularity in assembly, which I will describe in detail in the following section.
 Its structure maps into finite automata, regular expressions, HMMs, and other models while erasing the conceptual barrier between sequences and sequence graphs.
+However, this mapping is incomplete as POA MSAs are linear objects which cannot capture many natural kinds of genetic variation such as repeats rearrangements without duplication of the rearranged sequences.
+
+Several methods have extended the MSA concept to unordered graphs, including the Threaded Blockset Aligner (TBA) \cite{blanchette2004aligning}, which models the MSA graph as a set of partially ordered MSAs connected in an unordered manner at a larger scale, and the A-Bruijn Aligner (ABA), which models the MSA using a de Bruijn graph and represents a solution to problems in MSA using techniques that later become important to short read assembly \cite{raphael2004novel}.
+Variation graphs generalize these models without the limitations of order (as in POA and TBA) or $k$mer based graph structures (as in ABA), but in generality they lose the very features that help the performance of these methods, a fact that has likely inhibited their development until the present.
 
 \subsection{Assembly graphs}
 
@@ -550,33 +559,90 @@ OLC assembly methods in some sense began their evolution with the set of comprom
 As we saw, early assemblers would enforce a linear ordering, in a way forcing a form of overlap DAG.
 This approach makes sense only for very short genomes with minimal repeats and reads long enough to be uniquely localized in the reference genome.
 As overlap alignments can occur between any pair of sequence strands, assembly methods must implement a full biridectional graph model if they hope to represent ambiguity in the overlap set, and so by default must be more generic than linear MSA models.
+Earlier in section \ref{sec:genome_assembly} I gave a historical outline of the development of these methods in response to changes in available sequencing technology.
+In this section I provide deeper technical detail to describe these methods and illustrate their relationship to the variation graph model.
 
 \subsubsection{Overlap graphs}
 
-One interesting feature of these graphs is that their efficient genesis tends to yield a representation in which sequences attached to nodes partially overlap with the nodes in their neighborhood in the graph.
+One interesting feature of overlap graphs graphs is that their efficient construction tends to yield a representation in which sequences attached to nodes partially overlap with the nodes in their neighborhood in the graph.
 This follows from the fact that most of the graph induction algorithms require a kind of pairwise alignmen, and so retain relationships between different sequences in a pairwise rather than compacted N-wise form.
-In the case of DBGs and the FM-index based string graph assemblers, an iterative pairwise sequence comparison where unitigs (unbranching sequences in the graph) are inferred from the compressed sequence graph yields a similar overlap graph output.
+In the case of DBGs and the FM-index based string graph assemblers, an iterative overlap-wise sequence comparison where unitigs (unbranching sequences in the graph) are inferred from the compressed sequence graph yields a similar overlap graph output.
 It is thus standard to think of the edges in an assembly graph as representing the overlaps between the nodes they connect and their length.
 This feature represents an incomplete compression of the information in the graph, which typically is not important to the use of these methods as they are judged by the quality of the set of contiguous sequences (contigs) they output rather than their raw assembly graph.
-The overlaps add complexity to the use and representation of these graphs by differentating them from regular languages.
+These methods will traverse linear portions of the graph to generate contigs, after pruning or ignoring edges, which the uncompressed overlap representation does not inhibit.
+If we wish to use similar graphs as reference systems, where singular positions and sequence representations are desireable features, the overlap graph model is more complex to use than a ``bluntified'' representation in which the overlaps are non-ambiguously reduced into the nodes in the graph and its linkage topology.
 
 In their most correct form, overlaps are themselves alignments, and as we have seen in section \ref{sec:MSA} have a natural encoding in graph form.
 This means that assembly data models often encode multiple kinds of graph structures in a layered way, a fact which is reflected in the complexity and redundancy of the GFA version 2 specification\footnote{\url{https://github.com/GFA-spec/GFA-spec/blob/master/GFA2.md}}.
-In general this overlap representation makes it difficult to work directly with such graphs using the algorithms we will introduce, but these graphs remain relevant to my work as they may be reduced any overlap graph into a ``blunt-ended'' bidirectional graph using relatively efficient algorithms.
+In general this overlap representation makes it difficult to work directly with such graphs using the algorithms we will introduce, but these graphs remain relevant to this work as they may be reduced into a ``blunt-ended'' bidirectional graph.
 
-% mention miniasm and friends, bit of grounding
+% mention miniasm and friends, bit of grounding in the present
 
 Overlap assembly graphs, like MSA graphs, may be converted into variation graphs and used as a basis for resequencing.
 It is also possible to directly induce a bidirectional string graph from a set of pairwise alignments, sidestepping this issue.
 Later, I will present my design and implementation of an external memory algorithm that transforms the alignments into a graph through a transitive closure of the equivalencies implied by the alignments.
 This directly transforms the alignments which might be used by an assembler into a blunt-ended assembly graph.
 
-\subsubsection{deBruijn graphs}
+\subsubsection{De Bruijn graphs}
 
-% define DBG clearly, show why it is a special case of overlap graph in which overlaps can be computed implicitly
-% list all the methods in DBG space
+De Bruijn graphs \cite{de1946combinatorial} are graphs in which a set of $k$mers are taken as the nodes of the graph, and edges are added for each pair of $k$mers $k_1 \rightarrow k_2$ in which the last $k-1$ bases of $k_1$ are the same as the first $k-1$ bases of $k_2$.
+As discussed previously in section \ref{sec:genome_assembly}, this model simplifies the overlap graph structure, allowing efficient calculation and representation of the graph.
+For instance, $k$mer lengths may be chosen so that they fit inside a machine word, allowing bitwise operations and integer math rather than string comparison to be used to infer the graph structure directly implied by the $k$mers themselves.
+
+In second generation sequencing, where per base error rates are low and read lengths are short, little is lost by breaking the read set into $k$mers of 1/3 or 1/5th the length of the original reads, and so this model has been readily applied to cheap short read sequence data since its introduction to genomics in the mid 1990s and early 2000s \cite{idury1995new,pevzner2001eulerian}.
+The method was first implemented for short reads in Velvet \cite{zerbino2008velvet}, which used a straightforward but memory-costly hash table strategy to encode the DBG.
+Zam Iqbal then extended this model to support various kinds of pangenomic analysis based on DBGs by labeling each $k$mer with ``colors'' representing read counts from different samples \cite{iqbal2012novo}, while later versions of the Cortex assembler have extended it to fully encode long reads or contigs relative to the DBG \cite{turner2018integrating}.
+Similarly, improvements in performance have been yielded by linking read pairs in the DBG model \cite{bankevich2012spades}.
+
+It was be shown that the DBG is encoded in a FM-index of a read set \cite{bowe2012succinct}, and this \emph{succinct} DBG model underpins some of the most-scalable assembly methods currently available \cite{li2015megahit}, while efficient encodings using other models such as bloom filter schemes has enabled the most memory-efficient DBG methods \cite{chikhi2012space}.
+In the compacted DBG generalization non-bifurcating regions of the graph might be merged into a single node with label length $>k$.
+The compacted DBG is now often a typical output for DBG assemblers \cite{chikhi2016compacting,minkin2016twopaco}.
+The compressed nodes and their overlaps with their neighbors form a set of unitigs that are often taken as the most-raw kind of assembly output, to which popular assemblers like SPAdes and Minia3 apply a kind of graph simplification finishing step to infer longer contigs from them \cite{bankevich2012spades}.
+As with any overlap graph, DBGs must be made into blunt-ended sequence graphs before they can be utilized by variation graph based algorithms.
+The basic method for doing so is simpler than for generic overlap graphs, as overlaps in DBGs must be exact string matches.
+In my work I have found this an important feature, as in addition to being generated by efficient methods, it ensures that DBGs are universally reusable as variation graphs.
 
 \subsubsection{String graphs}
+
+The string graph is a formalism that describes the full information represented by a shotgun sequencing experiment and an all-against-all alignment between its reads represented as set of approximate overlaps between the read ends and containments between them \cite{myers1995toward,myers2005}.
+Myers argued that the then-current paradigm of assembly, which attempted to generate the shortest common superstring (SCS) incorporating all of the $N$ input sequence reads, failed to reconstruct the genome correctly in the context of repeats in the genome that are longer than the average read length $\overline{L}$.
+He then posited what he called the ``chunk graph'' (later, string graph) as a graphical model of the overlap set, showing that the correct consensus sequence would by definition exist as a walk through the graph.
+In this graph nodes represent sequence reads and directed edges represented observed approximate overlaps between them.
+Repeat units in the genome that are longer than $\overline{L}$ will collapse in this graph, provided errors in the reads can be corrected so such repeats become fully identical.
+The string graph compresses its input.
+The edge complexity of the graph may be reduced from the number of read overlaps by a factor proportional to the average coverage by removing transitive edges.
+Nodes may similarly be compressed where runs of nodes then have in and out degree one.
+
+This idea was introduced at the same time as de Bruijn graphs, with Myers' work on string graphs and the first description of a genome assembly algorithm using de Bruijn graphs both presented at the same workshop in 1995 \cite{myers1995toward,idury1995new}.
+Myers' 2005 formalization of the string graph \cite{myers2005} responds particularly to de Bruijn models, and he points out that generating $k$mers from the reads as the basis for the graph means that the resulting graph is not ``read coherent'', or in other words does not accurately represent the information in the read set.
+Subsequent work has shown that the boundaries between the two models are not so well-defined.
+As a specialization of the overlap string graph, the de Bruijn model may be applied to certain complex subsets of a string graph, creating a kind of hybrid assembler where the high-performance $k$mer model is used to resolve the most-difficult components, while the generic overlap model is used elsewhere \cite{huang2016integration}.
+Similarly, the high cost of error and graphical complexity suffered by the string graph encourage the use of $k$mer based read correction models, which could be seen as filtering the reads using a DBG model.
+
+String graphs are often described as ``lossless'' representations of the input read set and the alignments between them \cite{li2012exploring}.
+Neither in practice nor in Myers' formalizations nor its implementations like the Celera assembler (CABOG) \cite{miller2008aggressive} is this strictly true.
+In the model, overlaps are assumed to be $\epsilon-$correctable at approximately the raw sequencing error rate.
+In practice, this filtering can result in a loss of input sequence from the string graph.
+String graphs can consume very large amounts of memory when fully constructed without filtering from a read set \cite{li2016minimap,koren2017canu}.
+Input filtering, mostly to reduce repeat content, is used to mitigate this issue.
+If not aggressively corrected, repeats tend to generate ultra-dense graph regions that are known as ``hairballs'' which can increase the complexity of assembly by orders of magnitude.
+
+To deal with repetitive sequences in the genome, one solution is to mask out repetitive $k$mer, minimizer, or alignment seeds used in generating the overlap set, as in CABOG, FALCON, and miniasm \cite{miller2008aggressive,chin2016phased,li2016minimap}.
+Recently, alternative probabilistic seed filtering based on the \emph{tf-idf} (term frequency, inverse document frequency) metric has shown promise at retaining information about repeats and allowing their separation rather than excision from the assembly string graph \cite{koren2017canu}.
+%In principle these masked regions can be replaced by simplified models of particular repeat classes, but this appears difficult to achieve and has not been a priority as historically assembly graphs have not been directly used in resequencing.
+
+String graph methods related to the Celera assembler (FALCON, Canu) implement error correction steps before overlap inference, as this reduces memory requirements during assembly.
+Similarly, popular methods that generate assemblies via a string graph induction step from Illumina sequencing data (SGA, fermi, and fermikit) also apply an error correction processes before the generation of the string graph \cite{simpson2012efficient,simpson2014exploring,li2015fermikit}, which helps to reduce the graph complexity and improve contiguity of the resulting assembly.
+
+Heterozygosity in a string graph should result in a bubble, or graph component connected to the rest of the graph via single sources and sinks.
+Like de Bruijn graphs, string graphs have been used to support variant calling, for instance finding heterozygotes in the assembly graph of a single individual \cite{li2012exploring}.
+
+With minimap and miniasm Heng Li demonstrated that it is also possible to build an approximate overlap graph using an efficient all versus all alignment \cite{li2016minimap}.
+The application of an efficient, if greedy contig generation step results in an assembly in which the error rate in the contigs approaches that of the input reads.
+Instead of correcting before generating overlaps, the consensus step can be used to improve the base level accuracy of the assembly after it has been generated, but tools like racon that implement this approach do not do so on the assembly graph \cite{vaser2017fast}, and rather work on the level of individual contigs.
+Li \cite{li2016minimap} also proposed to mix and match different assembly components (for instance using DALIGNER \cite{myers2014efficient} miniasm for the overlap step, or swapping quiver for nanopolish for consensus generation) by establishing a set of standard data types including the pairwise alignment format (PAF) and the graphical fragment assembly (GFA).
+These encode the results of the overlap step and a graphical model for the assembly at any state of its progression.
+GFA is used in a wide number of methods, but as of August 2018 it appears that very few tools both read and write GFA, and much of the assembly improvement steps are implemented on contigs (encoded in FASTQ or FASTA format) rather than the string graph itself.
 
 % recap on string graph concept
 % implementations
@@ -585,21 +651,31 @@ This directly transforms the alignments which might be used by an assembler into
 %The string graph can be understood as the graph implied by the mutual alignment of all the sequence fragments input into the assembly.
 %Each position in two reads that aligns as a match becomes a single node in the graph.
 
-\subsection{RNA splicing graphs}
+\subsubsection{RNA splicing graphs}
 
 % could be developed by an assembly algorithm directly
 % in model organisms we can use curated gene models to build
 % not assembly graph as derived from gene model
 % which algorithms have used these methods?
+% for de novo assembly \cite{grabherr2011full}
+% \cite{schulz2012oases}
 
-\subsection{Variant representation with DAGs}
+\subsection{Variation aware alignment}
 
 % reference + variant alleles = sequence DAG
 % ``if we could'' describe SVs it might be not DAG like, but the reference would still be its backbone
 
-\subsubsection{The variant call format}
-
+%\subsubsection{The variant call format}
 % what is the variant call format?
+
+\subsubsection{1000GP indel genotyping}
+
+% quick summary with citation of supplement describing it 
+
+\subsubsection{GraphTyper}
+
+% uses VCF to construct a graph to which reads mapped into a given reference window
+% like 1000GP indel genotyper
 
 \subsubsection{Bwbble}
 
@@ -614,15 +690,6 @@ This directly transforms the alignments which might be used by an assembler into
 
 % write the DAG into the index provided a number of structural limitations
 % problems with nesting (yes could be corrected) and cost of large alphabet WT based FM-index
-
-\subsubsection{1000GP indel genotyping}
-
-% quick summary with citation of supplement describing it 
-
-\subsubsection{GraphTyper}
-
-% uses VCF to construct a graph to which reads mapped into a given reference window
-% like 1000GP indel genotyper
 
 \subsubsection{Seven Bridges Genomics' graph tool}
 
