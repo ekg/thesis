@@ -634,8 +634,10 @@ Recently, alternative probabilistic seed filtering based on the \emph{tf-idf} (t
 String graph methods related to the Celera assembler (FALCON, Canu) implement error correction steps before overlap inference, as this reduces memory requirements during assembly.
 Similarly, popular methods that generate assemblies via a string graph induction step from Illumina sequencing data (SGA, fermi, and fermikit) also apply an error correction processes before the generation of the string graph \cite{simpson2012efficient,simpson2014exploring,li2015fermikit}, which helps to reduce the graph complexity and improve contiguity of the resulting assembly.
 
-Heterozygosity in a string graph should result in a bubble, or graph component connected to the rest of the graph via single sources and sinks.
+Allelic diversity in a string graph should result in a bubble, or graph component connected to the rest of the graph via single sources and sinks.
 Like de Bruijn graphs, string graphs have been used to support variant calling, for instance finding heterozygotes in the assembly graph of a single individual \cite{li2012exploring}.
+While the purest form of variant calling in the graph would produce a data format relative to the graph, all methods that I am aware of will establish variants relative to a reference sequence threaded through the graph.
+The general problem of filtering paths from bubbles is equivalent to the consensus generation step, but thus far no method has specifically merged the two concepts of variant calling and graph based assembly finishing together, although assembly projects may use a variant caller to establish variants in their contigs \cite{jain2018nanopore}.
 
 With minimap and miniasm Heng Li demonstrated that it is also possible to build an approximate overlap graph using an efficient all versus all alignment \cite{li2016minimap}.
 The application of an efficient, if greedy contig generation step results in an assembly in which the error rate in the contigs approaches that of the input reads.
