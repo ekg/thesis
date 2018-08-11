@@ -637,7 +637,7 @@ Similarly, popular methods that generate assemblies via a string graph induction
 Allelic diversity in a string graph should result in a bubble, or graph component connected to the rest of the graph via single sources and sinks.
 Like de Bruijn graphs, string graphs have been used to support variant calling, for instance finding heterozygotes in the assembly graph of a single individual \cite{li2012exploring}.
 While the purest form of variant calling in the graph would produce a data format relative to the graph, all methods that I am aware of will establish variants relative to a reference sequence threaded through the graph.
-The general problem of filtering paths from bubbles is equivalent to the consensus generation step, but thus far no method has specifically merged the two concepts of variant calling and graph based assembly finishing together, although assembly projects may use a variant caller to establish variants in their contigs \cite{jain2018nanopore}.
+The general problem of filtering paths from bubbles is equivalent to the consensus generation step, but thus far no method has specifically merged the two concepts of variant calling and graph based assembly finishing together, although assembly projects may use a variant caller to establish variants in their contigs \cite{jain2018nanopore,schmid2018pushing}.
 
 With minimap and miniasm Heng Li demonstrated that it is also possible to build an approximate overlap graph using an efficient all versus all alignment \cite{li2016minimap}.
 The application of an efficient, if greedy contig generation step results in an assembly in which the error rate in the contigs approaches that of the input reads.
@@ -646,12 +646,7 @@ Li \cite{li2016minimap} also proposed to mix and match different assembly compon
 These encode the results of the overlap step and a graphical model for the assembly at any state of its progression.
 GFA is used in a wide number of methods, but as of August 2018 it appears that very few tools both read and write GFA, and much of the assembly improvement steps are implemented on contigs (encoded in FASTQ or FASTA format) rather than the string graph itself.
 
-% recap on string graph concept
-% implementations
 % it's an overlap graph yep
-
-%The string graph can be understood as the graph implied by the mutual alignment of all the sequence fragments input into the assembly.
-%Each position in two reads that aligns as a match becomes a single node in the graph.
 
 \subsubsection{RNA splicing graphs}
 
@@ -661,6 +656,7 @@ GFA is used in a wide number of methods, but as of August 2018 it appears that v
 % which algorithms have used these methods?
 % for de novo assembly \cite{grabherr2011full}
 % \cite{schulz2012oases}
+% cite HISAT2
 
 \subsection{Variation aware alignment}
 
