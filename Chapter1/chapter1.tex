@@ -669,28 +669,26 @@ Still in active development, Daewan Kim's HISAT2 implements a method for aligmen
 \subsubsection{Genome alignment graphs}
 
 The graphs used in genome alignment algorithms are the nearest in content and structure to variation graphs despite representational differences, and it can be shown than a number them of nearly identical representational capacities \cite{kehr2014genome}.
-The \emph{alignment graph}, first introduced in the context of multiple sequence alignment \cite{kececioglu1993maximum}, represents a collection of alignments in graphical form, allowing an induction of a sequence graph (or MSA when such a graph is partially ordered).
+The \emph{alignment graph}, first introduced in the context of multiple sequence alignment \cite{kececioglu1993maximum,rausch2008segment}, represents a collection of alignments in graphical form, allowing an induction of a sequence graph (or MSA when such a graph is partially ordered).
 Vertices in the alignment graph $G_a = (V, E)$ represent characters in the input sequences $S$, and edges represent cases where characters in the input sequences have been aligned, with a relation $\prec$ on $V$ such that $v \prec w$ holds if and only if $v$ precedes $w$ in $S$.
 As it contains both the sequences an their alignment, this graph may then be contracted to produce a compressed graph that represents both.
 We can then contract $G_a$ into the base graph $G_s$, adding a node for each connected component in $G_a$ and labeling it with the corresponding character, while adding an edge for each pair of nodes $X$ and $Y$ which represent pair of input characters in $G_a$ that satisfy $\prec$.
 Each column of an MSA matrix would correspond to a particular connected component in $G_a$.
-Similarly, if we rendered the resulting graph as a bidirectional sequence graph then each connected component in $G_a$ would yield a single base in the sequence space of the graph, but it is worth noting that the equivalence is not exact unless we generalize the alignment graph to represent alignments in both the forward or reverse complement orientations.
+Similarly, if we rendered the resulting graph as a bidirectional sequence graph then each connected component in $G_a$ would yield a single base in the sequence space of the graph.
+It is worth noting that the equivalence is not exact unless we generalize the alignment graph to represent alignments in both the forward or reverse complement orientations, which has been explored in the A-Bruijn model \cite{raphael2004novel}.
 
-The Enredo graph model, used by the Enredo/Pecan multiple genome aligner \cite{paten2008enredo}, generalizes the alignment graph model to bidirectionality by representing each genome segment in the graph with two nodes, a head and tail.
-Each segment between a head and tail represents a locus found in one or more locations in the input sequences, and within these segments Pecan is applied to generate colinear alignments.
+The Enredo graph model $G_e = (V, E)$, used by the Benedict Paten's Enredo/Pecan multiple genome aligner \cite{paten2008enredo}, generalizes the alignment graph model to bidirectionality by representing each genome segment in the graph with two nodes, a head and tail.
+The graph maintains two kinds of edges, $E_s$ which represent genome segments and are quivalent to nodes in $G_s$, and $E_a$ which represent breakpoints of adjacencies between segments.
+To obtain a graph like $G_s$ from the Enredo graph, the MSA resolver Pecan is applied to sets of homologous $E_s$ connecting the same head and tail nodes.
 
-%
-%Summarize work in \cite{paten2011cactus}, as this can be seen as representing a ``third way'' between DBG and string graph or breakpoint graphs.
-DBGs may be seen as a kind of intermediate thingy.
+Paten further refined multiple genome alignment by the development of the Cactus graph $G_c = (V,E)$ \cite{paten2011cactus}.
+To construct the Cactus graph, we build a precursor graph $G_c'$ by adding a node for each adjacency-connected component in the Enredo graph $G_e$ and adding edges between nodes for each segment $E_s$ whose head and tail lie in both adjacency components.
+To obtain the Cactus graph, we collapse three-edge connected components in $G_c'$ into single nodes, yielding a Eulerian graph with a tree like structure.
+The nodes in the Cactus graph can be shown to correspond to a tree of \emph{ultrabubbles} (graph components connected to the rest of the graph by one or two head and tail nodes) in the sequence graph from which it was constructed \cite{paten2016superbubbles}.
+This forms the basis for the development of genotype models on top of arbitrary graphs.
 
-% notes
-The compressiveness of the resulting graph and its expression of homology relationships in the input sequences are completely dependent on the aligner that was used to build the alignment set.
-
-Much existing effort has focused on algorithms to remove alignment artifacts from the graph and adjust its structure to better match evolutionary relationships.
-
-They can be used to produce ideal input to the methods I describe.
-However, in practice they require the availability of high-quality reference genomes as input.
-Multiple genome alignment graphs are used to describe sequence relationships in an evolutionarily-compatible fashion, as to allow their use as a basis for evolutionary inference.
+Without additional labeling, these graph models are insufficient to fully reproduce their input, and although it may be implemented in corresponding software, existing models to do not clarify how this labeling is accomplished \cite{kehr2014genome}.
+Variation graphs respond to this issue by making the path embedding of the sequences in the graph explicit in the model and faithfully implementing this model in software.
 
 \subsection{Pangenomic alignment}
 
@@ -749,7 +747,7 @@ The authors claim that deBGA is fast and, thanks to its use of a DBG-based index
 However it is not clear how the method develops mapping qualities, and due to its inability to represent evolutionary homology or equivalence between regions of genomes, this would appear to be is a significant limitation of the reference data structure they have chosen.
 
 Although the authors cannot validate the utility of their advance, deBGA is the first published method specifically designed to align short reads against arbitrarily-structured graph genomes.
-While deBGA was designed to work on collections of linear references, the authors note that it would also be possible to apply the indexing strategy to any sequence graph, as $k$mer enumeration may be used to convert any sequence graph into a DBG\footnote{Jouni Sir\"{e}n and I had implemented an aligner based on a DBG transform of an arbitrary sequence graph at the time of deBGA's publication. The authors of deBGA were apparently as unaware of our work as we were of theirs.}
+While deBGA was designed to work on collections of linear references, the authors note that it would also be possible to apply the indexing strategy to any sequence graph, as $k$mer enumeration may be used to convert any sequence graph into a DBG\footnote{Jouni Sir\'{e}n and I had implemented an aligner based on a DBG transform of an arbitrary sequence graph at the time of deBGA's publication. The authors of deBGA were apparently as unaware of our work as we were of theirs.}
 They do not specifically demonstrate its operation on generic DBGs, instead comparing with linear reference based aligners on the same collections of genomes.
 
 \subsubsection{Realigning reads to a local sequence DAG}
@@ -786,39 +784,67 @@ GraphTyper's efficient and accurate performance on exceptionally large resequenc
 
 \subsubsection{Population reference graphs}
 
-% another fun way, now using DBGs and possibly MSA sequence alignments rather than VCF
-% but definitely into the reference, focused on a small area rather than the whole problem
+Pangenomic references need not be used as a literal coordinate system in the same manner as the linear reference genome.
+Instead, they can be used to infer most-likely underlying haplotypes of a given individual.
+Further refinement can be achieved by aligning the read set back to the inferred haplotypes.
+This approach makes sense if alignment aganist the pangenome is extremely costly, but efficient haplotype inference patterns can be applied to the genome.
 
-%\cite{dilthey2015improved}
-% this basically just infers the underlying haplotypes given a partially ordered DBG kind of model, then aligns against them
-% downstream analysis is pretty much standard
-% limited to particular small loci
+Population reference graphs (PRGs) \cite{dilthey2015improved} are POA-like graphs in which sequences aligned by MSA are collapsed in the case of identity above a given $k$mer size, which embeds some information about local phasing into the POA.
+First assembled from long sequences, the PRG is then augmented with local variation information, with SNPs and indels added to all paths at appropriate positions.
+The resulting structure is similar to POA in that it forms a generative model of genomes, including recombination.
+Dilthey and colleauges develop a genome inference model based on the comparison of the PRG to a DBG built from reads from a given individual.
+By comparison between these two structures, weighted by $k$mer frequency in the genome and PRG, they provide sufficient annotations to the PRG to run an HMM on the graph to infer the most-likely underlying pair of haplotypes.
+Short read alignment can be used to map the full reads back to these haplotypes in an \emph{ad hoc} manner in order to find new small variation against them and fully resolve their sequences.
+The authors demonstrate that this method can be applied to the human MHC, where deep divergence and correspondingly high sequence diversity frustrate methods optimized for the average low diversity regions of the human genome.
 
-\subsubsection{Bwbble}
+\subsubsection{Succinct pangenomic sequence indexes}
 
-% a fun way of encoding the VCF data into a sequence index
-% add a bunch of additional sequences and remember when they are overlapping to fix up the resulting alignments
-%\cite{huang2013short}
-
-\subsubsection{Gramtools and the vBWT}
-
+%Given a sequence DAG 
 % write the DAG into the index provided a number of structural limitations
 % problems with nesting (yes could be corrected) and cost of large alphabet WT based FM-index
 
-\subsubsection{Seven Bridges Genomics' graph tool}
+Generalizations of the FM-index to support indexing of sequence DAGs, or equivalently regular languages, yielded a number of versions of short read to sequence graph aligners.
+As allowed by their indexing strategy, such methods enable pattern matching against pangenome graphs in much the same way as done by FM-index based short read aligners.
+
+The Generalized Compressed Suffix Array (GCSA) \cite{siren2011indexing,siren2014indexing} enables pattern matching against arbitrary finite regular languages.
+It indexes a reverse deterministic automaton that encodes the sequence DAG implied by a VCF and reference genome.
+To enable path queries, it builds the BWT based on the sorted prefixes of the language encoded in the automaton, adding support structures that allow pattern search as in an FM-index.
+Additional support bitvectors akin to those used to encode and index labeled trees \cite{ferragina2005structuring} allow the traversal of the sequence DAG during query matching.
+Sir\'{e}n constructs the index using the prefix-doubling method used to construct sorted suffixes, wherein prefixes and their starts and ends may be extended from length $L$ to $2L$ through a sort and join operation.
+Because it indexes a memoryless automaton and the construction requires the enumeration of all the prefixes of the automaton, GCSA suffers from exponential costs in index generation in the order of the number possible recombinations represented in the sequence DAG.
+Careful curation of the pangenome allows the construction of the GCSA for the entire human genome in the memory of an available computer (1TB), provided the construction is broken into chromosomes and local complexity in the VCF sequence DAG is reduced.
+Experiments with the GCSA used backtracking search as in BWA \cite{li2009fast} to directly align reads with differences from the indexed graph, but the method was not developed into a full-featured short read alignment method.
+
+Alternative schemes make no fundamental change to the CSA/FM-index model, but rather embed information about particular kinds of pangenome graphs into the sequence that is indexed.
+BWBBLE \cite{huang2013short} encodes SNPs by extending the reference alphabet to include ambiguity codes which match more than one DNA base.
+All indel alleles with $l$ bases of the reference sequence on each side into an extended reference sequence set, where $l$ is the length of the longest sequence that may be queried.
+A map projecting the positions in the extended reference into the original reference sequence space allows queries aligned against the extended reference set to be projected back into the original.
+This approach is simple and allows for a linear-time indexing of the pangenome reference.
+At query time BWBBLE is no more performant than GCSA, and takes around 100 fold as long to align reads than the backtracking BWA method \cite{huang2013short}.
+The authors attribute this lower performance to a number of factors related to the additional complexity caused by the larger sequence alphabet and reference space.
+
+\cite{maciuca2016natural}
+
+HISAT2 implements variation-aware alignment against human genome scale graphs, including alignment to RNA splicing junctions \cite{kim2017hisat2}.
+To find seeds globally, it uses an implementation of the generalized compressed suffix array (GCSA) \cite{siren2011indexing}, which generalizes the FM-index to sequence DAGs, and builds its index including common short SNPs and indels.
+Then a set of local GCSA indexes are used to allow fast search of the splice graph and determination of candidate splicing junctions even when supported by minimal evidence in the read.
+Although more limited in scope than my work, HISAT2 is an important point of reference as another scalable and mature implementation of sequence to graph alignment, and is the first widely-used aligner based on the GCSA index.
+Like other methods, HISAT2 writes BAM alignments resulting from the expression of alignments to the sequence graph against the linear reference genome.
+
+Sir\"{e}n's later work on this topic produced GCSA2 \cite{siren2017indexing}.
+This model removes the determinization step, allowing the index to be built on top of any kind of graph.
+Instead of indexing the automaton, GCSA2 indexes a DBG generated from a bidirectional sequence graph in which nodes retain both $k$mer identity and their starting and ending postional context in the graph.
+This positional information is used to drive the prefix doubling step required to build the BWT of the DBG.
+The space requirements of GCSA are avoided by terminating the prefix doubling at a length appropriate to accomodate queries of interest, which in practice is limited to 256bp.
+By including the longest common prefix array (LCP), GCSA2 can encode the implied suffix tree, which enables the development of MEM-based seed generation approaches that I use to drive efficient and sensitive alignment against variation graphs.
+
+\subsubsection{Scalable implementations of pangenome alignment}
 
 % whole genome alignment to particular kinds of graphs
 % local alignment method (based on path enumeration) limits variant density that can be allowed
 % results in highly variable runtime given graph structure
 % DAG only
 
-\subsubsection{HISAT2}
-
-HISAT2 implements variation-aware alignment against human genome scale graphs, including alignment to RNA splicing junctions.
-To find seeds globally, it uses an implementation of Jouni Sir\"{e}n's generalized compressed suffix array (GCSA) \cite{siren2011indexing}, which generalizes the FM-index to sequence DAGs, and builds its index including common short SNPs and indels.
-Then a set of local GCSA indexes are used to allow fast search of the splice graph and determination of candidate splicing junctions even when supported by minimal evidence in the read.
-Although more limited in scope than my work, HISAT2 is an important point of reference as another scalable and mature implementation of sequence to graph alignment, and is the first widely-used aligner based on the GCSA index.
-Like other methods, HISAT2 writes BAM alignments resulting from the expression of alignments to the sequence graph against the linear reference genome.
 
 \section{Overview of this work}
 
