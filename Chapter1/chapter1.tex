@@ -562,6 +562,7 @@ OLC assembly methods in some sense began their evolution with the set of comprom
 As we saw, early assemblers would enforce a linear ordering, in a way forcing a form of overlap DAG.
 This approach makes sense only for very short genomes with minimal repeats and reads long enough to be uniquely localized in the reference genome.
 As overlap alignments can occur between any pair of sequence strands, assembly methods must implement a full biridectional graph model if they hope to represent ambiguity in the overlap set, and so by default must be more generic than linear MSA models.
+Equivalently, whole genome alignment graphs must encode all kinds of structural variation in order to fully express evolutionary relationships.
 Earlier in section \ref{sec:genome_assembly} I gave a historical outline of the development of these methods in response to changes in available sequencing technology.
 In this section I provide deeper technical detail to describe these methods and illustrate their relationship to the variation graph model.
 
@@ -665,6 +666,32 @@ Direct use of the splicing graph concept is limited, with the most-popular workf
 More recently, probabilistic approaches have come into favor, and to support these assembly models have been applied to transcript quantification via pseudoalignment to a colored DBG annotated with reference transcripts \cite{bray2016near}.
 Still in active development, Daewan Kim's HISAT2 implements a method for aligment of RNA-seq reads to a whole genome splicing graph \cite{kim2015hisat,kim2017hisat2}, including SNP and indel variation directly in the whole genome index.
 
+\subsubsection{Genome alignment graphs}
+
+The graphs used in genome alignment algorithms are the nearest in content and structure to variation graphs despite representational differences, and it can be shown than a number them of nearly identical representational capacities \cite{kehr2014genome}.
+The \emph{alignment graph}, first introduced in the context of multiple sequence alignment \cite{kececioglu1993maximum}, represents a collection of alignments in graphical form, allowing an induction of a sequence graph (or MSA when such a graph is partially ordered).
+Vertices in the alignment graph $G_a = (V, E)$ represent characters in the input sequences $S$, and edges represent cases where characters in the input sequences have been aligned, with a relation $\prec$ on $V$ such that $v \prec w$ holds if and only if $v$ precedes $w$ in $S$.
+As it contains both the sequences an their alignment, this graph may then be contracted to produce a compressed graph that represents both.
+We can then contract $G_a$ into the base graph $G_s$, adding a node for each connected component in $G_a$ and labeling it with the corresponding character, while adding an edge for each pair of nodes $X$ and $Y$ which represent pair of input characters in $G_a$ that satisfy $\prec$.
+Each column of an MSA matrix would correspond to a particular connected component in $G_a$.
+Similarly, if we rendered the resulting graph as a bidirectional sequence graph then each connected component in $G_a$ would yield a single base in the sequence space of the graph, but it is worth noting that the equivalence is not exact unless we generalize the alignment graph to represent alignments in both the forward or reverse complement orientations.
+
+The Enredo graph model, used by the Enredo/Pecan multiple genome aligner \cite{paten2008enredo}, generalizes the alignment graph model to bidirectionality by representing each genome segment in the graph with two nodes, a head and tail.
+Each segment between a head and tail represents a locus found in one or more locations in the input sequences, and within these segments Pecan is applied to generate colinear alignments.
+
+%
+%Summarize work in \cite{paten2011cactus}, as this can be seen as representing a ``third way'' between DBG and string graph or breakpoint graphs.
+DBGs may be seen as a kind of intermediate thingy.
+
+% notes
+The compressiveness of the resulting graph and its expression of homology relationships in the input sequences are completely dependent on the aligner that was used to build the alignment set.
+
+Much existing effort has focused on algorithms to remove alignment artifacts from the graph and adjust its structure to better match evolutionary relationships.
+
+They can be used to produce ideal input to the methods I describe.
+However, in practice they require the availability of high-quality reference genomes as input.
+Multiple genome alignment graphs are used to describe sequence relationships in an evolutionarily-compatible fashion, as to allow their use as a basis for evolutionary inference.
+
 \subsection{Pangenomic alignment}
 
 As the review presented in this chapter shows, the idea of using pangenomic models as a reference basis is not new, and interest in the topic extends back to the earliest explorations of the multiple sequence alignment problem.
@@ -747,20 +774,31 @@ The posterior genotype and phasing quality estimates produced by MVNcall, along 
 The final set of alleles were fed back through the glia, freebayes, and MVNcall process to ultimately produce the set of indels in the 1000GP phase 3 release.
 
 Hannes Eggertson's GraphTyper \cite{eggertsson2017graphtyper} implements a remarkably similar workflow to that used to generate genotype likelihoods for the 1000GP indels.
-However, it differs in the alignment method used, as Eggertson opted for a $k$mer based extension model, with the objective not of producing alignments but rather allele observation counts that could be used in genotyping.
-
-% uses VCF to construct a graph to which reads mapped into a given reference window
-% like 1000GP indel genotyper
-
-\subsubsection{Bwbble}
-
-% a fun way of encoding the VCF data into a sequence index
-%\cite{huang2013short}
+In the GraphTyper pipeline, Illumina reads are aligned against the reference genome using a standard short read aligner.
+Those alignments with soft clips and apparent differences from the reference are matched to a sequence DAG (``pangenome reference graph'') built from the reference and VCF in a window nearby the read's candidate mapping location.
+Rather than a sensitive DP-based POA-like alignment against the graph, GraphTyper matches short $k$mers between the read and the sequence DAG using a $k$mer index of the reference structure and 1bp-overlapping $k$mers from the read.
+The results are not transformed into an alignment \emph{per se} but into a list of variant traversals supported by each read.
+This transformation provides sufficient information to genotype the variants in the graph, the results of which are then produced in VCF format for standard downstream consumption.
+The pipeline may update its reference system so that it includes both known variation from other studies and new variation discovered during analysis, but in practice this graph extension appears to be as simple as a union of alleles from known and novel VCFs.
+Here as in other contemporary graph-related resequencing, the graph reference system is used internally to improve algorithm performance, but results are projected into the linear reference and the graph has no other representation than VCF.
+This prevents the representation of ``nested'' variation or non-SNP or indel SVs.
+GraphTyper's efficient and accurate performance on exceptionally large resequencging problems supports the authors' design decisions and firmly asserts the utility of the graph realignment approach.
 
 \subsubsection{Population reference graphs}
 
 % another fun way, now using DBGs and possibly MSA sequence alignments rather than VCF
 % but definitely into the reference, focused on a small area rather than the whole problem
+
+%\cite{dilthey2015improved}
+% this basically just infers the underlying haplotypes given a partially ordered DBG kind of model, then aligns against them
+% downstream analysis is pretty much standard
+% limited to particular small loci
+
+\subsubsection{Bwbble}
+
+% a fun way of encoding the VCF data into a sequence index
+% add a bunch of additional sequences and remember when they are overlapping to fix up the resulting alignments
+%\cite{huang2013short}
 
 \subsubsection{Gramtools and the vBWT}
 
