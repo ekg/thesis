@@ -750,7 +750,7 @@ Although the authors cannot validate the utility of their advance, deBGA is the 
 While deBGA was designed to work on collections of linear references, the authors note that it would also be possible to apply the indexing strategy to any sequence graph, as $k$mer enumeration may be used to convert any sequence graph into a DBG\footnote{Jouni Sir\'{e}n and I had implemented an aligner based on a DBG transform of an arbitrary sequence graph at the time of deBGA's publication. The authors of deBGA were apparently as unaware of our work as we were of theirs.}
 They do not specifically demonstrate its operation on generic DBGs, instead comparing with linear reference based aligners on the same collections of genomes.
 
-\subsubsection{Realigning reads to a local sequence DAG}
+\subsubsection{Genotyping using a sequence DAG}
 
 Variant calls in the VCF format, when combined with the reference genome to which they refer, form a sequence DAG that encodes all the genomes from which the calls were derived as well as novel recombinations between them.
 As this feature of variant calls was appreciated, it has led to the development of several methods based on mapping reads globally using standard methods and realigning them locally to a variation-aware reference.
@@ -781,6 +781,10 @@ The pipeline may update its reference system so that it includes both known vari
 Here as in other contemporary graph-related resequencing, the graph reference system is used internally to improve algorithm performance, but results are projected into the linear reference and the graph has no other representation than VCF.
 This prevents the representation of ``nested'' variation or non-SNP or indel SVs.
 GraphTyper's efficient and accurate performance on exceptionally large resequencging problems supports the authors' design decisions and firmly asserts the utility of the graph realignment approach.
+
+Sibbesen and colleauges generalize the genotyping problem to arbitrary variation graphs with BayesTyper \cite{sibbesen2018accurate}.
+They adopt a kind of pseudoalignment model in which exact $k$mer matches between a read set and the reference are used to establish support for paths across bubbles in the variation graph.
+These can then be used to build probabilistic models of genotypes for any kind of variation represented in the graph, both small (SNPs and indels), including nested variation.
 
 \subsubsection{Population reference graphs}
 
@@ -874,16 +878,26 @@ In this context the authors demonstrate their method can significantly (although
 However, the method is not adaptable to other graph types or sequencing contexts, with reports from users indicating high increases in runtime with increased read error and variant density.
 Due to the fact that SBGA is closed source and proprietary it will not be possible to appreciate exactly why.
 
-\section{Overview of this work}
+\section{Motivation and overview of this work}
 
-\begin{comment}
-Where these methods are used in resequencing, they universally project alignments into a linear reference space and standard data formats for further processing.
-They do not use the pangenome as the reference itself, but as an of additional source of information.
-I found this perspective limited, as it specializes the models used which tends to isolate the algorithms implemented on top of them from integration into a larger ecosystem of tools.
-The work I present in this thesis responds to this limitation.
-{\tt vg} is not the first pangenomic aligner, but it is the first that models its results in terms of the pangenome itself.
-\end{comment}
+Resolving the genome of a new sample requires sequencing, assembly, or resequencing.
+Standard approaches to assembly are built on graphical models that allow for ambiguity, and out of this ambiguous system they attempt to derive a set of contigs which represent the true haplotypes of the genome.
+However, resequencing traditionally is based around a single linear reference genome, with ambiguity represented only in the alignments of the new sequences.
+This exposes resequencing based genome inference to reference bias, which is a distortion of inferred genomes toward the sequence of the reference genome.
 
-% nothing out there meets all the variation graph model needs
-% boom
- 
+I posit that by extending the reference genome to be a pangenome with a graphical representation, we can enable population aware resequencing that avoids reference bias to any particular linear reference.
+This model, the variation graph, extends bidirection sequence graph models used in assembly to support the labeling of paths that traverse the graph, and thus allows the representation and relationships of linear reference systems within itself.
+Variation graphs are related to a wide array of graphical models used in bioinformatics.
+They have deep similarity with string graphs, multiple sequence alignments, and whole genome alignment graphs.
+Recently, numerous methods have been published which provide variation-aware alignment or genotyping based on sequence DAGs built from population-scale resequencing.
+These methods demonstrate the difficulty of the problem of generalizing resequencing to graphical reference systems.
+In virtually all cases, these methods use a graph reference model internally, but express their results in terms of a linear reference genome, producing BAM alignments, or genotyping results in VCF format.
+None implement a generic strategy to work with a graphical model equivalent to the variation graph.
+The method I develop, {\tt vg} is not the first pangenomic aligner, but it is the first that models its results in terms of the pangenome itself.
+
+In the following chapter I will precisely define the variation graph and associated data models that allow representing all kinds of resequencing data types in the context of a variation graph.
+Then I will describe the algorithms implemented in {\tt vg} that enable the use of variation graphs as a basis for genome analysis, including their construction from many data sources, serialization and visualization.
+I will present indexing methods that support the queries needed to enable resequencing, and I will provide algorithms that implement efficient read alignment to large scale graphs.
+
+Finally, I will cover applications of the method I developed.
+I will show that {\tt vg} is applicable to a wide range of genomic inference problems, with a particular focus on the quality of alignment of both short and long sequence reads against variation graphs constructed from all kinds of sources.
