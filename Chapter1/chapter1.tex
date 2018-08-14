@@ -340,7 +340,7 @@ In practice they were superceded by equivalent data structures with better memor
 By augmenting the BWT to enable the exact matching via emulation of the suffix tree, Paolo Ferragina and Giovanni Manzini developed the FM-index \cite{ferragina2000opportunistic,ferragina2004alphabet}.
 Given a string $S$, the FM-index may be built using a series of transformations and auxiliary data structures that induce the suffix tree in the context of the highly-compressible BWT.
 First, we add marker characters for the start and end with lexicographic order less and greater than the rest of the characters in the alphabet, e.g. $\#,S,\$$.
-Then, we take all rotations of the sequence and sort them, yielding matrix $M$.
+Then, we take all rotations of the sequence and sort them, yielding matrix $M$, which is sometimes called the Burrows Wheeler Matrix (BWM).
 This sort has many similarities to the suffix tree, and for instance it can be seen that a lexicographically-ordered DFS through the suffix tree would enumerate the prefixes of the rotations of the sequence preceeding the terminal character $\#$ in the same order as they are sorted.
 The suffix array $SA$ is given by the vector by the suffix ranks in the sorted order they occur in $M$, and is related to the ordering of characters in the first column $F$, while the BWT is given as the last column, $L$.
 If the input text has repetitive patterns, then these will tend to result in runs in the BWT of the string that may be compressed using various schemes.
@@ -601,7 +601,7 @@ Later versions of the Cortex assembler have extended it to fully encode long rea
 Similarly, improvements in performance have been yielded by linking read pairs in the DBG model \cite{bankevich2012spades}.
 
 It was be shown that the DBG is encoded in a FM-index of a read set \cite{bowe2012succinct}, and this \emph{succinct} DBG model underpins some of the most-scalable assembly methods currently available \cite{li2015megahit}, while efficient encodings using other models such as bloom filter schemes has enabled the most memory-efficient DBG methods \cite{chikhi2012space}.
-In the compacted DBG generalization non-bifurcating regions of the graph might be merged into a single node with label length $>k$.
+In the compacted DBG generalization non-furcating regions of the graph might be merged into a single node with label length $>k$.
 The compacted DBG is now often a typical output for DBG assemblers \cite{chikhi2016compacting,minkin2016twopaco}.
 The compressed nodes and their overlaps with their neighbors form a set of unitigs that are often taken as the most-raw kind of assembly output, to which popular assemblers like SPAdes and Minia3 apply a kind of graph simplification finishing step to infer longer contigs from them \cite{bankevich2012spades}.
 As with any overlap graph, DBGs must be made into blunt-ended sequence graphs before they can be utilized by variation graph based algorithms.
@@ -729,8 +729,8 @@ At the same time, several percent of the reference genome is missing or highly d
 These conditions break standard short-read aligners developed for mapping Illumina sequencing data against low-diversity reference genomes.
 GenomeMapper models the pangenome using 256 basepair tiles.
 A $k$mer index is used to seed local alignment of very short (<50bp) reads against the pangenome.
-The authors report an extension of the Needleman-Wunsch alignment algorithm that allows alignment against the graph wherein the graph traversal is converted into a tree of alignments by duplicating the alignment process at each bifurcation.
-This alignment algorithm is exponential in the average number of bifurcations per sequence base, which may contribute to the observation that it runs hundreds of times slower than standard alignment methods on 100bp reads \cite{liu2016debga}.
+The authors report an extension of the Needleman-Wunsch alignment algorithm that allows alignment against the graph wherein the graph traversal is converted into a tree of alignments by duplicating the alignment process at each furcation.
+This alignment algorithm is exponential in the average number of forks per sequence base, which may contribute to the observation that it runs hundreds of times slower than standard alignment methods on 100bp reads \cite{liu2016debga}.
 GenomeMapper does not have a graph-specific alignment format, and instead reports alignments against the genome to which each is most similar, which the authors call ``reference free''.
 So that the alignments may be used downstream in standard approaches, they may be converted so that they are given against another chosen reference genome.
 
@@ -821,15 +821,33 @@ All indel alleles with $l$ bases of the reference sequence on each side into an 
 A map projecting the positions in the extended reference into the original reference sequence space allows queries aligned against the extended reference set to be projected back into the original.
 This approach is simple and allows for a linear-time indexing of the pangenome reference.
 At query time BWBBLE is no more performant than GCSA, and takes around 100 fold as long to align reads than the backtracking BWA method \cite{huang2013short}.
-The authors attribute this lower performance to a number of factors related to the additional complexity caused by the larger sequence alphabet and reference space.
+The authors attribute this lower performance to a number of factors related to the additional complexity caused by the larger sequence alphabet, which multiplies the time required for backwards search, and reference space, which increases the chance of multiple mapping during alignment.
 
-\cite{maciuca2016natural}
+In gramtools \cite{maciuca2016natural}, a full encoding of a particular kind of sequence DAG is enabled by use of large-alphabet CSA based on wavelet trees \cite{grossi2003high}.\footnote{Wavelet trees reduce the representation of a large alphabet of size $\Sigma$ into a tree of $O(\log{\Sigma})$ bitvectors that recursively partition the sequence space into each character.
+These bitvectors may be compressed efficiently while maintaining accessibility, and by augmenting them with rank and select supports the entire structure can be used to determine the number of each class of character before a given position, or select the $i$th of a given character.
+This allows for the implementation of $LF$ mapping on a CSA represented in a large alphabet.}
+Maciuca and colleauges develop an encoding for a sequence DAG in which bubbles may not have any deeper internal structure, and any traversal across a bubble is required to contain sequence.
+Effectively, bubbles contain a number of alternate alleles that may be represented as linear sequences.
+Conveniently, this kind of graph is exactly that which is used in VCF.
+To build its vBWT index of the graph, gramtools linearizes the alt-bubble sequence DAG into an integer vector (the ``linear PRG'') in which DNA bases are represented normally while the structure of each bubble is encoded as a series of alternate alleles delimted by $i$, flanked by delimiters $i-1$.
+Each bubble gets a unique even integer $i$, requiring the use of alphabets in the millions to encode the integer vector.
+A CSA-based FM-index is then built from the linear PRG.
+To search through alternate alleles, the backwards search algorithm is augmented to consider the alternate alleles when it encounters an odd integer greater than 4 (the alphabet space allocated to DNA sequence encoding).
+The use of a unique pair of integers for each bubble ensures that the alleles in the bubble will be sorted together in the CSA of the linear PRG.
+The encoded bubble structure allows backward search to furcate across the alternative alleles, and a new suffix array interval is added to a heap which are simultaneously searched.
+As this scheme results in an exponential increase in the number of suffix array intervals, the input set of alleles must be structured in a way to reduce the number of bubbles, so in experiments the authors set an allele frequency threshold and merge alleles within a certain window size into larger haplotype alleles\footnote{The algorithm used to convert the input VCF into the haplotype bubble form appears to be the same as in vcfgeno2haplo in vcflib: \url{https://github.com/vcflib/vcflib/blob/master/src/vcfgeno2haplo.cpp}.}.
+It is perhaps due to this exponential factor that gramtools' query performance is hundreds of times slower than BWBBLE and around 1000 times slower than bwa mem on a linear version of the same reference \cite{maciuca2016natural}.
+In effect, the method trades exponentially expensive construction for exponentially expensive queries.
+Gramtools does not implement any local alignment model, and to demonstrate the method's conceptual utility, it is used (as in PRG) to infer the most-likely linear genome for a given query set, to which the read set is realigned using a standard aligner.
 
 HISAT2 implements variation-aware alignment against human genome scale graphs, including alignment to RNA splicing junctions \cite{kim2017hisat2}.
-To find seeds globally, it uses an implementation of the generalized compressed suffix array (GCSA) \cite{siren2011indexing}, which generalizes the FM-index to sequence DAGs, and builds its index including common short SNPs and indels.
+Its hierarchical GFM-index structure allows seeding alignments against sequence DAGs.
+To find seeds globally, it uses an implementation of the generalized compressed suffix array (GCSA) \cite{siren2011indexing}.
+It builds the global index including common short SNPs and indels.
 Then a set of local GCSA indexes are used to allow fast search of the splice graph and determination of candidate splicing junctions even when supported by minimal evidence in the read.
-Although more limited in scope than my work, HISAT2 is an important point of reference as another scalable and mature implementation of sequence to graph alignment, and is the first widely-used aligner based on the GCSA index.
+HISAT2 is an important point of reference as a scalable and mature implementation of sequence to graph alignment, and is the only widely-used aligner based on the GCSA index.
 Like other methods, HISAT2 writes BAM alignments resulting from the expression of alignments to the sequence graph against the linear reference genome.
+Unlike the other pangenomic aligners, HISAT2 can achieve very high throughput, and is competitive with standard short read aligners even when considering splicing and small variants.
 
 Sir\"{e}n's later work on this topic produced GCSA2 \cite{siren2017indexing}.
 This model removes the determinization step, allowing the index to be built on top of any kind of graph.
@@ -838,13 +856,23 @@ This positional information is used to drive the prefix doubling step required t
 The space requirements of GCSA are avoided by terminating the prefix doubling at a length appropriate to accomodate queries of interest, which in practice is limited to 256bp.
 By including the longest common prefix array (LCP), GCSA2 can encode the implied suffix tree, which enables the development of MEM-based seed generation approaches that I use to drive efficient and sensitive alignment against variation graphs.
 
-\subsubsection{Scalable implementations of pangenome alignment}
+\subsubsection{Mapping to $k$mer based pangenome indexes}
 
-% whole genome alignment to particular kinds of graphs
-% local alignment method (based on path enumeration) limits variant density that can be allowed
-% results in highly variable runtime given graph structure
-% DAG only
+A $k$mer index is trivial to build from a graph, one just needs to be able to enumerate or sample $k$-long walks through the graph and link the graph position to the $k$mer in an efficient hash table or other kind of index.
+The size of the index can be reduced by sampling $k$mers in some pattern.
+This indexing strategy was used in an early version of {\tt vg}, which supported experiments by the GA4GH-DWG \cite{novak2017genome} oriented at understanding the utility of various graphs constructed for a set of loci where GRCh38 encoded alternative sequences.
+This same indexing technique is used by a proprietary method developed by members of the GA4GH-DWG from Seven Bridges Genomics (SBG) \cite{rakocevic2018fast}.
+The SBG graph aligner's (SBGA) input is constructed from higher-frequency variants found in various public variation resources.
+It masks out regions of high allelic complexity and builds a reference-rooted sequence DAG to serve as an alignment target.
+To enable graph mapping it builds an index of spaced $k$mers by walking short segments of the graph.
+The $k$mers and their locations are used as seeds to establish mapping candidate loci.
+A local alignment is obtained for each candidate, and the output is transformed into the reference space as BAM.
 
+Curiously, to align the reads to the graph locally SBG's aligner does not use a method like POA, and instead uses a kind of local backtracking exact matching against the tree of paths through the local graph which has exponential complexity with respect to the density of variation.
+If the variant density and read error rates are kept low, this scheme allows SBGA to achieve extremely high read throughput, equivalent to that of bwa mem without any apparent loss in accuracy on the linear reference.
+In this context the authors demonstrate their method can significantly (although slightly) improve sensitivity to known indels.
+However, the method is not adaptable to other graph types or sequencing contexts, with reports from users indicating high increases in runtime with increased read error and variant density.
+Due to the fact that SBGA is closed source and proprietary it will not be possible to appreciate exactly why.
 
 \section{Overview of this work}
 
