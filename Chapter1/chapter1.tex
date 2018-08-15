@@ -522,8 +522,11 @@ The progressive approach is fundamentally greedy, and susceptible to errors that
 Further improvements to the quality of the MSA can be gained by guiding the progressive alignment with a limited kind of global information about the relationships of all the sequences, as in T-COFFEE \cite{notredame2000t}, but this popular method exhibits a worst-case computational complexity of $(O)N^{3}L^{2}$.
 
 The progressive alignment in MSA algorithms like CLUSTAL may be represented graphically.
-In the late 1980s Eugene Myers and Webb Miller developed algorithms to optimally align sequences to sequence graphs, and sequence graphs (in the form of regular expressions) to each other in $O(MN)$ time (where $M$ and $N$ are the sequence length of the graphs) \cite{myers1989approximate}.
+In the late 1980s Eugene Myers and Webb Miller developed algorithms to optimally align sequences to sequence graphs, and sequence graphs (in the form of regular expressions) to each other in $O(MN)$ time (where $M$ and $N$ are the sequence length of the graphs) \cite{myers1989approximate,wu1995subquadratic}.
 These algorithms provide a solution to the generic problem of aligning bidirectional sequence graphs to each other using DP, but to my knowledge were never implemented in publicly available software for sequence analysis\footnote{Myers was unable to provide related source code on request.}.
+A recent implementation of sequence to graph alignment \cite{rautiainen2018bit} transforms a sequence graph into an alignable graph which is acyclic and partially ordered, on which a bit-parallel alignment algorithm is applied to achieve high performance when aligning long noisy reads to arbitrary sequence graphs.
+This work is related to that of Wu, Manber and Myers \cite{wu1995subquadratic}, wherein the authors provide an algorithm for the alignment of pairs of regular expressions using a transformation of the regexes to NFAs and bit-parallel resolution the final alignment.
+Later in this I will present and evaluate an equivalent approach to aligning reads to arbitrary bidirectional sequence graphs through transformation of the graph into an ordered graph against which parallelized sequence to graph alignment may be run.
 
 Christopher Lee later provided the first implementation of an MSA algorithm based on sequence to graph alignment \cite{lee2002POA}.
 Apparently unaware of the work of Myers and Miller, he instead built on the concept of ``consistent equivalence relations'' that DIALIGN used to represent the MSA \cite{morgenstern1996multiple}.
@@ -724,7 +727,7 @@ As new genomes are added to the structure, new tiles only need to be added when 
 In this way the model achieves both compression and short range phasing information that allows for the faithful representation of complex small variation.
 
 A tiled pangenome graph was employed by the first practical pangenomic aligner, GenomeMapper \cite{schneeberger2009simultaneous}, was produced in support of the \emph{Arabidopsis thaliana} 1001 Genomes Project (AT1001GP).
-As arabidopsis frequently self crosses, individuals may have extremely low levels of genomic diversity, which in turn simplifies the process of genome inference \cite{cao2011whole}.
+As arabidopsis frequently selfs, individuals may have extremely low levels of genomic diversity, which in turn simplifies the process of genome inference \cite{cao2011whole}.
 At the same time, several percent of the reference genome is missing or highly divergent in various accessions (strains) \cite{clark2007common,zeller2008detecting}.
 These conditions break standard short-read aligners developed for mapping Illumina sequencing data against low-diversity reference genomes.
 GenomeMapper models the pangenome using 256 basepair tiles.
