@@ -880,24 +880,26 @@ Due to the fact that SBGA is closed source and proprietary it will not be possib
 
 \section{Motivation and overview of this work}
 
-Resolving the genome of a new sample requires sequencing, assembly, or resequencing.
-Standard approaches to assembly are built on graphical models that allow for ambiguity, and out of this ambiguous system they attempt to derive a set of contigs which represent the true haplotypes of the genome.
-However, resequencing traditionally is based around a single linear reference genome, with ambiguity represented only in the alignments of the new sequences.
-This exposes resequencing based genome inference to reference bias, which is a distortion of inferred genomes toward the sequence of the reference genome.
+Resolving the genome of a sample \emph{de novo} requires sequencing and assembly.
+Standard approaches to assembly are built on graphical models that allow for ambiguity, and out of this system they attempt to derive a set of contigs which represent the true haplotypes of the genome.
+When we have already assembled a genome related to the one we wish to infer, we can describe our new sample in terms of a reference genome, with ambiguity and variation represented only in the alignments of the new sequences where they can be mapped to the reference genome.
+This reduces the cost of sequencing, as we can infer much of the genome using lower sequencing coverage and shorter reads, but it also exposes resequencing based genome inference to reference bias, which is a distortion of inferred genomes towards the sequence of the reference genome.
 
 I posit that by extending the reference genome to be a pangenome with a graphical representation, we can enable population aware resequencing that avoids reference bias to any particular linear reference.
-This model, the variation graph, extends bidirection sequence graph models used in assembly to support the labeling of paths that traverse the graph, and thus allows the representation and relationships of linear reference systems within itself.
+The model I develop, the variation graph, extends the bidirection sequence graph models used in assembly to support the labeling of paths through the graph, and allowing the representation and relation of linear reference systems within itself.
+
 Variation graphs are related to a wide array of graphical models used in bioinformatics.
 They have deep similarity with string graphs, multiple sequence alignments, and whole genome alignment graphs.
-Recently, numerous methods have been published which provide variation-aware alignment or genotyping based on sequence DAGs built from population-scale resequencing.
-These methods demonstrate the difficulty of the problem of generalizing resequencing to graphical reference systems.
-In virtually all cases, these methods use a graph reference model internally, but express their results in terms of a linear reference genome, producing BAM alignments, or genotyping results in VCF format.
-None implement a generic strategy to work with a graphical model equivalent to the variation graph.
-The method I develop, {\tt vg} is not the first pangenomic aligner, but it is the first that models its results in terms of the pangenome itself.
+This similarity indicates that they could serve as a unifying basis for many domains of sequence analysis which have traditionally been separated by methodological differences, such as assembly and and variant calling.
 
-In the following chapter I will precisely define the variation graph and associated data models that allow representing all kinds of resequencing data types in the context of a variation graph.
+Recently, numerous methods have been published which provide variation-aware alignment or genotyping based on sequence DAGs built from population resequencing.
+These methods demonstrate the difficulty of the problem of generalizing resequencing to graphical reference systems at the multi-gigabase scale of vertebrate genomes.
+In virtually all cases, they use a graph reference model internally, but express their results in terms of a linear reference genome, producing BAM alignments, or genotyping results in VCF format.
+None implement a generic strategy to work with a graphical model equivalent to the variation graph.
+The method I develop, {\tt vg}, is not the first pangenomic aligner, but it is the first that models its results in terms of the pangenome itself, enabling full resequencing analyses to be completed within the graphical model.
+
+In the following chapters I will precisely define the variation graph and associated data models that allow representing all kinds of resequencing data types in the context of a variation graph.
 Then I will describe the algorithms implemented in {\tt vg} that enable the use of variation graphs as a basis for genome analysis, including their construction from many data sources, serialization and visualization.
 I will present indexing methods that support the queries needed to enable resequencing, and I will provide algorithms that implement efficient read alignment to large scale graphs.
-
 Finally, I will cover applications of the method I developed.
 I will show that {\tt vg} is applicable to a wide range of genomic inference problems, with a particular focus on the quality of alignment of both short and long sequence reads against variation graphs constructed from all kinds of sources.
