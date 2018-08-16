@@ -66,7 +66,7 @@ Note that graphs in vg can contain ordinary cycles (in which $n_i$ is reachable 
 
 \subsection{Paths with edits}
 
-We implement paths as an edit string with respect to the concatenation of node sequences along a directed walk through the graph.
+We implement paths as an edit string with respect to the concatenation of node subsequences along a directed walk through the graph.
 We do not require the alignment described by the edit string to start at the beginning of the sequence of the initial node, nor to terminate at the end of the sequence of the terminal node.
 To allow the path model to support differences from the graph, each path is composed of a series of node mappings $p_i = m_1 \ldots m_{|p_i|}$ which are semantically identical to the alignment format used by standard aligners.
 Each mapping $m_i = ( b_i, \Delta_i )$ has a starting position encoded as a node and offset in the graph $b_i = ( n_j, o_i )$ and a series of edits $\Delta_i = \delta_1 \ldots \delta_{|m_i|}$.
@@ -90,7 +90,7 @@ These are recorded in a quality string in FASTQ.
 The need to collect this information has resulted in the development of the SAM/BAM sequence alignment format, which provides a standard for linking the called bases (sequence), quality information, read name, features of the alignment against a reference genome and additional optional freeform annotations.
 
 I follow this same model in developing an alignment format for read alignments to the graph.
-An aligned set of $Q$ reads $A = a_1 \ldots a_Q$ represents a sequencing experiment.
+An aligned set of sequences $Q$, $A = a_1 \ldots a_{|Q|}$, represents a sequencing experiment.
 Each aligned read connects a sequence, an (optional) quality string, a path through the graph, and an optional set of $D_i$ annotations: $a_i = (s_i, q_i, p_i, k_1\ldots k_{D_i})$.
 In principle the read sequence can be reconstructed from the path, but retaining the sequence information makes the alignment object lossless with respect to the input FASTQ and provides redundancy which can help in data processing.
 Alignments may thus be reprocessed without reference to the graph to which they were aligned.
@@ -101,6 +101,7 @@ They form the basis for operations on the graph, as new sequences mapped into th
 Just as alignments describe a function to edit the graph, they can describe the relationship between the sequence space of two graphs.
 
 \subsection{Translations}
+\label{sec:translation}
 
 A generalization of the alignment is the translation set $\Phi = \phi_1 \ldots \phi_{|\Phi|}$, which relates paths in different graphs to describe the alignment between them.
 A translation $\phi = (p_f, p_t)$ defines the projection between two paths which may arise in the context of two graphs $G_f$ and $G_t$.
@@ -109,9 +110,10 @@ However, both paths in each pair could be relative to the same graph, in which c
 
 If each node in both graphs is represened in some graph translation in $\Phi$ then it provides an isomorphic relationship between the coordinates and sequences in both graphs.
 Provided each $\Phi$ encodes an isomorphism, then we can layer a series of $\Phi_i$ together to provide a coherent coordinate space across any number of updates to a given graph.
-Consider a function $translate(G_f, \Phi) \Rightarrow G_t$.
+Consider a function pattern $translate$, which allows the projection of paths relative to $G_f$ through translations $\Phi$ to yield paths in $G_t$: $translate(p_i, \Phi) \Rightarrow p_j \in G_t$, and similarly allows the transformation of a base graph into a target graph: $translate(G_f, \Phi) \Rightarrow G_t$.
 If we have a series of $(G_i, \Phi_1) \ldots (G_\sigma, \Phi_\sigma)$, where $translate(G_i, \Phi_i) \Rightarrow G_{i+1}$ and thus each $\Phi_i$ describes an isomorphism between $G_i$ and $G_{i+1}$, then we can generate a graph translation $\Phi_\Delta$ providing $translate(G_1, \Phi_\Delta) \Rightarrow G_\sigma$.
-We build this graph translation with the function $layer(\Phi_\alpha, \Phi_\beta) \Rightarrow \Phi_{\alpha \cup \beta}$ by rewriting each path translation $\phi_i \in \Phi_\alpha$ by projecting its $p_t$ through $\Phi_\beta$, and finally adding any $\phi_j \in \Phi_\beta$ for which $p_f = \emptyset$, as these represen insertions of new sequence in $G_\beta$ relative to $G_\alpha$.
+We build this graph translation with the function $layer(\Phi_\alpha, \Phi_\beta) \Rightarrow \Phi_{\alpha \cup \beta}$ by rewriting each path translation $\phi_i \in \Phi_\alpha$ so that its $p_t$ refers to $G_\beta$.
+We do so by projecting the $p_t$ through $\Phi_\beta$, and finally adding any $\phi_j \in \Phi_\beta$ for which $p_f = \emptyset$, as these represent insertions of new sequence in $G_\beta$ relative to $G_\alpha$.
 
 \subsection{Genotypes}
 
@@ -119,11 +121,21 @@ As path to path relationships can provide descriptions of allelic diversity, the
 To represent the exact genotype of a particular sample with ploidy $\nu$ at a given locus $\iota$ we can simply collect the multiset of alleles $\pi_\iota = ( p_1 \ldots p_\nu)$.
 We could alternatively build a probabilistic model $\varpi$ of an unphased genotype by using a set of $\mu$ alleles $\{ p_1 \ldots p_\mu\}$.
 To do so we associate likelihoods $\gamma_\xi$ for each possible genotype $\pi_{\iota_\xi}$ that could be sampled from the alleles such that $\varpi = \gamma_1 \ldots \gamma_{\mu! \over{\nu!(\mu-\nu)!} }$.
-In practice we develop our $\gamma_\xi$ out of quality information from the reads and a sampling model related to $\nu$.
+In practice we develop our $\gamma_\xi$ out of quality information from the reads and a sampling model related to $\nu$ \cite{garrison2012haplotype,li2011stats}.
 Given this definition of a genomic locus it is clear that existing genotyping models can be applied to drive genotyping using read sets aligned to the graph, and the output of the genotyper is defined fully in the space of the graph.
 
 \subsection{Extending the graph}
-%*1p 1h*
+
+Given an alignment $a_i$, we can edit the graph $G$ so that it includes the alignment and the sequence it represents as an embedded path, $augment(G, a_i) \Rightarrow (G', \Phi)$, such that $translate(p_i, \Phi) \in G'$.
+To update the path space of the graph we project all paths, including that of $a_i$, through the translation implied by the augmentation of the graph with $p_i$.
+Any other $a_j$ whose path $p_j$ overlaps $p_i$ would no longer be valid, although it could be projected through the graph translation $\Phi$ as well to express it in the space of the new graph $G'$.
+Updating the graph one alignment at a time is inefficient as we need to build and layer a new translation for each alignment.
+It is simpler to edit the graph in a single step, taking a collection of alignments and including them in the graph, $edit(G, A) \Rightarrow (G', \Phi)$.
+
+One way to accomplish this is to first take the set of unique mappings represented in the paths of $A$, $\Omega = \{ m_1 \ldots m_{|\Omega|}\}$, and for each $m_i$ edit $n_i$ at the breakpoints where any new variation would need to be added in.
+Then, walking through each alignment we add in unique novel sequences and their linkages to the preexisting nodes or new breakpoints to the graph.
+This process will disrupt the identifier space of the nodes and edges of the graph, but it naturally yields a translation that can be used as described in section \ref{sec:translation}.
+
 % edits allow the expansion of the graph
 % a function we describe later does this
 % discuss the things that happen to the graph itself
