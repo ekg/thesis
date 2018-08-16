@@ -470,6 +470,7 @@ Because it does not model homologies between sequences, an unfolded pangenome ca
 Finally, by relying on the linear reference to report alignments, CHIC gains the ability to hook into standard resequencing workflows, but it loses the ability to describe variation in sequence that is not contained in the reference.
 
 \subsection{The variation graph}
+\label{sec:the_variation_graph}
 
 The implication of these examples is that we need a data model for the reference that losslessly encodes sequence-level relationships between genomes, in effect representing a kind of all-versus-all alignment between the sequences in the pangenome.
 If the data model is to allow recombination between known sequences (a key contributor to genomic diversity) and linear copy number variation (which occurs readily in genomes), then it could naturally be represented as a regular language, and thus could be represented using a graphical model like a nondeterministic finite automaton.
