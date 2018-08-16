@@ -374,7 +374,7 @@ This means we cannot infer a genome directly from a single read, and must aggreg
 In the context of resequencing, techniques to do this have come to be known as \emph{variant calling}.
 The simplest methods for this process resemble the consensus step in OLC assembly, and could be implemented as heuristic filters on the mutually gapped alignment matrix of a set of homologous sequence reads \cite{koboldt2009varscan}.
 A natural framework in which to do so is a Bayesian one, in which prior expectations about the genomic state are combined with the available data to generate a posterior probability that allows the propagation of information about uncertainty to downstream analyses.
-Such a model allows the integration of various sources of information in addition to the sequence of the reads themselves, including the base quality (BQ), or machine-estimated probability of an erroneous base call, and mapping quality (MQ), which represents the aligner's estimate that the given alignment is a mismapping or ambiguous \cite{li2011statistical}.
+Such a model allows the integration of various sources of information in addition to the sequence of the reads themselves, including the base quality (BQ), or machine-estimated probability of an erroneous base call, and mapping quality (MQ), which represents the aligner's estimate that the given alignment is a mismapping or ambiguous \cite{li2011stats}.
 Furthermore, collections of genomes could be modeled at the same time using expectations of population genetic and combinatoric patterns, for instance in a panmictic population under neutral selection the pattern of observed genotypes should match Hardy-Wineberg Equilibrium (HWE), and to have confidence in a given genotyping call, the evidence for variation should be stronger than our expectation of the rate of haplotype diversity in a given sample.
 
 The earliest implementations of this technique focused on genotyping samples using expressed sequence transcripts (ESTs) \cite{marth1999general}, which were promoted by Celera and others as a techinque to focus genome analysis on coding sequences.
@@ -755,7 +755,7 @@ While deBGA was designed to work on collections of linear references, the author
 They do not specifically demonstrate its operation on generic DBGs, instead comparing with linear reference based aligners on the same collections of genomes.
 
 \subsubsection{Genotyping using a sequence DAG}
-
+\label{sec:seq_dag_vcf}
 Variant calls in the VCF format, when combined with the reference genome to which they refer, form a sequence DAG that encodes all the genomes from which the calls were derived as well as novel recombinations between them.
 As this feature of variant calls was appreciated, it has led to the development of several methods based on mapping reads globally using standard methods and realigning them locally to a variation-aware reference.
 This can be shown to reduce reference bias, but it can only do so in a localized sense as this form of graph resequencing cannot change the global placement of reads.

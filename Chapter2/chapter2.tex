@@ -22,7 +22,7 @@ Sequences generated from an HMM will exhibit an exponential decay in mutual info
 This observation suggests that no pure markovian model will allow us to faithfully represent its input, and in turn that the only way to be sure that we model the input sequence space is to maintain a record of it in the context of the graph.
 The compression provided by the graph is still relevant, as we can exploit the repetitive nature of natural sequences to obtain compression of this set, but using lossless techniques.
 
-\emph{Variation graphs}, previously introduced in section \ref{sec:the_variation_graph}, combine a bidirectional sequence graphs with paths that model their preimage as walks through the positional space of the graph.
+\emph{Variation graphs} (VG)\footnote{I will refer to variation graph as VG, and to the software implementation of the VG model {\tt vg}}, previously introduced in section \ref{sec:the_variation_graph}, combine a bidirectional sequence graphs with paths that model their preimage as walks through the positional space of the graph.
 This makes them representationally equivalent to both graphical models and linear sequence models, and allows them to be used to model the relationships between collection of sequences, including all variation contained therein.
 The encapsulation of these two divergent ways of modeling about bioinformatic data systems allows them to bridge traditionally isolated analysis modalities.
 We can define these graphs by their construction from a set of pairwise alignments between sequences, as in the alignment, Enredo, and Cactus graph models, but if we want to relate new sequences to them then we would need to rebuild the entire graph to include these sequences.
@@ -116,6 +116,7 @@ We build this graph translation with the function $layer(\Phi_\alpha, \Phi_\beta
 We do so by projecting the $p_t$ through $\Phi_\beta$, and finally adding any $\phi_j \in \Phi_\beta$ for which $p_f = \emptyset$, as these represent insertions of new sequence in $G_\beta$ relative to $G_\alpha$.
 
 \subsection{Genotypes}
+\label{sec:genotypes}
 
 As path to path relationships can provide descriptions of allelic diversity, they form the basis for a graph-relative genotype encoding.
 To represent the exact genotype of a particular sample with ploidy $\nu$ at a given locus $\iota$ we can simply collect the multiset of alleles $\pi_\iota = ( p_1 \ldots p_\nu)$.
@@ -141,16 +142,56 @@ Note that both alignments and genotypes are based on paths, so this mechanism ca
 \section{Variation graph construction}
 
 We will use variation graphs as the core model for a number of essential processes in genome inference.
-How can we build these graphs?
-The variation graph model is generic enough to represent many graphical sequence models used in genomics.
-Each one, including MSAs, assembly graphs, and alignment graphs necessitates conversion to project it into the variation graph model.
+This model can represent many graphical sequence models used in genomics.
+Each one necessitates conversion to project it into the variation graph model.
+Here I describe the transformation of a number of graphical models into variation graphs, including MSAs, assembly graphs, and alignment graphs induced from pairwise alignments.
+In some cases the conversion is direct, but in others it requires the addition of new labels to our model.
 Variation graphs may also be built from first principles, provided a function that aligns a sequence into the graph and the editing operations described in \ref{sec:extending}.
 
 \subsection{Progressive alignment}
 %*1p 1h*
+Assume a function \emph{align} that takes a sequence $Q$ and a variation graph $G$ and yields the path $p$ that is the best model of $Q$ in $G$, such that it maximizes a $\lambda$-parameterized measure $score_\lambda(p)$: or $p = \arg\max_{score_\lambda(p)} [\forall p \in G : seq(p) = Q]$.
+Provided $score_\lambda$ scores exact matches above mismatches and gaps, the alignment given by $p$ will be a kind of minimal description of $Q$ in the basis of $G$.
+Equivalently, it is a $\lambda$-minimal augmentation of $G$ required to include $Q$.
+
+We can build a variation graph progressively from a set of sequences.
+If we have a series of $k$ queries $q_1 \ldots q_k$, then we can build a progressive alignment by a series of edit and alignment operations applied to the variation graph.
+First, take the empty graph $G_\emptyset$, to which any alignment will yield a path $p_1$ that has no mappings an which encodes the query sequence $q_1$ as a replacement sequence in the path.
+We then edit the graph to add the sequence using $edit(G_\emptyset, p_1) \Rightarrow G_1$.
+For each subsequent $q_j$ we obtain the next graph by finding the alignment $align(q_j, G_j) \Rightarrow p_j$ and editing the graph with it to yield the next graph $edit(G_j, p_j) \Rightarrow G_{j+1}$ until $j = k$ and we obtain our final graph $G_{\cup \forall q_i}$.
+This simple approach is attractive as it allows the variation graphs to be built from whole sequences using only techniques that are native to the variation graph model itself.
+I later describe an implementation of this process multiple sequence graph alignment, {\tt vg msga}.
 
 \subsection{Using variants in VCF format}
 %*1.5p 1h*
+As discussed in section \ref{sec:seq_dag_vcf}, the VCF format that is popular in resequencing implies a sequence DAG.
+We can consider how to build a variation graph using the core operation $edit$.
+First, we build a variation graph from the reference genome $Q_\textbf{ref}$ : $G_\textbf{ref}$.
+This graph contains one path $p_\textbf{ref}$ : $seq(p_\textbf{ref}) = Q_\textbf{ref}$.
+As described in section \ref{sec:genotypes} each locus reported in VCF can be encoded as a set of paths $P_\textbf{vcf} = p_1 \ldots p_V$, each representing a different one of the $V$ alleles in the VCF.
+We now edit the graph to embed these allele paths, $edit(G_\textbf{ref}, P_\textbf{vcf}) \Rightarrow G_\textbf{vcf}$.
+Note that the graph has losslessly encoded the variant input and reference genome, and it is possible to regenerate the VCF file input by walking the positions of $p_\textbf{ref}$ and enumerating the overlapping paths as alleles in VCF format.
+
+For efficiency, we have not implemented VCF to variation graph conversion with specifically this algorithm, but instead build up $G_\textbf{vcf}$ by walking along the reference genome $Q_\textbf{ref}$ and processing each locus independently.
+This exploits the partially ordered property of the VCF to limit memory requirements when working with whole genome graphs.
+For regions before, after, and between variant records at reference offsets $i$ and $j$ we add a node $n_\textbf{curr} : seq(n_\textbf{curr}) = substr(Q_\textbf{ref}, i, j)$, linking these by edges to those nodes ending at position $i$ of the reference and adding corresponding mappings for the reference path to $p_\textbf{ref}$.
+At simple variant sites we add each of the alleles as a new node $n_{\textbf{var}_i}$, including an edge for each $e_{\textbf{curr} \prec \textbf{var}_i}$.
+Here we also handle the reference allele differently in that we append a mapping $m_\textbf{ref} = ((n_\textbf{ref}, 0), \emptyset)$ to $p_\textbf{ref}$.
+This approach seamlessly handles all kinds of common variation, including SNPs and indels, as well as more complex variation encoded as small haplotypes.
+
+As long as the VCF records are ordered, this process allows for streaming conversion of the VCF format into a variation graph.
+However, VCFs used to represent structural variation often do not describe a fully-ordered series of loci.
+For instance, a large deletion may be described in one record, and followed by a number of records describing variation on the reference within the scope of the deletion.
+In the graph, this results in the nesting of bubbles, and requires a deviation from a simple streaming algorithm in order to be handled.
+Deletions must be recorded and linked into the downstream portion of the graph as it is later generated.
+The reference allele for the deletion can only be defined once we have constructed the variation graph under the deletion.
+
+VCFs may also encode phased haplotypes, which, like the reference, have a natural representation in the graph as paths.
+Parsing these may require multiple passes over the VCF due to the memory requirements for storing large numbers of haplotypes uncompressed and cross-indexed to allow traversal in RAM.
+To prevent $O(H|G_\textbf{vcf}|)$ growth of the required memory to store these, we implement efficient compression strategies on the haplotype set that exploit their repetitiveness.
+There is no semantic requirement that the encoded haplotypes in VCF are valid, which introduces some complexity in the implementation of this method.
+We must break haplotypes where they are found to be invalid in order to record them in VG format.
+For instance, a phased VCF may report more than $\nu$ (expected ploidy) alleles for a given individual, such as when deletion and SNP variants overlap.
 
 \subsection{From gene models} % (GFF)
 %*1p 4h*
