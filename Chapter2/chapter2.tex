@@ -125,6 +125,7 @@ In practice we develop our $\gamma_\xi$ out of quality information from the read
 Given this definition of a genomic locus it is clear that existing genotyping models can be applied to drive genotyping using read sets aligned to the graph, and the output of the genotyper is defined fully in the space of the graph.
 
 \subsection{Extending the graph}
+\label{sec:extending}
 
 Given an alignment $a_i$, we can edit the graph $G$ so that it includes the alignment and the sequence it represents as an embedded path, $augment(G, a_i) \Rightarrow (G', \Phi)$, such that $translate(p_i, \Phi) \in G'$.
 To update the path space of the graph we project all paths, including that of $a_i$, through the translation implied by the augmentation of the graph with $p_i$.
@@ -135,13 +136,15 @@ It is simpler to edit the graph in a single step, taking a collection of alignme
 One way to accomplish this is to first take the set of unique mappings represented in the paths of $A$, $\Omega = \{ m_1 \ldots m_{|\Omega|}\}$, and for each $m_i$ edit $n_i$ at the breakpoints where any new variation would need to be added in.
 Then, walking through each alignment we add in unique novel sequences and their linkages to the preexisting nodes or new breakpoints to the graph.
 This process will disrupt the identifier space of the nodes and edges of the graph, but it naturally yields a translation that can be used as described in section \ref{sec:translation}.
-
-% edits allow the expansion of the graph
-% a function we describe later does this
-% discuss the things that happen to the graph itself
+Note that both alignments and genotypes are based on paths, so this mechanism can be used to extend the graph based on any sequence level differences that we observe either through alignment or variant calling.
 
 \section{Variation graph construction}
-%*0.5p 0.5h*
+
+We will use variation graphs as the core model for a number of essential processes in genome inference.
+How can we build these graphs?
+The variation graph model is generic enough to represent many graphical sequence models used in genomics.
+Each one, including MSAs, assembly graphs, and alignment graphs necessitates conversion to project it into the variation graph model.
+Variation graphs may also be built from first principles, provided a function that aligns a sequence into the graph and the editing operations described in \ref{sec:extending}.
 
 \subsection{Progressive alignment}
 %*1p 1h*
