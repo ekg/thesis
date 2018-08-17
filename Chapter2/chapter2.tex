@@ -299,6 +299,21 @@ The nodes are given by $S$ and $S_{id}$, and similarly we project $L$ and $P$ th
 \section{Data interchange}
 %*0.5p 0.5h*
 
+{\tt vg}'s design largely preceeded its development.
+The mathematical concepts described in the previous section lie at the core of its implementation.
+A schema language, Google Protocol Buffers (Protobuf), is used to define a compact description of data structures sufficient for the representation of all the required data models.
+One cause of this pattern was my involvement in the GA4GH-DWG at the beginning of my thesis.
+As the GA4GH is chartered to encourage focus on data interchange, the GA4GH-DWG was then seeking a coherent way of describing graph genomes\footnote{\url{https://github.com/ga4gh/ga4gh-schemas}} to allow support pangenomic principles resequencing.
+I thus implemented the schema for {\tt vg} in the popular Protobuf schema language.
+This provided a core API on which to bulid {\tt vg}.
+It also implied a set of streaming data formats, which I implemented as a template library capable of serializing any stream of Protobuf objects.
+Due to the reliance on Protobuf, the code requried to implement reading and writing of these formats is only the {\tt vg} schema and the stream library\footnote{At the time of writing the schema, \url{https://github.com/vgteam/vg/blob/master/src/vg.proto} and stream parsing library \url{https://github.com/vgteam/vg/blob/master/src/stream.hpp} total around 1000 LOC, and are sufficient to link any C++ program into the {\tt vg} ecosystem.}.
+This greatly simplified the process of developing libraries for working with the variation graph data models.
+Although in practice the Protobuf data structures are slower to parse than handmade C-struct serializations like BAM, the amount of effort required to begin writing efficient and structured binary data formats was considerably less with the schema based approach.
+Most importantly, the schema based definition of the core data types in {\tt vg} helped new developers and researchers using the system quickly appreciate the basic concepts.
+It is not easy to measure, but I believe this has been a key cause of the success of the project and unifying many different research interests spread across many groups.
+
+%The graphical basis of {\tt vg}'s data model made it simple to adapt to RDF.
 
 \section{Index structures}
 %*0.5p 0.5h*
