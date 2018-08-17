@@ -192,18 +192,99 @@ To prevent $O(H|G_\textbf{vcf}|)$ growth of the required memory to store these, 
 There is no semantic requirement that the encoded haplotypes in VCF are valid, which introduces some complexity in the implementation of this method.
 We must break haplotypes where they are found to be invalid in order to record them in VG format.
 For instance, a phased VCF may report more than $\nu$ (expected ploidy) alleles for a given individual, such as when deletion and SNP variants overlap.
+We expect these haplotype paths to be fully embedded in the graph an they can be represented as a walk through nodes.
+Although haplotype sets are equivalent to large collections of paths, we term them \emph{threads} to indicate that they have a simpler representation than full paths.
 
 \subsection{From gene models} % (GFF)
-%*1p 4h*
+
+A reference-based RNA splicing graph is usually expressed as a set of alignments, perhaps as named intervals in BED or the General Feature Format (GFF).
+As with the generic VCF generation algorithm, we can convert the transcripts to alignments $A$ relative to the graph.
+Then we can then embed the transcript paths in the graph $edit(G_\textbf{ref}, A) \Rightarrow G_\textbf{splice}$.
+Any transcript in our set is thus encoded by the graph, and can be matched to it directly with alignment.
+We also allow for novel isoforms with local similarity to the known set.
 
 \subsection{From multiple sequence alignments}
 %*0.5p 0.5h*
+A multiple sequence alignment in matrix form has a simple translation into a sequence DAG and thus a VG \cite{lee2002POA}.
+Given a set of sequences $Q = q_1 \ldots q_\kappa$ their $\upsilon$-long mutual alignment may be described in a $\kappa \upsilon$ matrix $X$ designed to maximize $\sum_{i=1}^{\upsilon} \sum_{j=1}^{\kappa} \sum_{k=1}^{\kappa} \delta_{X_{ij}X_{ik}}$, where $\delta$ is the Kronecker delta.
+The alphabet used to encode the matrix is the same as the input sequences with the addition of a special gap character $\Box \neq \Box$, and gaps thus do not contribute positively to the matrix score.
+To build a variation graph $G_\textbf{msa}$ from the MSA we proceed from $i = 1 \to \upsilon$ through $X$.
+For each unique character ${\cal B}$ in the query alphabet ${\cal A} \setminus \Box$ found in each row $i$, we create a node $n_{\cal B}$ in $G_\textbf{msa}$ and append a mapping to each path $p_i$ for which $n_{\cal B} \in q_i$.
+We construct the edges of $G_\textbf{msa}$ by taking the distinct pairs of consecutive node traversals found in the path set $P_\textbf{msa}$ produced after the generation of the nodes in MSA traversal.
+For each pair connecting nodes $n_i$ and $n_j$ we add an edge $e_{ij}$.
+We can optionally compact series of nodes (which represent single characters) where no bifurcations occur, which is similar to the operation used to compact DBGs to yield unitig graphs.
+
+Instead of a matrix, we can formulate the multiple alignment as an alignment graph (described in section \ref{sec:genome_alignment_graphs}).
+By making this graph bidirectional, and thus equivalent in information content with the Enredo graph, we can see that it is equivalent to a variation graph.
+Aligners that produce data formats of this type, such as Cactus \cite{Paten:2011fva}, can thus be used to produce VGs, so long as the relationship between the input sequences and the graph is recorded and can be converted into a path description.
+I later use this technique to build a pangenomic reference system for a diverse set of yeast strains.
 
 \subsection{From overlap assembly and deBruijn graphs}
 %*2p 1.5h*
 
+Overlap-based sequence graphs used in assembly, described in sections \ref{sec:overlap_graphs}, \ref{sec:de_bruijn_graphs}, and \ref{sec:string_graphs}, are nearly identical to variation graphs.
+The critical difference between these models and the variation graph is that they attach a label to each edge describing the alignment between the pair of nodes which they connect.
+Variation graphs do not support such a feature in their basic definition, as it is unimportant for any use of variation graphs besides temporarily representing overlap graphs.
+This process is known as \emph{bluntification}, as the edges lose information and sequences given by traversing the graph are represented directly in the concatenation of node sequences.
+
+If we reduce an overlap between a pair of nodes, it will render other overlaps on the same nodes incorrect.
+Thus it is essential that the bluntification algorithm work by the reduction of sets of overlaps on edges which are transitively closed by connection to the same ends of each node, $net(e_{ij}) \Rightarrow \forall e_{i*} \in G \cup \forall e_{*j} \in G$, considering both strands of the graph when doing so.
+For each net we apply a function $pinch(net(e_{ij})) \Rightarrow G_{\textbf{pinch}_{ij}}$, which reduces the overlaps between the nodes in the net into a blunt-edged variation graph.
+We then link $G_{\textbf{pinch}_{ij}}$ back into the rest of the graph by connecting with the inbound links to each node involved in the net.
+We may thus rewrite the input overlap graph as a variation graph.
+
+In a de Bruijn graph or string graph such as SGA or Fermi2, overlaps are defined given only a length.
+This simplifies the implementation of $pinch$, as no further computation is required to correctly determine the mutual alignment of overlapping sequences.
+In contrast, overlaps in a generic string or overlap graph are correctly defined as alignments.
+Resolving a single pairwise alignment into structures in the graph is trivial, but it becomes considerably more complex when many sequences map into a transitively closed set of overlaps.
+These nets can then be resolved into an alignment graph by an algorithm similar to that given in section \ref{sec:from_pairwise_alignments}, but in practice, {\tt vg} implements bluntification by conversion of the input graph to a pinch graph library that was used to resolve the same problem in whole genome alignment \cite{paten2008enredo}.
+
+% we have to add the overlap label to edges, but otherwise we cool
+% then there is the pinch graph reduction
+% probably can be explained pretty easily
+
 \subsection{From pairwise alignments}
-% seqwish
+\label{sec:from_pairwise_alignments}
+
+% seqwish algoritm
+\emph{seqwish} implements a lossless conversion from pairwise alignments between sequences to a variation graph encoding the sequences and their alignments.
+As input we typically take all-versus-all alignments, but the exact structure of the alignment set may be defined in an application specific way.
+This algorithm uses a series of disk-backed sorts and passes over the alignment and sequence inputs to allow the graph to be constructed from very large inputs that are commonly encountered when working with large numbers of noisy input sequences. 
+Memory usage during construction and traversal is limited by the use of sorted disk-backed arrays and succinct rank/select dictionaries to record a queryable version of the graph.
+
+%## squish graph induction algorithm
+
+As input we have $Q$, which is a concatenation of the sequences from which we will build the graph.
+We build an compressed suffix array (CSA) mapping sequence names to offsets in $Q$, and also the inverse using a rank/select dictionary on a bitvector marking the starts of sequences in $Q$.
+This allows us to map between positions in the sequences of $Q$, which is the format in which alignment algorithms typically express alignments, and positions in $Q$ itself, which is the coordinate space we will use as a basis for the generation of our graph.
+To relate the sequences in $Q$ to each other we apply a function $map$ to generate alignments $A$.
+Although these alignments tend to be represented using oriented interval pairs in $Q$, for simplicity and robustness to graph complexity, we describe $A$ as a vector of pairs of bidirectional positions (sequence offsets and strands) $b$ in $Q$ , such that $A = (b_{q}, b_{r}), \ldots $.
+We sort $A$ by the first member ($b_{q}$) of each pair, ensuring that the entries in $A$ are ordered according to their order in $Q$.
+
+To query the induced graph we build a rank/select dictionary allowing efficient traversal of $A$, based on a bit vector $A_{bv}$ of the same length as $A$ such that we record a 1 at those positions which correspond to the first instance of a given $b_{q}$ and record a 0 in $A_{bv}$ otherwise. 
+We record which $b_{q}$ we have processed in the bitvector $Q_{seen}$ which is of the same length as $Q$.
+This allows us to avoid a quadratic penalty in the order of the size of the transitive closures in $Q$ given by the $map$ function.
+
+Now we inductively derive the graph implied by the alignments.
+For each base $b_{q}$ in $Q$, we find its transitive closure $c_{q}$ := [$b_{q}$, $b_{r_{1}}$, ... ] via the $map$ operation by traversing the aligned base pairs recorded in $A$.
+We write the character of the base $b_{q}$ to a vector $S$, then for each $b_{c}$ in $c_{q}$ we record a pair [$s_{i}, b_{c}$] into $N$ and its reverse, [$b_{c}$, $s_{i}$] into $P$.
+We mark $Q_{seen}$ for each base in each emitted cluster, and we do not consider marked bases in subsequent transitive closures.
+By sorting $N$ and $P$ by their first entries, we can build rank/select dictionaries on them akin to that we built on $A$ that allow random access by graph base (as given in $S$) or input base (as given in $Q$).
+
+To fully induce the variation graph we need to establish the links between bases in $S$ that would be required for us to find any sequence in the input as a walk through the graph.
+We do so by rewriting $Q$ (in both the forward and reverse orientation) in terms of pairs of bases in $S$, then sorting the resulting pairs by their first element, which yields $L$ = [($b_{a}$, $b_{b}$), ... ].
+These pairs record the links and their frequencies, which we can emit or filter (such as by frequency) as needed given particular applications.
+In typical use we take the graph to be given by the unique elements of $L$.
+
+Our data model encodes the graph using single-base nodes, but often downstream use requires identifying nodes and thus we benefit from compressing the unitigs of the graph into single nodes, which reduces memory used by identifiers in analysis.
+We can compress the node space of the graph by traversing $S$, and for each base querying the inbound links.
+Maintaining a bitvector $S_{id}$ of length equal to $S$ we mark each base at which we see any link other than one from or to the previous base on the forward or reverse strand, or at bases where we have no incoming links.
+By building a rank/select dictionary on $S_{id}$ we can assign a smaller set of node ids to the sequence space of the graph.
+
+Given the id space encoded by $S_{id}$ we can materialize the graph in a variety of interchange formats, or provide id-based interfaces to the indexed squish graph.
+To generate graphs in [.vg](https://github.com/vgteam/vg/blob/master/src/vg.proto) or [GFAv1 format](https://github.com/GFA-spec/GFA-spec/blob/master/GFA1.md), we want to decompose the graph into its nodes ($S$), edges ($L$) and paths ($P$).
+The nodes are given by $S$ and $S_{id}$, and similarly we project $L$ and $P$ through $S_{id}$ to obtain a compressed variation graph.
+
 %*2p 4h*
 
 \section{Data interchange}
