@@ -94,7 +94,6 @@ An aligned set of sequences $Q$, $A = a_1 \ldots a_{|Q|}$, represents a sequenci
 Each aligned read connects a sequence, an (optional) quality string, a path through the graph, and an optional set of $D_i$ annotations: $a_i = (s_i, q_i, p_i, k_1\ldots k_{D_i})$.
 In principle the read sequence can be reconstructed from the path, but retaining the sequence information makes the alignment object lossless with respect to the input FASTQ and provides redundancy which can help in data processing.
 Alignments may thus be reprocessed without reference to the graph to which they were aligned.
-The serialization of this alignment format is called GAM, for Graphical Alignment/Map, in analogy to SAM (Sequence Alignment/Map format).
 
 At their heart alignments redundantly link a sequence with a path through the graph.
 They form the basis for operations on the graph, as new sequences mapped into the graph may be used to extend the graph itself by editing the graph to include the sequences represented by the alignments.
@@ -307,19 +306,57 @@ As the GA4GH is chartered to encourage focus on data interchange, the GA4GH-DWG 
 I thus implemented the schema for {\tt vg} in the popular Protobuf schema language.
 This provided a core API on which to bulid {\tt vg}.
 It also implied a set of streaming data formats, which I implemented as a template library capable of serializing any stream of Protobuf objects.
-Due to the reliance on Protobuf, the code requried to implement reading and writing of these formats is only the {\tt vg} schema and the stream library\footnote{At the time of writing the schema, \url{https://github.com/vgteam/vg/blob/master/src/vg.proto} and stream parsing library \url{https://github.com/vgteam/vg/blob/master/src/stream.hpp} total around 1000 LOC, and are sufficient to link any C++ program into the {\tt vg} ecosystem.}.
+Due to the reliance on Protobuf, the only code needed to implement reading and writing of these formats is {\tt vg} schema and the stream library\footnote{At the time of writing the schema, \url{https://github.com/vgteam/vg/blob/master/src/vg.proto} and stream parsing library \url{https://github.com/vgteam/vg/blob/master/src/stream.hpp} total around 1000 LOC, and are sufficient to link any C++ program into the {\tt vg} ecosystem.}.
 This greatly simplified the process of developing libraries for working with the variation graph data models.
 Although in practice the Protobuf data structures are slower to parse than handmade C-struct serializations like BAM, the amount of effort required to begin writing efficient and structured binary data formats was considerably less with the schema based approach.
 Most importantly, the schema based definition of the core data types in {\tt vg} helped new developers and researchers using the system quickly appreciate the basic concepts.
 It is not easy to measure, but I believe this has been a key cause of the success of the project and unifying many different research interests spread across many groups.
 
-%The graphical basis of {\tt vg}'s data model made it simple to adapt to RDF.
+Several data formats have been important to {\tt vg}.
+The graph itself can be serialized in non-overlapping chunks, where each edge $e_{ij}$ is stored once in the chunk $G_\textbf{chunk} : n_i \in G_\textbf{chunk}$.
+Path mappings must have a rank that identifies their position in the path in order to be subdivided in this way, and otherwise must be serialized literally in a single vector as in GFA's ``P'' namespace.
+This allows them to be read in and rebuilt even if they have been serialized out of order.
+A series of alignment objects is a sensible output of the mapping algorithm {\tt vg map}.
+The file format produced by writing out a series of Protobuf alignment object serializations using the {\tt stream.hpp} library is called GAM, for Graphical Alignment/Map, in analogy to SAM (Sequence Alignment/Map format).
+
+These data models have various other equivalent serializations.
+As mentioned before, the GFA format can be used to directly encode VGs, although some of the default fields (particularly the overlap CIGAR on edges) are generally not useful and carry no information.
+However, GFA lacks a representation of an alignment with the same semantics as that described here.
+VCF files and the reference they refer to can encode VGs, and VGs of a partially ordered format can be deconstructed into the equivalent VCF.
+As paths in variation graphs can be used to represent any kind of existing annotations, data providers who represent annotations across many genomes (such as ENSEMBL Genomes) can build their annotation sets which were previously spread across many genomes into a single one embedded in a VG.
+To enable this several collaborators\footnote{Jerven Bolleman and Toshiaki Katayama among others.} have developed a Resource Description Framework (RDF) compatible version of the core VG model.
 
 \section{Index structures}
-%*0.5p 0.5h*
+
+Alignment is the fundamental operation in resequencing.
+Given a sequence (the ``query'') and a reference system (the ``target''), we infer a description of the query in terms of edits to the reference.
+Variant calling and other genome inference problems rely on these alignments.
+As described in section \ref{sec:sequence_alignment}, the large collections of read data produced by current sequencing methods require efficient read alignment to support downstream analysis.
+Typically, these methods develop indexes of their reference genome, using $k$mer hash tables or FM-index/CSA based methods capable of arbitrary-length match inference.
+These indexes remain static during the resequencing analysis, and can thus be made very compact and designed to support efficient queries.
+%{\tt vg} uses 
+
+When the genome is just a linear string, distances between locations may be computed trivially, so no additional structure is required to seed the alignment of reads to the genome.
+However, this situation changes in graphs, where the computation of distances becomes greatly more complex.
+Here, I will show that graph distances may be estimated using an approximate sort and the paths embedded in the graph.
+However, to do so requires efficient indexes of the path structure in the graph.
+Furthermore, loading the entire graph into memory in a na\"{i}ve manner can be very expensive, and effort is required to minimize the runtime costs so as to enable resequencing even on lower-memory commodity systems.
+%As with 
+% summarize succinct structures for path queries
+
+\subsection{Dynamic in-memory graph model}
+
+Serialized in .vg or compressed GFA format, the graph of the 1000GP is not much larger than the uncompressed human reference genome.
+However, the performace-oriented implemenation of the dynamic variation graph which I developed at the beginning of my studies can use a hundred times this mich memory when the entire graph is loaded into RAM.
+In this scheme implemented in {\tt vg}, indexes on the node idientifier space of the graph allow for fast traversal and query of nodes by identity and neighborhood.
+Various inefficiencies are accepted, such as on the hash table occupancies used to build these indexes, in the pursuit of higher performance during dynamic modification of the graph.
+I now believe that it should be easy to provide a dynamic VG in low memory by using a succinct encoding, but I have not yet completed any work on this issue.
+Operating on graphs of hundreds of millions of nodes with annotations like paths remains a difficult problem in other fields.
+In most cases the graph can be subdivided, and this is particularly the case for sequence DAG VGs, allowing for us to work on graphs of arbitrary sizes if they are approximately linear.
 
 \subsection{XG index}
 %*2p 3h*
+While a dynamic in-memory model of a dense VG may be difficult to use, it is comparatively easy to build succinct indexes of the graph that use only a small constant factor more memory than the uncompressed graph, yet provide support for a number of queries which are important for read mapping.
 
 \subsection{GCSA2 index}
 %*1p 2h*
