@@ -246,8 +246,18 @@ These nets can then be resolved into an alignment graph by an algorithm similar 
 \subsection{From pairwise alignments}
 \label{sec:from_pairwise_alignments}
 
+Although they are mathematically equivalent, the complexity of converting various graphical genome models to variation graphs can be considerable, and {\tt vg} still lacks an ideal solution to the problem.
+A set of pairwise alignments imply a variation graph, however I know of no contained method that will generate the variation graph or lossless string graph from these alignments.
+One apparent problem is the memory requirements of doing so.
+The full string graph for a noisy or divergent sequence set is rarely possible to maintain in RAM.
+This suggest that an external memory based approach may enable greater applicability of such an approach.
+To explore this, I developed an algorithm to do so that operates in external memory, which I here present in detail.
+It operates by conversion of the alignment set into an alignment graph and the subsequent use of this graph in the elaboration of the variation graph including paths representing the input sequences.
+The resulting graph is a lossless representation of the input and the alignments between them.
+To distinguish the approach from string graphs, which imply error correction, I call this variation graph induction model the \emph{squish graph}.
+
 % seqwish algoritm
-\emph{seqwish} implements a lossless conversion from pairwise alignments between sequences to a variation graph encoding the sequences and their alignments.
+{\tt seqwish}\footnote{\url{https://github.com/ekg/seqwish}} implements a lossless conversion from pairwise alignments between sequences to a variation graph encoding the sequences and their alignments.
 As input we typically take all-versus-all alignments, but the exact structure of the alignment set may be defined in an application specific way.
 This algorithm uses a series of disk-backed sorts and passes over the alignment and sequence inputs to allow the graph to be constructed from very large inputs that are commonly encountered when working with large numbers of noisy input sequences. 
 Memory usage during construction and traversal is limited by the use of sorted disk-backed arrays and succinct rank/select dictionaries to record a queryable version of the graph.
@@ -282,10 +292,9 @@ Maintaining a bitvector $S_{id}$ of length equal to $S$ we mark each base at whi
 By building a rank/select dictionary on $S_{id}$ we can assign a smaller set of node ids to the sequence space of the graph.
 
 Given the id space encoded by $S_{id}$ we can materialize the graph in a variety of interchange formats, or provide id-based interfaces to the indexed squish graph.
-To generate graphs in [.vg](https://github.com/vgteam/vg/blob/master/src/vg.proto) or [GFAv1 format](https://github.com/GFA-spec/GFA-spec/blob/master/GFA1.md), we want to decompose the graph into its nodes ($S$), edges ($L$) and paths ($P$).
+To generate graphs in {\tt vg}  or GFA format, we want to decompose the graph into its nodes ($S$), edges ($L$) and paths ($P$).
 The nodes are given by $S$ and $S_{id}$, and similarly we project $L$ and $P$ through $S_{id}$ to obtain a compressed variation graph.
 
-%*2p 4h*
 
 \section{Data interchange}
 %*0.5p 0.5h*
