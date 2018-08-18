@@ -373,7 +373,7 @@ An XG index of $G = (N, E, P)$ is comprised primarily of the backing graph vecto
 Each $p_i \in P$ is encoded with a set of structures that allow random access of the graph by path position, which is important for the use of paths as reference coordinate systems in the graph.
 
 To enable better compression, the node sequence space is recorded as a concatenation of node labels $S_\textbf{iv} = seq(n_i) \ldots seq(n_{|N|})$, in which each node has an offset in this sequence space defined by $seq_\textbf{offset}(n_i)$.
-In bitvector $S_\textbf{bv} : |S_\textbf{bv}| = |S_\textbf{iv}|$ we set 1 at each first character in a node label, and 0 otherwise: $S_\textbf{bv}[i] = 1 \iff \exists j : seq_\textbf{offset}(n_j) = i$.
+In bitvector $S_\textbf{bv} : |S_\textbf{bv}| = |S_\textbf{iv}|$ we set 1 at each first character in a node label, and 0 otherwise: $S_\textbf{bv}[i] = 1 \iff \exists j : seq_\textbf{offset}(n_j) = i \lor 0$.
 Random access by node rank $i$ is provided by function $S_\textbf{bv}^{select_1}$, allowing us to find the sequence given a node rank in $G_\textbf{iv}$.
 
 To allow node identifiers to be separated from the internal rank in $G_\textbf{iv}$, each context header $\eta_i$ records the external id of $n_i$.
@@ -389,17 +389,18 @@ We delimit the records by a secondary bitvector $G_\textbf{bv}$, for which we bu
 Node to path membership recorded in $N_\textbf{path} = ( p_1 \ldots p_{|\{p_i : n_1 \in p_i \}|} ) \ldots ( p_{|N|} \ldots p_{|\{p_i : n_{|N|} \in p_i \}|} )$, and random access to this integer vector is provided by a rank/select dictionary built on a bitvector delimiting the various node path membership lists.
 Nodes with no path membership are marked in $N_\textbf{path}$ with a 0.
 
-Each path is represented in a set of succinct stuctures.
-%    int64_t min_node_id = 0;
-%    wt_gmr<> ids;
-%    sd_vector<> directions; // forward or backward through nodes  
-%    int_vector<> positions;
-%    int_vector<> ranks;
-%    bit_vector offsets;
-%    rank_support_v<1> offsets_rank;
-%    bit_vector::select_1_type offsets_select;
+Each path is represented in a set of succinct data stuctures that let us walk the path by starting at a particular node, query the path position of a given node, or find the node at a particular path position.
+We store the path $p_i = m_1 \ldots m_{|p_i|}$ by decomposing its mappings into the nodes (id and orientation) it traverses $p_{i_\textbf{ids}} = id(n_j) \forall n_j \in p_i$ and $p_{i_\textbf{dir}}$ such that $p_{i_\textbf{dir}}[j] = 0 \iff m_j = (n_j, \ldots) \lor 1 \iff m_j = (\overline{n_j}, \ldots)$.
+To allow rank and select queries on the node ids, we can store $p_{i_\textbf{ids}}$ in a wavelet tree, although in practice performance is greatly improved by also recording a minimum node id, so as to decrease the alphabet size of the wavelet tree, which has a large effect on WT size.
+So that we may transform nodes to path positions, we use an integer vector to store a path position for each node traversal in the path, $p_{i_\textbf{pos}}$.
+To go from path offset to node, we build a bitvector that marks the beginning of each node traversal in the path in a manner similar to that used to mark the sequence beginning of each node in $S_\textbf{iv}$, such that $p_{i_\textbf{offset}}$ is a bitvector of length $\sum_{j=1}^{|p_i|} |seq(p_i[j])|$ where we have marked 1 for each node start in the path, $p_{i_\textbf{offset}}[j] = 1 \iff \exists n_k \in p : j = \sum_{m=1}^{k} |seq(p_i[m])| \lor 0$.
+By implementing $p_{i_\textbf{offset}}^{rank_1}$ we can find the node at a given path position $\mathcal{Q}$ by $p_{i_\textbf{offset}}^{rank_1}(\mathcal{Q}) \Rightarrow j : \left( \sum_{k=1}^{j} |seq(p_i[k])| \leq \mathcal{Q} \land \sum_{k=1}^{j+1} |seq(p_i[k])| > \mathcal{Q} \right)$.
+We can also find the position of the $j$th node in a path as $p_{i_\textbf{offset}}^{select_1}(j)$.
+A CSA and rank dictionary $P_\textbf{csa}$ and $P_\textbf{name}^{rank_1}$ map from path name to internal rank of the path in $P$, which ensures maximum scalability of the path set names.
 
-A CSA $P_\textbf{csa}$ maps from path name to internal rank.
+A number of compression techniques can be applied to the data models in XG to reduce the size of the overall index without any loss in functionality.
+However, many of these compression methods producing compressed bitvectors, integer vectors, and wavelet trees, will result in slower access.
+In the context of a short read aligner, such losses may be undesirable as long as there is sufficient memory to load the entire index into system memory, and so I have tuned the index by chosing compression strategies appropriate for its use on current datasets. 
 
 \subsection{Sequence indexes}
 %*1p 2h*
