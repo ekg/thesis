@@ -236,11 +236,7 @@ In a de Bruijn graph or string graph such as SGA or Fermi2, overlaps are defined
 This simplifies the implementation of $pinch$, as no further computation is required to correctly determine the mutual alignment of overlapping sequences.
 In contrast, overlaps in a generic string or overlap graph are correctly defined as alignments.
 Resolving a single pairwise alignment into structures in the graph is trivial, but it becomes considerably more complex when many sequences map into a transitively closed set of overlaps.
-These nets can then be resolved into an alignment graph by an algorithm similar to that given in section \ref{sec:from_pairwise_alignments}, but in practice, {\tt vg} implements bluntification by conversion of the input graph to a pinch graph library that was used to resolve the same problem in whole genome alignment \cite{paten2008enredo}.
-
-% we have to add the overlap label to edges, but otherwise we cool
-% then there is the pinch graph reduction
-% probably can be explained pretty easily
+These nets can then be resolved into an alignment graph by an algorithm similar to that given in section \ref{sec:from_pairwise_alignments}, but in practice, {\tt vg} implements bluntification by conversion of the input graph to a pinch graph library that was used to resolve the same problem in whole genome alignment \cite{Paten:2011fva}.
 
 \subsection{From pairwise alignments}
 \label{sec:from_pairwise_alignments}
@@ -275,13 +271,13 @@ We record which $b_{q}$ we have processed in the bitvector $Q_{seen}$ which is o
 This allows us to avoid a quadratic penalty in the order of the size of the transitive closures in $Q$ given by the $map$ function.
 
 Now we inductively derive the graph implied by the alignments.
-For each base $b_{q}$ in $Q$, we find its transitive closure $c_{q}$ := [$b_{q}$, $b_{r_{1}}$, ... ] via the $map$ operation by traversing the aligned base pairs recorded in $A$.
-We write the character of the base $b_{q}$ to a vector $S$, then for each $b_{c}$ in $c_{q}$ we record a pair [$s_{i}, b_{c}$] into $N$ and its reverse, [$b_{c}$, $s_{i}$] into $P$.
+For each base $b_{q}$ in $Q$, we find its transitive closure $c_{q} := [b_{q}, b_{r_{1}}, \ldots ]$ via the $map$ operation by traversing the aligned base pairs recorded in $A$.
+We write the character of the base $b_{q}$ to a vector $S$, then for each $b_{c}$ in $c_{q}$ we record a pair $[s_{i}, b_{c}]$ into $N$ and its reverse, $[b_{c}, s_{i}]$ into $P$.
 We mark $Q_{seen}$ for each base in each emitted cluster, and we do not consider marked bases in subsequent transitive closures.
 By sorting $N$ and $P$ by their first entries, we can build rank/select dictionaries on them akin to that we built on $A$ that allow random access by graph base (as given in $S$) or input base (as given in $Q$).
 
 To fully induce the variation graph we need to establish the links between bases in $S$ that would be required for us to find any sequence in the input as a walk through the graph.
-We do so by rewriting $Q$ (in both the forward and reverse orientation) in terms of pairs of bases in $S$, then sorting the resulting pairs by their first element, which yields $L$ = [($b_{a}$, $b_{b}$), ... ].
+We do so by rewriting $Q$ (in both the forward and reverse orientation) in terms of pairs of bases in $S$, then sorting the resulting pairs by their first element, which yields $L = [(b_{a}, b_{b}), \ldots ]$.
 These pairs record the links and their frequencies, which we can emit or filter (such as by frequency) as needed given particular applications.
 In typical use we take the graph to be given by the unique elements of $L$.
 
@@ -336,8 +332,8 @@ Typically, these methods develop indexes of their reference genome, using $k$mer
 These indexes remain static during the resequencing analysis, and can thus be made very compact and designed to support efficient queries.
 %{\tt vg} uses 
 
-When the genome is just a linear string, distances between locations may be computed trivially, so no additional structure is required to seed the alignment of reads to the genome.
-However, this situation changes in graphs, where the computation of distances becomes greatly more complex.
+When the genome is just a linear string, distances between locations may be computed trivially, and subsets of the sequence are simply substring operations on the vector representing the genome, so no additional structure is required to seed the alignment of reads to the genome.
+However, this situation changes in graphs, where the computation of distances becomes greatly more complex and particular topologies of the graph must be recorded and reproduced.
 Here, I will show that graph distances may be estimated using an approximate sort and the paths embedded in the graph.
 However, to do so requires efficient indexes of the path structure in the graph.
 Furthermore, loading the entire graph into memory in a na\"{i}ve manner can be very expensive, and effort is required to minimize the runtime costs so as to enable resequencing even on lower-memory commodity systems.
@@ -351,14 +347,61 @@ However, the performace-oriented implemenation of the dynamic variation graph wh
 In this scheme implemented in {\tt vg}, indexes on the node idientifier space of the graph allow for fast traversal and query of nodes by identity and neighborhood.
 Various inefficiencies are accepted, such as on the hash table occupancies used to build these indexes, in the pursuit of higher performance during dynamic modification of the graph.
 I now believe that it should be easy to provide a dynamic VG in low memory by using a succinct encoding, but I have not yet completed any work on this issue.
-Operating on graphs of hundreds of millions of nodes with annotations like paths remains a difficult problem in other fields.
-In most cases the graph can be subdivided, and this is particularly the case for sequence DAG VGs, allowing for us to work on graphs of arbitrary sizes if they are approximately linear.
+Operating on graphs of hundreds of millions of nodes with annotations like paths remains a difficult problem in this and other fields.
+In most cases the graph can be subdivided (as with map/reduce processing patterns \cite{dean2008mapreduce} which underpin most industrial operation on large graphs \cite{cohen2009graph}).
+This is particularly easy to implement for sequence DAG VGs, allowing for us to work on graphs of arbitrary sizes if they are approximately linear.
 
-\subsection{XG index}
+\subsection{Succinct graph index}
 %*2p 3h*
-While a dynamic in-memory model of a dense VG may be difficult to use, it is comparatively easy to build succinct indexes of the graph that use only a small constant factor more memory than the uncompressed graph, yet provide support for a number of queries which are important for read mapping.
+While a dynamic in-memory model of a dense VG may be difficult to scale, it is comparatively easy to build succinct indexes of the graph that use only a small constant factor more memory than the uncompressed graph, yet provide support for a number of queries which are important for read mapping.
 
-\subsection{GCSA2 index}
+When using a variation graph as a reference system, we are unlikely to need to modify it.
+As such we can compress it into a system that provides efficient access to important aspects of the graph.
+Specifically, we care about the node and edge structure of the graph and queries that allow us to extract and seek to positions in embedded paths.
+We would like to be able to query a part of the graph corresponding to a particular region of a chromosome in a reference path embedded in the graph.
+Similarly, if we find an exact match on the graph using GCSA2, we would like to load that region of the graph into memory for efficient local alignment.
+
+We implement a succinct representation of variation graphs in the XG\footnote{``X'' implies compression and ``G'' refers to the graph that is compressed.} library, using data structures from \href{https://github.com/simongog/sdsl-lite}{SDSL-lite}.
+Node labels and node ids are stored in a collection of succinct vectors, augmented by rank/select dictionaries that allow the lookup of node sequences and node ids.
+An internal node rank is given for each node, and we map from and to this internal coordinate system using a compressed integer vector of the same order as the node id range of the graph we have indexed.
+To allow efficient exploration of the graph, we store each node's edge context in a structured manner in an integer vector, into which we can jump via a rank/select dictionary keyed by node rank in the graph.
+Efficient traversal of the graph's topology via this structure is enabled by storing edges a relative offsets to ``to'' or ``from'' node, which obviates the need for secondary lookups and reduces the cost of step-wise traversal to member access on the containing vector and the cost of parsing each node context record that we encounter.
+Paths provided to XG are used to induce multifarious coordinate systems over the graph. 
+We store them using a collection of integer vectors and rank/select dictionaries that allow for efficient queries of the paths at or near a given graph position, as well as queries that give us the graph context near a given path position.
+
+An XG index of $G = (N, E, P)$ is comprised primarily of the backing graph vector $G_\textbf{iv} = g_1 \ldots g_{|N|}$, with each $g_i$ recording the edge context for node $n_i$ in the graph: $g_i = ( \eta_i, \Xi_i)$, a sequence vector $S_\textbf{iv}$ recording the sequences labels of the nodes in a bitcompressed form, and a path membership mapping $N_\textbf{path}$.
+Each $p_i \in P$ is encoded with a set of structures that allow random access of the graph by path position, which is important for the use of paths as reference coordinate systems in the graph.
+
+To enable better compression, the node sequence space is recorded as a concatenation of node labels $S_\textbf{iv} = seq(n_i) \ldots seq(n_{|N|})$, in which each node has an offset in this sequence space defined by $seq_\textbf{offset}(n_i)$.
+In bitvector $S_\textbf{bv} : |S_\textbf{bv}| = |S_\textbf{iv}|$ we set 1 at each first character in a node label, and 0 otherwise: $S_\textbf{bv}[i] = 1 \iff \exists j : seq_\textbf{offset}(n_j) = i$.
+Random access by node rank $i$ is provided by function $S_\textbf{bv}^{select_1}$, allowing us to find the sequence given a node rank in $G_\textbf{iv}$.
+
+To allow node identifiers to be separated from the internal rank in $G_\textbf{iv}$, each context header $\eta_i$ records the external id of $n_i$.
+This supports operation on subsets of larger graphs, as the subgraph retains a mapping into the node identifier space of the larger graph.
+
+The $G_\textbf{iv}$ node context header $\eta_i$ thus links the topology of the graph to node sequences and externally resolvable node ids, as well as recording the number of inbound and outbound edges in the graph context of
+$n_i$: $\eta_i = [ id(i), seq_\textbf{offset}(n_i), |seq(n_i)|, |\{e\}| : \exists e_{i*} \lor \exists e_{\overline{i}*}, |\{e\}| : \exists e_{*i} \lor e_{*\overline{i}} ]$.
+Meanwhile, the edge context $\Xi_i$ enumerates the set of edges that connect to this node in a structured way that allows for oriented traversals across the two strands of the graph: $\Xi_i = \bigcup_{j=1}^{|N|} \forall e \in e_{ij}, e_{\overline{i}j}, e_{i\overline{j}}, e_{\overline{ij}}, e_{ji}, e_{\overline{j}i}, e_{j\overline{i}}, e_{\overline{ji}} : \exists e$.
+To enable fast traversal we rewrite the edges in terms of relative positions in the encoded $G_\textbf{iv}$ vector, which is stored as a bitcompressed integer vector using SDSL-lite's template primitives.
+Each node record is stored contiguously.
+We delimit the records by a secondary bitvector $G_\textbf{bv}$, for which we build supports for functions $G_\textbf{bv}^{rank_1}$ and $G_\textbf{bv}^{select_1}$, which allow random access of $G_\textbf{iv}$ by node $id$.
+
+Node to path membership recorded in $N_\textbf{path} = ( p_1 \ldots p_{|\{p_i : n_1 \in p_i \}|} ) \ldots ( p_{|N|} \ldots p_{|\{p_i : n_{|N|} \in p_i \}|} )$, and random access to this integer vector is provided by a rank/select dictionary built on a bitvector delimiting the various node path membership lists.
+Nodes with no path membership are marked in $N_\textbf{path}$ with a 0.
+
+Each path is represented in a set of succinct stuctures.
+%    int64_t min_node_id = 0;
+%    wt_gmr<> ids;
+%    sd_vector<> directions; // forward or backward through nodes  
+%    int_vector<> positions;
+%    int_vector<> ranks;
+%    bit_vector offsets;
+%    rank_support_v<1> offsets_rank;
+%    bit_vector::select_1_type offsets_select;
+
+A CSA $P_\textbf{csa}$ maps from path name to internal rank.
+
+\subsection{Sequence indexes}
 %*1p 2h*
 
 \subsection{Haplotype indexes}
