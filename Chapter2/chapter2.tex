@@ -352,6 +352,7 @@ In most cases the graph can be subdivided (as with map/reduce processing pattern
 This is particularly easy to implement for sequence DAG VGs, allowing for us to work on graphs of arbitrary sizes if they are approximately linear.
 
 \subsection{Graph topology index}
+\label{sec:graph_topology_index}
 %*2p 3h*
 While a dynamic in-memory model of a dense VG may be difficult to scale, it is comparatively easy to build succinct indexes of the graph that use only a small constant factor more memory than the uncompressed graph, yet provide support for a number of queries which are important for read mapping.
 
@@ -385,6 +386,7 @@ Meanwhile, the edge context $\Xi_i$ enumerates the set of edges that connect to 
 To enable fast traversal we rewrite the edges in terms of relative positions in the encoded $G_\textbf{iv}$ vector, which is stored as a bitcompressed integer vector using SDSL-lite's template primitives.
 Each node record is stored contiguously.
 We delimit the records by a secondary bitvector $G_\textbf{bv}$, for which we build supports for functions $G_\textbf{bv}^{rank_1}$ and $G_\textbf{bv}^{select_1}$, which allow random access of $G_\textbf{iv}$ by node $id$.
+Previous designs decomposed the graph structure into a set of parallel vectors, but this required multiple select queries during traversal and provided poor cache locality and performance.
 
 Node to path membership recorded in $N_\textbf{path} = ( p_1 \ldots p_{|\{p_i : n_1 \in p_i \}|} ) \ldots ( p_{|N|} \ldots p_{|\{p_i : n_{|N|} \in p_i \}|} )$, and random access to this integer vector is provided by a rank/select dictionary built on a bitvector delimiting the various node path membership lists.
 Nodes with no path membership are marked in $N_\textbf{path}$ with a 0.
@@ -393,7 +395,7 @@ Each path is represented in a set of succinct data stuctures that let us walk th
 We store the path $p_i = m_1 \ldots m_{|p_i|}$ by decomposing its mappings into the nodes (id and orientation) it traverses $p_{i_\textbf{ids}} = id(n_j) \forall n_j \in p_i$ and $p_{i_\textbf{dir}}$ such that $p_{i_\textbf{dir}}[j] = 0 \iff m_j = (n_j, \ldots) \lor 1 \iff m_j = (\overline{n_j}, \ldots)$.
 To allow rank and select queries on the node ids, we can store $p_{i_\textbf{ids}}$ in a wavelet tree, although in practice performance is greatly improved by also recording a minimum node id, so as to decrease the alphabet size of the wavelet tree, which has a large effect on WT size.
 So that we may transform nodes to path positions, we use an integer vector to store a path position for each node traversal in the path, $p_{i_\textbf{pos}}$.
-To go from path offset to node, we build a bitvector that marks the beginning of each node traversal in the path in a manner similar to that used to mark the sequence beginning of each node in $S_\textbf{iv}$, such that $p_{i_\textbf{offset}}$ is a bitvector of length $\sum_{j=1}^{|p_i|} |seq(p_i[j])|$ where we have marked 1 for each node start in the path, $p_{i_\textbf{offset}}[j] = 1 \iff \exists n_k \in p : j = \sum_{m=1}^{k} |seq(p_i[m])| \lor 0$.
+To go from path offset to node, we build a bitvector that marks the beginning of each node traversal in the path in a manner similar to that used to mark the sequence beginning of each node in $S_\textbf{iv}$, such that $p_{i_\textbf{offset}}$ is a bitvector of length $\sum_{j=1}^{|p_i|} |seq(p_i[j])|$ where we have marked 1 for each node start in the path, $p_{i_\textbf{offset}}[j] = \left( 1 \iff \exists n_k \in p : j = \sum_{m=1}^{k} |seq(p_i[m])| \right) \lor 0$.
 By implementing $p_{i_\textbf{offset}}^{rank_1}$ we can find the node at a given path position $\mathcal{Q}$ by $p_{i_\textbf{offset}}^{rank_1}(\mathcal{Q}) \Rightarrow j : \left( \sum_{k=1}^{j} |seq(p_i[k])| \leq \mathcal{Q} \land \sum_{k=1}^{j+1} |seq(p_i[k])| > \mathcal{Q} \right)$.
 We can also find the position of the $j$th node in a path as $p_{i_\textbf{offset}}^{select_1}(j)$.
 A CSA and rank dictionary $P_\textbf{csa}$ and $P_\textbf{name}^{rank_1}$ map from path name to internal rank of the path in $P$, which ensures maximum scalability of the path set names.
@@ -403,6 +405,7 @@ However, many of these compression methods producing compressed bitvectors, inte
 In the context of a short read aligner, such losses may be undesirable as long as there is sufficient memory to load the entire index into system memory, and so I have tuned the index by chosing compression strategies appropriate for its use on current datasets.
 
 \subsection{Graph sequence indexes}
+\label{sec:graph_sequence_indexes}
 %*1p 2h*
 Indexing the sequence space of a variation graph can be achieved using the same $k$-mer based techniques that are popular in pairwise alignment.
 In the early stages of this project, I implemented a $k$-mer based index using a disk-backed system (see section \ref{sec:generic_disk_backed_indexes}).
@@ -414,20 +417,66 @@ On seeing my early experiments, Jouni Sir\'{e}n, who had recently joined our lab
 He proposed a DBG transformation of the graph as input to the indexing process.
 The resulting indexing model is similar to both GCSA, in its encoding of the graph topology, and succinct DBGs, which are also developed from BWTs based on a $k$-mer set.
 Sir\'{e}n's design allows for the use of much longer $k$-mers than are typcially considered in DBGs, with the final DBG to be indexed having $k=256$.
-As few contemparary reads are likely to generate 256bp-long sequences with no mismatch from the reference\footnote{Illumina's reads rarely reach 256bp, and when they do they tend to have higher error rates in the later cycles. The 15\% error rate of PacBio and ONT sequencing mean that a 256bp exact match is extremely unlikely.}, this approach effectively allows us to find all the SMEMs for a typical sequencing read.
+As few contemparary reads are likely to generate 256bp-long sequences with no mismatch from the reference\footnote{Illumina's reads rarely reach 256bp, and when they do they tend to have higher error rates in the later cycles. The 15\% error rate of PacBio and ONT sequencing mean that a 256bp exact match is extremely unlikely, although PacBio circular consensus reads (CCR) may approach this level of accuracy.}, this approach effectively allows us to find all the SMEMs for a typical sequencing read.
 The addition of the LCP array to encode the suffix tree alongside GCSA2's BWT effectively generalized all essential operations possible on a suffix tree of a string to the GCSA2, and enabled us to find SMEMs and develop sensitive MEM-based seeding heuristics using the index.
+The design of GCSA2 is wholly Sir\'{e}n's work \cite{siren2017indexing}, and it forms one of the core components of the {\tt vg} mapper paper, which we coauthored.
+I present it here as the mapping algorithm I developed for {\tt vg} relies on it heavily.
 
-%and we shared authorship of the main {\tt vg} paper.
-%, and subsequently developed GCSA2 using principles from GCSA and succinct DBG indexes.
+In broadest terms, GCSA2 employs a de Bruijn graph as a $k$-mer index of a variation graph.
+Effectively the DBG nodes are labeled with their positions in the variation graph from which the DBG is generated.
+To reduce redundancy, GCSA2 uses a \emph{pruned} DBG by using nodes with labels shorter than $k$ where these shorter strings still uniquely identify the beginning of their coresponding paths in the unpruned DBG.
 
+This pruned graph is then encoded in a generalization of the FM-index built on a BWT of the $k$-mers in the pruned DBG.
+The FM-index is extended to support search over the DBG by adding auxiliary bitvectors which record the indegree and outdegree of nodes in the pruned DBG.
+These are used in backwards search to adjust the suffix array ranges that are considered, expanding them when the indegree is greater than 1 and contracting them when the out degree is greater than 1, in effect encoding the graph structure into the index in a space efficient and traversal optimized manner.
+The technique is the same as that used in GCSA, although GCSA indexes a reverse deterministic automaton rather than a DBG.
+Impressively, GCSA2 uses around 1 bit per $k$-mer in indexes of the 1000GP pangenome graph for $k=128$, which is favorable with comparsion to true DBG indexes, as these need to record information about each $k$-mer that is not important for GCSA2.
+
+As an FM-index like structure, GCSA2 supports queries for a pattern $X$ that yield the suffix array interval matching a given pattern: $find(X) = ( sp_{X}, ep_{X} )$, and $locate( sp_{X}, ep_{X} ) = \{ b_1 \ldots b_{count(sp_{X}, ep_{X})} \}$ which yields the positions in the input VG where the given patterns occur.
+The afformentioned LCP array allows the index to support several operations that require a suffix tree, including $count(sp_i, ep_i)$, which returns the number of matches for a given suffix array range, and $parent(sp_i, ep_i) = (sp_j, ep_j)$, which conceptually allows us to traverse the suffix links embedded in the suffix tree and forms the core of maximal exact match (MEM) inference using GCSA2.
+
+GCSA2 resolves a number of problems that limit the utility of other graph path indexing schemes.
+Indexing a pruned DBG allows GCSA2 to be applied to arbitrary bidirectional string graphs.
+It avoids exponential costs during backwards search using the graph augmentation of the FM-index, which is itself supported by the transformation of the input variation graph into a pruned DBG.
+However, it does incur exponential costs in indexing, but to mitigate the affects of these it may be constructed mostly in external memory, and furthermore construction may be broken into pieces by chromosome or some other subdivision of the graph.
+Its external memory construction algorithm uses a prefix doubling approach to transform an input DBG of order $k$ to one of order $2^mk$ through $m$ doubling steps.
+The high-order DBG need never be loaded into RAM but is induced from a lower-order DBG augmented with sufficient positional context on its nodes to support the disk-backed prefix doubling process.
+By default, {\tt vg} runs GCSA2 with input $k=16$ and $m=4$, yielding a final DBG with $k=256$.
+In indexing a DBG, GCSA2 limits the maximum-length query for which no false-positive results will be returned to the order $k$ of the DBG.
+This has the benefit of allowing GCSA2 to index complex graphs, as a shorter $k$ may be chosen to limit exponential costs.
+Provided the final alignment is completed against the full VG using DP-based alignment techinques that have non-exponential costs, the DBG input to GCSA2 may be constructed from a VG in which complex regions have been masked or reduced in local complexity using prior information such as a haplotype panel.
+
+To appreciate the costs of indexing\footnote{Precise sizes are given later in the discussion of results.}, the order-256 GCSA2 may be constucted using less than 500GB of scratch space, to and from which are written approximately 3TB during construction, all while requiring less than 50G of RAM.
+This puts GCSA2 indexing's resource requirements well within the specifications of standard commodity compute servers.
+The resulting index occupies between five and ten times the input graph's serialized size, so no more than 50G for something in the order of a human genome.
 
 \subsection{Haplotype indexes}
-%*1.5p 2h*
+%*1.5p 3h*
+% worth mentioning gpBWT and PBWT
+Recording the path set of a graph in XG (described in section \ref{sec:graph_topology_index}) requires $O(N{\cal L}|P|)$ space where ${\cal L}$ is the average haplotype length, $N$ is the number of nodes in the graph, and $|P|$ is the number of paths in the graph.
+Although, such a representation can be compressed, the size of this representation will grow linearly with the addition of new paths, making it impractical as a means to record very large numbers of genomes.
+This encoding does simplify positional queries, but to do so each path must be stored independently and without reference to other paths.
+
+Recording collections of paths is an important requirement for the use of VG in resequencing, as the markovian property of the bare sequence graph $G = (N, E, P= \emptyset)$ means it can encode exponentially many paths relative to the true input path set used to build the graph.
+This introduces significant issues during read mapping and genome inference.
+With increasing variant density the number of haplotypes grows exponentially, and this can lead to spurious mismapping as discussed in section \ref{sec:1000GP_sim}.
+The exponential growth of the path space of the graph has relevance for sequence indexing with GCSA2, and as described in \label{sec:graph_sequence_indexes}, simplification of the graph input to GCSA2 indexing is required to reliably build indexes.
+A haplotype index is the only way that the pruning operation applied to the graph may preserve known haplotypes, rather than defaulting to the reference genome in such cases.
+Efficient path indexes could be used for many operations in variant calling and phasing, and may have utility in assembly problems, for instance to losslessly record a read set embedded in a squish graph representing their mutual alignment (section \ref{sec:from_pairwise_alignments}).
+
+Haplotypes from the genomes of the same species are often shared exactly, which suggests that they may be very efficiently compressed.
+This property was first used to store large haplotype sets in the positional BWT (PBWT) \cite{durbin2014efficient}.
+Assume a set of haplotype strings $S_1 \ldots S_m$
+which can be understood as a kind of FM-index developed out of texts $t_i = ()$
+\cite{gagie2017wheeler} % wheeler graphs
+\cite{Novak2016gPBWT}
+\cite{siren2018haplotype}
+
 
 \subsection{Generic disk backed indexes}
 %*0.5p 0.5h*
 \label{sec:generic_disk_backed_indexes}
-I began the development of {\tt vg} alone, beginning with schemas for the data models, then building an index of the graph using the disk-backed key/value store RocksDB\footnote{\url{https://github.com/vgteam/vg/blob/master/src/index.hpp}}.
+I began the development of {\tt vg} alone, starting with schemas for the data models, then building an index of the graph using the disk-backed key/value store RocksDB\footnote{\url{https://github.com/vgteam/vg/blob/master/src/index.hpp}}.
 In principle this would allow working with graphs that were many times larger than main memory.
 I transcribed the data model into namespaces and sorted arrays written into the key/value store.
 As compressors of various types could be applied to the sorted arrays backing RocksDB, the memory uses of this approach were ultimately similar to those for the final indexing models that I present here.
@@ -464,9 +513,6 @@ Finally, on the networked storage available in my instutitional setting, the con
 
 \subsection{Distance estimation}
 %*1p 1h*
-
-\subsection{MEM chaining}
-%*2.5p 3h*
 
 \subsection{Chunked alignment}
 %*1p 1h*
