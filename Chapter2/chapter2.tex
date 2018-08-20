@@ -555,6 +555,20 @@ However, I found it impossible to construct this for a large high-coverage seque
 
 \section{Sequence alignment to the graph}
 %*0.5p 0.5h*
+We have built variation graphs to be used as a pangenomic reference for sequence analysis.
+The most important step in such analysis is sequence alignment.
+Aside from whole genome alignment methods, which implicitly use such techniques, no previously published approach allows the sensitive alignment of long sequences to large graphs.
+The graphs we build are meant to encode any kind of variation.
+Our alignment algorithm should be able to represent them in alignments as well.
+I have explored a particular hierarchical model of alignment that does by using hierarchical partial alignment of the sequence to the graph.
+In \emph{chunked alignment}, large sequences are broken up into overlapping segments, each of which is aligned individually in any order or orientation.
+This subdivision provides a kind of banding to the alignment algorithm, preventing the evaluation of the full DP matrix, but more importantly it also allows alignments that are generated to represent any kind of variation.
+Each chunk is aligned indepenently.
+I use GCSA2 and the XG index to find and cluster maximal exact matches (MEMs) using a global pseudoalignment algorithm that exploits approximate distance indexes in the graph to drive colinear chaining of MEMs.
+Locally, I use fully evaluated dynamic programming approach that generalizes striped Smith Waterman Gotoh (SSW) to operate on a graph (GSSW) to align each chunk to each candidate locus.
+The same colinear chaining model, with different parameters, is used to establish the optimal global chain through the alignment chunks, thus yielding a full alignment for the input sequence of any size.
+In the simple case where our reads are shorter than the standard chunk size (256bp), the alignment behaves exactly as in {\tt bwa mem}, and this use constitutes much of the application of the method in the subsequent chapter.
+Optionally, other alternative DP alignment algorithms implementing a banded global alignment can be applied, and I also report on these as I have supported their authors' implementation of them in {\tt vg}.
 
 \subsection{POA and GSSW}
 %*2p 2h*
