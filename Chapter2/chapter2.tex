@@ -538,8 +538,20 @@ The sorted disk-backed array does have the useful property of allowing prefix qu
 Finally, on the networked storage available in my instutitional setting, the construction costs for disk-backed index models were usually much worse than those of the XG and GCSA2 models.
 
 \subsection{Coverage index}
-%*1p 1h*
 
+As variation graphs can remove specific bias towards any particular sequence, they imply a uniform vector space in which all samples can be placed for later analysis.
+One reductive form that this can take is a coverage map, which is similar to the labeling required to implement ``colors'' on a DBG.
+Here, we lose information about the edge traversals and the paths taken through the graph
+In principle, this doesn't matter for many kinds of variation.
+And in benefit,, but the complexity of computing the coverage map is linear in the number of the input alignment set, and it requires $O(\sum_{\forall{n_i\in N}}|n_i|)$ space.
+In exploration of this, I developed an indexing method that allows us to build and query compact coverage indexes.
+Simply, we map the sequence space of the graph into a vector and record coverage across it for a GAM read set.
+During construction, a succinct format is employed to store the coverages in a single byte as long as they are below 255, and in a secondary hash table if they reach 256.
+Finally a compressed integer vector is generated, which be queried by graph position computed from the XG index of the graph.
+I extended this concept with a kind of succinct ``pileup'' format \cite{li2009sequence} generated from the edits against the graph.
+In this model edits in mappings which don't match the reference were serialized into a byte alphabet using protobuf, such that each non-reference edit $e_j$ at position $b_i$ was recorded as a string $\$b_i e_j$, and these were combined and delimited by a character $\$$ escaped from the representation by duplication of all instances in the byte string.
+By building a CSA/FM-index from these I can obtain the set of edits at each graph position through pattern matching.
+However, I found it impossible to construct this for a large high-coverage sequencing sample, and have not continued research into the topic.
 
 \section{Sequence alignment to the graph}
 %*0.5p 0.5h*
