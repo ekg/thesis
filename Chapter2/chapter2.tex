@@ -54,7 +54,7 @@ These data models thus provide a sufficient informational basis for resequencing
 
 \subsection{The bidirectional sequence graph}
 
-Each node $n_i$ represents a sequence $seq(n_i)$ that is built from an alphabet ${ \cal A } = \{ {\tt A, C, G, T, N} \}$. Nodes may be traversed in either the forward or reverse direction, with the sequence being reverse-complemented in the reverse direction.
+Each node $n_i$ represents a sequence $seq(n_i)$ that is built from an alphabet $\Sigma = \{ {\tt A, C, G, T, N} \}$. Nodes may be traversed in either the forward or reverse direction, with the sequence being reverse-complemented in the reverse direction.
 We write $\overline{n_i}$ for the reverse-complement of node $n_i$, so that $seq(n_i) = revcomp(seq(\overline{n_i}))$.
 Note that $n_i = \overline{\overline{n}}$. For convenience, we refer to both $n_i$ and $\overline{n_i}$ as ``nodes''.
 
@@ -110,7 +110,7 @@ However, both paths in each pair could be relative to the same graph, in which c
 If each node in both graphs is represened in some graph translation in $\Phi$ then it provides an isomorphic relationship between the coordinates and sequences in both graphs.
 Provided each $\Phi$ encodes an isomorphism, then we can layer a series of $\Phi_i$ together to provide a coherent coordinate space across any number of updates to a given graph.
 Consider a function pattern $translate$, which allows the projection of paths relative to $G_f$ through translations $\Phi$ to yield paths in $G_t$: $translate(p_i, \Phi) \Rightarrow p_j \in G_t$, and similarly allows the transformation of a base graph into a target graph: $translate(G_f, \Phi) \Rightarrow G_t$.
-If we have a series of $(G_i, \Phi_1) \ldots (G_\sigma, \Phi_\sigma)$, where $translate(G_i, \Phi_i) \Rightarrow G_{i+1}$ and thus each $\Phi_i$ describes an isomorphism between $G_i$ and $G_{i+1}$, then we can generate a graph translation $\Phi_\Delta$ providing $translate(G_1, \Phi_\Delta) \Rightarrow G_\sigma$.
+If we have a series of $(G_i, \Phi_1) \ldots (G_\rho, \Phi_\rho)$, where $translate(G_i, \Phi_i) \Rightarrow G_{i+1}$ and thus each $\Phi_i$ describes an isomorphism between $G_i$ and $G_{i+1}$, then we can generate a graph translation $\Phi_\Delta$ providing $translate(G_1, \Phi_\Delta) \Rightarrow G_\rho$.
 We build this graph translation with the function $layer(\Phi_\alpha, \Phi_\beta) \Rightarrow \Phi_{\alpha \cup \beta}$ by rewriting each path translation $\phi_i \in \Phi_\alpha$ so that its $p_t$ refers to $G_\beta$.
 We do so by projecting the $p_t$ through $\Phi_\beta$, and finally adding any $\phi_j \in \Phi_\beta$ for which $p_f = \emptyset$, as these represent insertions of new sequence in $G_\beta$ relative to $G_\alpha$.
 
@@ -208,7 +208,7 @@ A multiple sequence alignment in matrix form has a simple translation into a seq
 Given a set of sequences $Q = q_1 \ldots q_\kappa$ their $\upsilon$-long mutual alignment may be described in a $\kappa \upsilon$ matrix $X$ designed to maximize $\sum_{i=1}^{\upsilon} \sum_{j=1}^{\kappa} \sum_{k=1}^{\kappa} \delta_{X_{ij}X_{ik}}$, where $\delta$ is the Kronecker delta.
 The alphabet used to encode the matrix is the same as the input sequences with the addition of a special gap character $\Box \neq \Box$, and gaps thus do not contribute positively to the matrix score.
 To build a variation graph $G_\textbf{msa}$ from the MSA we proceed from $i = 1 \to \upsilon$ through $X$.
-For each unique character ${\cal B}$ in the query alphabet ${\cal A} \setminus \Box$ found in each row $i$, we create a node $n_{\cal B}$ in $G_\textbf{msa}$ and append a mapping to each path $p_i$ for which $n_{\cal B} \in q_i$.
+For each unique character ${\cal B}$ in the query alphabet $\Sigma \setminus \Box$ found in each row $i$, we create a node $n_{\cal B}$ in $G_\textbf{msa}$ and append a mapping to each path $p_i$ for which $n_{\cal B} \in q_i$.
 We construct the edges of $G_\textbf{msa}$ by taking the distinct pairs of consecutive node traversals found in the path set $P_\textbf{msa}$ produced after the generation of the nodes in MSA traversal.
 For each pair connecting nodes $n_i$ and $n_j$ we add an edge $e_{ij}$.
 We can optionally compact series of nodes (which represent single characters) where no bifurcations occur, which is similar to the operation used to compact DBGs to yield unitig graphs.
@@ -465,13 +465,62 @@ A haplotype index is the only way that the pruning operation applied to the grap
 Efficient path indexes could be used for many operations in variant calling and phasing, and may have utility in assembly problems, for instance to losslessly record a read set embedded in a squish graph representing their mutual alignment (section \ref{sec:from_pairwise_alignments}).
 
 Haplotypes from the genomes of the same species are often shared exactly, which suggests that they may be very efficiently compressed.
-This property was first used to store large haplotype sets in the positional BWT (PBWT) \cite{durbin2014efficient}.
-Assume a set of haplotype strings $S_1 \ldots S_m$
-which can be understood as a kind of FM-index developed out of texts $t_i = ()$
-\cite{gagie2017wheeler} % wheeler graphs
-\cite{Novak2016gPBWT}
-\cite{siren2018haplotype}
+This property was first used to store large haplotype sets in the \emph{positional BWT} (PBWT) \cite{durbin2014efficient}.
+As input the PBWT assumes a set of haplotype strings $S_1 \ldots S_m$ of the same length which describe a set of haplotypes relative to a set of variable loci.
+$S_j[i]$ records the allele in haplotype $j$ found at locus $i$.
+We set $S_j[i] = 0$ when haplotype $j$ has the reference allele at locus $i$, and $S_j[i] > 0$ if it encodes one of possibly several alternate alleles.
+The PBWT can be understood as an FM-index of texts $T_1 \ldots T_m : T_j[i] = (i, S_j[i])$ \cite{gagie2017wheeler}.
+To search for a haplotype of $h$ in the range $[i,j]$ we look for pattern $h' = (i, h[1]) \ldots (j, h[|h|])$.
+The alphabet size of this FM-index is large, but the matrix like structure of the haplotype set means that we can implicitly encode the array indexes by building a separate sub index for each position.
+Applying run length encoding to the BWT allows extremely good compression of real haplotype sets.
 
+With the \emph{graph positional Burrows–Wheeler transform} (gPBWT) \cite{Novak2016gPBWT}, we extended this model to work on variation graphs.
+The basic model is the same as the generic PBWT except that instead of variant matrix positions we consider haplotype traversals of node ``sides'' $n_i$ or $\overline{n_i}$, and rather than a local alphabet of variant alleles we encode a local alphabet $\Sigma_{n_i} = \{ j \in N | e_{ij} \in E \}$ which describes the set of nodes $n_{\{j \in N | e_{ij} \in E \}}$ to which haplotypes go after the current node (side) $n_i$.
+As in the generic PBWT we build an FM-index of $T_1 \ldots T_m$, encoded in what we call the $B_s$ arrays, which provide the local description of prefix sorted haplotypes (equivalently, threads) traversing each node side $n_s$.
+To deal with bidirectionality of paths in variation graphs, each haplotype must be encoded in its forward and reverse orientation.
+We demonstrated the expected sublinear scaling property for the gPBWT by building an index for chr22 with increasing numbers of samples.
+Constructing the gPBWT for large haplotype sets proved difficult when using our particular implementation.
+Progressive construction of the gPBWT in generic graphs was enabled by encoding the gPBWT into dynamic succinct data structures and adding a single haplotype thread and its inverse one at a time.
+The overheads associated with the dynamic succinct data structures and the linear time required resulted in an infeasible serial construction algorithm for large haplotype sets, and all experiments were carried out using a partially ordered construction algorithm that worked using a VCF file as input.
+
+The \emph{graph Burrows-Wheeler transform} (GBWT) \cite{siren2018haplotype} simplifies the data model used by gPBWT so that it is independent of {\tt vg} and can be applied to generic sequence graphs.
+The most generic conceptual model for the GBWT is as the FM-index of a transformation of the graph's paths $p_1\ldots p_m \cup \overline{p_1}\ldots \overline{p_m}$ into the text $T = \$( p1 = n_i\ldots n_j) \ldots \$ (\overline{p_m} = \overline{n_j} \ldots \overline{n_i}) $ wherin the paths are rewritten as a series of characters representing node traversals in a large alphabet and delimited by a marker $\$$.
+Unfortunately, this approach is technically challenging to implement due to the extremely large size of $T$ for moderately-sized haplotype sets embedded in variation graphs ($|T| \approx 10^{12}$ for the 1000GP  \cite{siren2018haplotype}).
+Serializing the path set during construction is not feasible, which suggests a dynamic version of the model is required.
+Also this approach it does not benefit from a number of features which distinguish paths in typical variation graphs.
+Sequence graphs based on homology tend to be manifoldly partially ordered, as unique sequence will easily assemble into long coherently-ordered segments.
+If we sort the identifier space of these graphs, then most haplotypes passing through the graph will be comprised of increasing or decreasing sequences.
+This is even more true for VGs built from VCFs, although even there the issue of indels must be handled in a way that is very different from the assumptions that simplify the PBWT.
+The nodes in these regions of the graph will also tend to have low degree.
+These features suggest that a local compression of each's node's context in the graph can be achieved very efficiently.
+The GBWT can thus benefit from a formulation in similar positional terms as those used in PBWT, with the augmentation of the positional model to record its local context in the graph.
+The isolation of each node's context can also allow the construction of the GBWT to be completed in parallel over isolated segments of the variation graph, such as separate chromosomes, and these may be merged easily.
+
+In the GBWT we break the full FM-index into per-node records, each of which encodes a header consisting of a description of the local edge transition alphabet $\Sigma_{n_i}$ through which the graph topology is maintained, and a body $BWT_{n_i}$ which is the subset of the full BWT specific to paths traversing $n_i$.
+The GBWT supports essential FM-index operations including: $find(X) \Rightarrow [sp, ep]$ yielding the lexicographic range of suffixes starting with pattern $X$; $locate(sp, ep) \Rightarrow$ paths occuring in $SA[sp, ep]$; and $extract(j) \Rightarrow p_j$ which returns the $j$th path in the graph.
+By encoding all paths in both orientations, the GBWT can be treated as a kind of FMD-index for haplotypes, allowing bidirectional search.
+In principle, this means that the GBWT turn supports MEM-based haplotype matching, which has potential uses in genotype imputation, phasing, association mapping, and other population genetic and evolutionary assays.
+
+The GBWT representation reflects a number of assumptions that tend to hold for most DNA sequence graphs.
+Nodes tend to have low degree, which means the local alphabet size $|\Sigma_i|$ is small and we can afford to decompress a local alphabet encoding efficiently.
+Most nodes are not traversed more than once by each path, so the $BWT_{n_i}$ remains small and can be accessed and modified in bounded time.
+Due to relatedness among individuals in many species, it is sensible to assume that haplotypes will be highly repetitive, which allows for efficient RLE encoding of $BWT_{n_i}$.
+The graph is sorted, and its identifier space has been compacted, which allows us to store the same information for the entire range of node identifiers in bounded memory with respect to $|N|$.
+The graph tends to be locally ordered in most cases, which decreases the complexity of recording the graph topology in our records.
+
+%GBWT builds an efficient dynamic model 
+
+%To resolve the issues with construction faced by gPBWT, GBWT 
+
+A \emph{dynamic GBWT} implementation presents the node records through an index over the range of $[min(i : n_i \in N), max(i : n_i \in N)]$, for each linking to its header, body, incoming edges, and haplotype identifiers.
+Construction employs this model in a manner similar to RopeBWT2 \cite{li2014fast}, where batches of paths are insert into the index in a single step following the BCR construction algorithm to build the BWT for large sequence sets \cite{bauer2013lightweight}.
+This process includes the new paths in the dynamic GBWT by rebuilding each node record affected by the extension.
+At the end of each step the dynamic GBWT remains valid.
+When constructed, the GBWT may be encoded in a compacted but immutable form that uses less memory.
+By breaking the construction process apart for each chromosome and finally merging the compressed GBWTs, it is possible to build the GBWT for the entire 1000GP haplotype set around 30 hours.
+The resulting GBWT requires $\approx 15$GB, with around half allocated to the GBWT structure itself and half to haplotype identifiers.
+Incredibly, this structure requires less than 0.1 bits per mapping in the stored paths.
+This demonstrates that it has fully exploited haplotype sharing in the 1000GP set, and we can expect that this compression rate will only improve with the addition of more samples.
 
 \subsection{Generic disk backed indexes}
 %*0.5p 0.5h*
@@ -484,7 +533,7 @@ This encoding included the graph, alignments, and
 However, performance was far worse and the initial version of the aligner based on these systems could not achieve meaningful results using reasonable amountsof time for large graphs.
 Ultimately, this flexible database model has remained important for some pipelines, in particular as a technique to organize alignments against the graph.
 The ability of a disk backed index to exceed main memory limits makes it useful for exactly this kind of workload.
-Unfortunately, other workloads such as sequence queries were untenable for large genomes, with reliable performance only possible if the entire inde of spaced $27$-mers were cached in RAM, requiring nearly 200G in the case of the 1000GP variation graph.
+Unfortunately, other workloads such as sequence queries were untenable for large genomes, with reliable performance only possible if the entire index of spaced $27$-mers were cached in RAM, requiring nearly 200G in the case of the 1000GP variation graph.
 The sorted disk-backed array does have the useful property of allowing prefix queries of the $k$-mer set, but this can easily be attained with GCSA2.
 Finally, on the networked storage available in my instutitional setting, the construction costs for disk-backed index models were usually much worse than those of the XG and GCSA2 models.
 
