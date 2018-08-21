@@ -135,11 +135,11 @@ Subsequently the sequence of each polony could be read out by synthesizing the s
 Contemporaneously, a related sequencing by synthesis method, which is now known as Illumina dye sequencing, was developed by Shankar Balasubramanian and Solexa (later acquired by Illumina) \cite{balasubramanian2004arrayed, bentley2008accurate}.
 Rather than polymerase colonies embedded in an emulsion or gel, Solexa's technology relied on ``bridging PCR'', in which the polymerized clones of a particular fragment were locally hybdridized to an adapter-bearing surface of a flowcell.
 Through successive PCR steps, a micrometer-wide spot of clonal DNA is cloned around the original position of its base molecule.
-Reversible terminator chemistry \cite{canard1994dna} and fluorescently labeled dNTPs are used to observe the sequence of the DNA molecule.
+Controlled synthesis of the second strand, based on reversible terminator chemistry \cite{canard1994dna} and fluorescently labeled dNTPs, is then used to observe the sequence of the DNA molecule in each colony.
 
 Similar efforts to reduce sequencing costs yielded a series of novel technologies, most of which have seen little use after their development.
 Church's group focused on a hybridization based sequencing protocol proceeded by an emulsion based polony PCR step \cite{shendure2005accurate}.
-Initally the group attempted to commercialize an open source sequencing device (the Polonator)\footnote{My interest in open source projects, developed while an undergraduate studying the social sciences, led me to work in this device. The project introduced me to biology, bioinformatics, and DNA sequencing, which have attracted my interest and effort ever since.}, but the technology was ultimately brought to market by Applied Biosystems in their SOLiD (Sequencing by Oligo Ligation Detection) sequencing device.
+Initally the group attempted to commercialize an open source sequencing device (the Polonator)\footnote{My interest in open source projects, developed while an undergraduate studying the social sciences, led me to work on this device. The project introduced me to biology, bioinformatics, and DNA sequencing, which have attracted my interest and effort ever since.}, but the technology was ultimately brought to market by Applied Biosystems in their SOLiD (Sequencing by Oligo Ligation Detection) sequencing device.
 In this technique, random oligonucleotides where a single base (or pair of bases) is known and correlated with an attached fluorophore are arrayed over clonal DNA fragments in order to read out the bases of the sequence.
 Although in principle this method may achieve lower per base error rates due to redundant observations, the technology was plagued by artifacts related to contextual bias in the hybridization and ligation reaction as well as difficulty in normalizing the random probe set \cite{challis2015distribution}.
 In ion semiconductor sequencing (as implemented in the IonTorrent platform) direct observation of pH changes at a fixed spot rather than fluorescent imaging were used to determine DNA sequences \cite{rusk2010torrents}.
@@ -193,7 +193,8 @@ Single stranded DNA and fluorescently-labeled dNTPs are added to the buffer abov
 As synthesis progresses, the fluorophore attached to the DNA base that is being incorporated will tend to remain inside the ZMW longer than would be expected due to random diffusion of the dNTPs.
 Thus, the series of incorporated bases in each ZMW well may be read out as a sequence of fluorescent pulses, allowing the synthesis of the second strand to be observed in real time.
 The main sources of error stem from difficulty in perfectly observing the series of fluorophores pulled into the well, and also not discriminating random ZMW occupancy from polymerization-mediated occupancy, which tend to result in insertion errors.
-The base-level error rate of sequencing is high, up to 15\% and subtle context dependent biases do exist \cite{ono2012pbsim}, but due to their genesis in Brownian motion, the errors themselves may be considered as almost perfectly random in analysis \cite{ross2013characterizing,myers2014efficient}.
+The base-level error rate of sequencing is high, up to 15\%, and subtle context dependent biases do exist \cite{ono2012pbsim}.
+However, due to their genesis in Brownian motion, the errors themselves may be considered as almost perfectly random in analysis \cite{ross2013characterizing,myers2014efficient}.
 The configuration of the sequencing system allows for unique chemistries, such as via the sequencing of circular DNA molecules, which can provide dramatic reductions in error at a cost of read length.
 PacBio's system has taken much of a decade to develop into a reliable sequencing platform, but in recent years has become a foundational technology in genome sequencing, with many recent genome assemblies completed using it \cite{rhoads2015pacbio}.
 
@@ -235,7 +236,7 @@ The process implemented in the Celera assembler (including repeat masking) has r
 In 2005, Myers formalized an idealized version of the assembly problem in the \emph{string graph} data structure \cite{myers2005}, which is a sequence graph induced from the overlaps in a set of shotgun sequencing reads.
 This model demonstrates that repeats greater than the length of a sequence read will collapse into singular regions of the graph, while unique sequences will form loops between different repeat classes that flank them.
 The string graph can be shown to represent the full information available in the input sequence data, and some of the most-popular algorithms for assembling short read sequencing are built around an induction of the string graph via the construction of the FM-index \cite{ferragina2001experimental} from Illumina read sets \cite{simpson2010,simpson2012efficient,li2015fermikit}.
-If not using compressed data structures and low-error reads, the repeats are often irresolvable and may be masked from the assembly process to improve performance on the tractable non-repetitive regions of the genome, which is a strategy promoted and still employed by Myers \cite{myers2014efficient}.
+If not using compressed data structures and low-error reads, the repeats are often irresolvable and may be masked from the assembly process to improve performance on the tractable non-repetitive regions of the genome, which is a strategy still promoted and employed by Myers \cite{myers2014efficient}.
 Canu and FALCON, which to some extent stand as contemporary implementations of the Celera assembly process, are among the best-performing assemblers for noisy single-molecule sequencing data that is the mainstay of current genome assembly projects \cite{chin2016phased,koren2017canu}.
 These and other similar methods have shown that recent long reads can be used to fully assemble genomes directly from shotgun sequencing and without human finishing \cite{loman2015complete,jain2018nanopore}.
 
@@ -256,7 +257,7 @@ This file format and the data model it implies is an essential link between the 
 \section{Reference genomes}
 
 As we have seen in the previous section, obtaining a single genome sequence \emph{de novo} is an arduous task, and remains a complex problem.
-The result is a valuable object which can be used to lower the cost of subsequent analyses and enable direct whole genome comparisons which provide a full perspective on the genetic relationship between two individuals or species.
+The result is a valuable object which can be used to lower the cost of subsequent analyses and enable direct whole genome comparisons which provide a full perspective on the genetic relationship between multiple individuals or species.
 The need for reference genomes is clear, and they are collected in open public databases to allow their dissemination and use by researchers.
 NCBI's RefSeq release 89 of July 13, 2018 contains some 81,345 organisms\footnote{\url{https://www.ncbi.nlm.nih.gov/refseq/}}, although it should be noted that only a handful of these genomes are eukaryotic.
 Recent developments in long read, single molecule sequencing have enabled great decreases in the cost and complexity of generating high-quality genome assemblies, supporting a recent project to generate reference quality genomes of ten thousand vertebrates \cite{genome2009genome,koepfli2015genome}.
@@ -268,7 +269,7 @@ Traditionally, references are seen as singular haploid models of the genome, and
 This conceptual simplicity is a core feature of their public use.
 Although the issue of genetic diversity has always been appreciated by those who work with genomes, expediency has encouraged the use of linear models for reference genomes.
 For instance, within the HGP members of the consortium could observe diversity within the BAC clones that they had sequenced from different human donors, and initated a debate about the inclusion of heterozygosity in the reference itself.
-Ultimately, the twin needs of ``completing'' the reference sequence and maintaining a simple conceptual system (the haploid sequence became known as the ``golden path'') encouraged the publication of a simple linear reference,\footnote{Personal communication with David Haussler.} and it was only with the most-recent release of GRCh38 that a concept of alternative locus and variation was added to the human reference genome \cite{schneider2017evaluation}.
+Ultimately, the twin needs of ``completing'' the reference sequence and maintaining a simple conceptual system (the haploid sequence became known as the ``golden path'') encouraged the publication of a simple linear reference\footnote{Personal communication with David Haussler.}, and it was only with the most-recent release of GRCh38 that a concept of alternative locus and variation was added to the human reference genome \cite{schneider2017evaluation}.
 %and to my knowledge this is the only reference genome project in which such a step has been taken 
 
 % history of reference sequences
@@ -364,7 +365,7 @@ Due to its relative robustness to error and variation, the MEM concept has ultim
 
 Much of the new sequencing data was being generated for humans in medically-motivated genome wide assocation studies \cite{uk10k2015uk10k} or population survey projects like the 1000 Genomes Project (1000GP) \cite{1000Gphase1,1000g2015}.
 The development of these methods was accelerated by an open, competitive spirit fostered during the 1000GP, whose primary sequencing data remains the largest completely publicly available data set, with more than 100TB of sequence data available for download from public URLs without any authentication.
-There, project participants formalized the resequencing process by generating a series of data formats linking the various stages of analysis, including the sequence alignmen/map format (SAM) and its binary equivalent (BAM) \cite{li2009sequence} that is the standard output format for contemporary aligners.
+There, project participants formalized the resequencing process by generating a series of data formats linking the various stages of analysis, including the sequence alignment/map format (SAM) and its binary equivalent (BAM) \cite{li2009sequence} that is the standard output format for contemporary aligners.
 
 
 \subsection{Variant calling}
@@ -675,7 +676,7 @@ Still in active development, Daewan Kim's HISAT2 implements a method for aligmen
 
 \subsubsection{Genome alignment graphs}
 \label{sec:genome_alignment_graphs}
-The graphs used in genome alignment algorithms are the nearest in content and structure to variation graphs despite representational differences, and it can be shown than a number them of nearly identical representational capacities \cite{kehr2014genome}.
+The graphs used in genome alignment algorithms are the nearest in content and structure to variation graphs, and it can be shown than a number them of nearly identical representational capacities \cite{kehr2014genome}.
 The \emph{alignment graph}, first introduced in the context of multiple sequence alignment \cite{kececioglu1993maximum,rausch2008segment}, represents a collection of alignments in graphical form, allowing an induction of a sequence graph (or MSA when such a graph is partially ordered).
 Vertices in the alignment graph $G_a = (V, E)$ represent characters in the input sequences $S$, and edges represent cases where characters in the input sequences have been aligned, with a relation $\prec$ on $V$ such that $v \prec w$ holds if and only if $v$ precedes $w$ in $S$.
 As it contains both the sequences an their alignment, this graph may then be contracted to produce a compressed graph that represents both.
@@ -769,13 +770,13 @@ The best-performing methods for generating SNP genotype likelihoods (GLs), which
 It was decided to use specialized methods for all allele classes, and while the method used in the previous phase of the project was used for biallelic SNPs, a small study group formed to examine how to include indels and other complex variation such as multinucleotide polymorphisms (MNPs) in the project's final release.
 
 While participating in that effort, Deniz Kural and I extended (as glia\footnote{\url{https://github.com/ekg/glia}}) a POA algorithm he had developed so that it would realign poorly-aligned reads (such as those with softclips, many mismatches, gaps, or unaligned fragments anchored by their pair mates) to a sequence DAG created from the candidate alleles in the region.
-By projecting the alignment back into the reference space, I was able to generate a BAM output from glia.
+By projecting the alignment back into the reference space, we were able to generate a BAM output from glia.
 I implemented improvements to freebayes that allowed it to genotype alleles represented by observations in these alignments, as well as contamination estimates that were essential to high-quality GLs in low-coverage data.
 This pipeline outperformed alternatives, and was ultimately used to generate GLs for all non-SNP variation in the project.
 
 The indels were integrated into the phased scaffolds provided by the SNPs through two cycles of genotyping.
 In the first, GLs generated by the method were given to MVNcall \cite{menelaou2012genotype}, a multalleleic, site-independent phasing algorithm that can phase genotypes at a given site onto a fixed background haplotype scaffold.
-The posterior genotype and phasing quality estimates produced by MVNcall, along with a number of other metrics were then used to establish an SVM classification model which was trained using data from high-quality genomes and applied to the full set of alleles to remove likely errors.
+The posterior genotype and phasing quality estimates produced by MVNcall, along with a number of other metrics related to indel sequencing error such as sequence entropy and homopolymer context, were then used to establish a support vector machine (SVM) classification model which was trained using data from high-quality genomes and applied to the full set of alleles to remove likely errors.
 The final set of alleles were fed back through the glia, freebayes, and MVNcall process to ultimately produce the set of indels in the 1000GP phase 3 release.
 
 Hannes Eggertson's GraphTyper \cite{eggertsson2017graphtyper} implements a remarkably similar workflow to that used to generate genotype likelihoods for the 1000GP indels.

@@ -80,6 +80,7 @@ When mapping positions are always at the start of a node, the edit set for the p
 The paths from which we construct the variation graph are fully embedded, and in practice paths that contain differences occur only in the alignment of new sequences into the graph.
 
 \subsection{Alignments}
+\label{sec:alignments}
 
 Additional auxiliary information is important when analyzing collections of DNA sequencing data sets.
 Each read has a name, and an identity related to a particular sequencing experiment.
@@ -619,11 +620,14 @@ We then copy this subgraph, take its reverse complement, and replace the inverti
 If $k$ is greater than any length in our graph, then we are guaranteed to  duplicate the entire reverse complement of the graph on the forward strand, effectively doubling the size of the graph if we have any inversions in it.%, as shown in Supplementary Figure 3. %\ref{fig:unfold}.
 
 \subsection{DAGification}
+\label{sec:DAGify}
 
 Variation graphs may have cycles.
 These are useful as compact representations of copy number variable regions, and arise naturally in the process of genome assembly.
-However, our partial order alignment implementation does not handle these structures, and so when they occur we convert them into an approximately equivalent acyclic graph in order to align with GSSW.
+However, our partial order alignment implementation does not handle these structures, and so when they occur we convert them into an $k$-path equivalent acyclic graph in order to align with DAG-based alignment algorithms.
 To do so, we unroll cyclic structures by copying their internal nodes an appropriate number of times to allow a given query length to align through the unrolled version of the component.
+In this graph, we can find all paths of length $k$ found in the original graph.
+If our query is shorter than this limit, $k \geq |Q|$, then we are guaranteed to find the optimal alignment in the original graph by aligning against the DAGified one.
 
 We first detect all strongly connected components by using a recursion-free implementation of Tarjan's strongly connected components algorithm \cite{tarjan1972depth}.
 Then, we copy each strongly connected component and its internal edges into a new graph.
@@ -642,28 +646,129 @@ The resulting graph is acyclic and supports queries up to length $k$ on the orig
 %*2p 2h*
 
 Partial order alignment (POA), which I previously describe in section \ref{sec:MSA}, generalizes string to graph and graph to graph alignment for the case of sequence DAGs.
+It is the core alignment algorithm used in {\tt vg map}.
+Where POA was defined for graphs in which each node represents a single base, we must account for the compressed nature of variation graphs, which adds some complexity in our definition and implementation.
+Furthermore, default POA is efficient in terms of runtime, but does not benefit from vectorized instructions that are now ubiquitous on modern processors.
+As part of work in the 1000GP, I developed an accelerated version of POA which I will present in detail here.
 
 Given a candidate cluster of exact matches that we have extracted from the MEM chaining model described in the previous section \ref{sec:collinear_chaining}, we want to derive a complete description of the alignment of the read to the reference graph.
 Sensitive alignment of each candidate is essential for distinguishing the optimal alignment.
 
-We link seeds using local alignment based on dynamic programming. 
-To make this efficient we extended an implementation \cite{zhao2013ssw} of Farrar's SIMD-accelerated striped Smith Waterman (SSW) algorithm \cite{farrar2007striped}, which we term \emph{graph striped Smith-Waterman} (GSSW)\footnote{\url{https://github.com/ekg/gssw}}.
-Single input multiple data (SIMD) instructions allow vectorized mathematical operations in a single machine instruction, and can be used to greatly speed up algorithms which can be implemented in terms of operations on vectors.
-GSSW generalizes all aspects of SSW to operate over sequence directed acyclic graphs, including affine gap penalties, and retains its matrices for traceback.
+We transform seed chains into alignment using local alignment based on dynamic programming. 
+To make this efficient we extended an implementation \cite{zhao2013ssw} of Farrar's SIMD-accelerated striped Smith Waterman (SSW) algorithm \cite{farrar2007striped}, which we term \emph{graph striped Smith-Waterman} (GSSW)\footnote{\url{https://github.com/vgteam/gssw}}.
+Single-Input Multiple-Data (SIMD) instructions allow vectorized mathematical operations in a single machine instruction, and can be used to greatly speed up algorithms which can be implemented in terms of operations on vectors.
 
-To interface with GSSW we transform a local region of our graph so that it is acyclic and only represents a single strand of the DNA. The two operations we use in this transformation are \emph{unfold}, which expands the graph to include its reverse complement where accessible via an inversion, and \emph{dagify}, which unrolls strongly connected components of the graph far enough that we are guaranteed to be able to find any sequence of given length $k$ in the source graph in the unrolled one.
+GSSW generalizes all aspects of SSW to operate over sequence directed acyclic graphs, including affine gap penalties, and retains its matrices for traceback\footnote{SSW discards these matrices for performance reasons, instead establishing the traceback later with local banded DP.}.
+This is simple to accomplish if the reference is a graph, as the striping of SIMD calculations in SSW across the reference is done by a single character at a time, and thus boundaries between nodes do not split the SIMD embedded variables.
+We can generalize SSW to GSSW by extending the recurrence relation that defines the scores in the DP matrices to consider all previous positions on all nodes that connect to the current one.
+
+Given a query $Q$ and a sequence graph $G = (N, E)$ with sequence length $L=\sum_{i}^{|N|} |seq(n_i)|$.
+We record the maximum scores of alignments between $Q$ and $G$ in the tensor $\hat{\cal H} = {\cal H}_1 \ldots {\cal H}_{|N|} :$ each ${\cal H}_i$ is a $|seq(n_i)| \times |Q|$ matix.
+$\hat{\cal H}$ thus contains $|Q|\times L$ cells, and when we have completed the scoring phase of alignment each will record the maximum score of an alignment between $Q$ and $G$ ending at $(n_i[x], Q[y])$ in ${\cal H}_{i}[x,y]$\footnote{Here I will use brackets $[\ldots]$ to identify the cells in 2-dimensional arrays.}.
+To develop our scores, we use a scoring function $score(a, b)$, which in the case of DNA returns the value of a match (typically a positive integer) when $a = b \lor a = N \lor b = N$ and the value of mismatch when $a \neq b$ (typically a negative integer).
+We score a gap beginning with $\omega_\textbf{open}$ and a gap extension as $\omega_\textbf{extend}$
+We record the score of a gap along $G$ in tensor $\hat{\cal E} = {\cal E}_1 \ldots {\cal E}_{|N|}$ and a gap along $Q$ in tensor $\hat{\cal F} = {\cal F}_1 \ldots {\cal F}_{|N|}$.
+
+Gaps in $\hat{\cal E}$ extend across the graph, and so we need to consider all the inbound edges when we are at the beginning of a node:
+
+\begin{equation}
+  {\cal E}_i[x,y] = \max
+  \begin{cases}
+    {\cal E}_i[x,y-1] - \omega_\textbf{extend} \\
+    {\cal H}_i[x,y-1] - \omega_\textbf{open} \\
+    \max_{\forall j : \exists e_{ji} \in E} {\cal E}_j[|n_j|,y-1] - \omega_\textbf{extend} & \text{if } x = 1 \\
+    \max_{\forall j : \exists e_{ji} \in E} {\cal H}_j[|n_j|,y-1] - \omega_\textbf{open} & \text{if } x = 1 \\
+  \end{cases}
+\end{equation}
+
+However, this is not the case for $\hat{\cal F}$, whose data dependencies flow vertically over the query $Q$:
+
+\begin{equation}
+  {\cal F}_i[x,y] = \max
+  \begin{cases}
+    {\cal F}_i[x-1,y] - \omega_\textbf{extend} \\
+    {\cal H}_i[x-1,y] - \omega_\textbf{open} \\
+  \end{cases}
+\end{equation}
+
+
+The score in $\hat{\cal H}$ combines the affine gap calculations in $\hat{\cal E}$ and $\hat{\cal F}$.
+As with $\hat{\cal E}$, we here we also must consider the inbound nodes:
+
+\begin{equation}
+  \label{eqn:gssw_h}
+  {\cal H}_i[x,y] = \max
+  \begin{cases}
+    0 \\
+    {\cal E}_i[x,y] \\
+    {\cal F}_i[x,y] \\
+    {\cal H}_i[x-1,y-1] - score(Q[x], n_i[y])\\
+    \max_{\forall j : e_{ji} \in E} {\cal H}_j[|n_j|,y-1] - score(Q[x], n_j[y]) & \text{if } x = 1 \\
+  \end{cases}
+\end{equation}
+
+The values of ${\cal H}_i$, ${\cal E}_i$, and ${\cal F}_i$ are 0 when $x < 1$ or $y < 1$ and node $n_i$ has no inbound edges.
+Note that this is the initial condition provided by Gotoh to improve the algorithm of Smith and Waterman.
+
+We fill the matrices using Farrar's SSW algorithm \cite{farrar2007striped}, based on Zhao's implementation \cite{zhao2013ssw}.
+By storing the full score matrices we can then trace back from the maximum score in $\hat{\cal H}$ to obtain the optimal alignments under our scoring parameters.
+The traceback can be represented as moves in the matrix, or equivalently as the alignment object model described in section \ref{sec:alignments}.
+
+To interface with GSSW we transform a local region of our graph so that it is acyclic and only represents a single strand of the DNA as described in section \ref{sec:DAGify}.
+The two operations we use in this transformation are \emph{unfold}, which expands the graph to include its reverse complement where accessible via an inversion, and \emph{dagify}, which unrolls strongly connected components of the graph far enough that we are guaranteed to be able to find any sequence of given length $k$ in the source graph in the unrolled one.
 This allows us to align any sequence of up to length $k$ against a completely general section of a variation graph.
 Through these steps we retain a mapping from old node ids to new ones, which we will use to project alignments to the transformed graph back into our base coordinate space.
 
-\subsection{Banded global alignment}
-%*0.5p 0.5h*
+\subsection{Banded global alignment and multipath mapping}
+\label{sec:banded_global}
+
+By modifying equation \ref{eqn:gssw_h} so that it is no longer capped at 0 and changing the traceback so that it goes from beginning to end of query $Q$ and graph $G$, we obtain a ``global'' alignment algorithm with the same properties as Needleman-Wunsch.
+The SIMD-based approach of GSSW is not adapted to negative scores, and so the implementation of global alignment to the graph is completed a standard DP approach as in POA.
+However, it may be \emph{banded} so that only a limited region of the DP tables need to be explored.
+This approach, as implemented in {\tt vg} by Jordan Eizenga, forms the basis for multipath mapping, in which alignments are represented probabilistically as DAGs rather than linear series of node traversals and edits.
+In multipath mapping, regions between MEMs in a particular cluster may be aligned using global alignment, so as to obtain full-length descriptions of the alignment in the non-matching region.
+Multiple traceback allows for alternatives to be included, and each of these may be scored on the basis of both alignment score and haplotype matching score.
+His implementation is key to the development of haplotype aware mapping, which is the subject of a paper currently in development by collaborators on the {\tt vg} project.
+In the case of low-error reads, this limited exploration of the DP problem allows for fast derivation of the optimal alignments, and so the multipath mapper in {\tt vg mpmap} achives runtime comparable to or exceeding the simpler algorithm in {\tt vg map}.
+It is also important to mention here as it forms the basis for alignment surjection, in which an alignment to the graph is projected into the linear reference.
 
 \subsection{X-drop DP}
-%*0.5p 0.5h*
 
+As our query length $|Q|$ increases, so does the practical complexity of deriving the alignment using POA/GSSW.
+Given that we tend to align against proportionally larger graphs and so we effectively face a quadratic penalty with increasing alignment length, $|Q| \propto |L| \implies$ GSSW is $O(|Q|^2)$.
+The most direct solution to this is to use a banded alignment method like banded global alignment, as described in section \ref{sec:banded_global}.
+However, this method cannot exploit data parallel operations that allow dramatic speedups on modern processors.
+
+In the course of our work on {\tt vg}, Eizenga and I explored the application of Hajime Suzuki's adaptive banded global alignment (libgaba)\footnote{\url{https://github.com/ocxtal/libgaba}} \cite{suzuki2017acceleration}, which has been used in to greatly improve alignment speed with long single-molecule reads \cite{li2018minimap2}.
+In this approach, an antidiagonal band of cells are computed at each step, of a predetermined width designed to fit into the word sizes of SIMD instructions.
+The band can move either ``right'' or ``down'' at each step, depending on where the highest score is found.
+A termination criteria is given, so that alignment stops when the maximum score falls a given amount.
+This is similar to the X-drop parameter used in BLAST to stop alignment extension.
+Although it improves performance it can hurt sensitivity to indels.
+
+Suzki had already implemented a version alignmen over graphs by transforming the graph into a tree through a dynamic unrolling process akin to that described in \ref{sec:DAGify} and aligning to the tree using libgaba\footnote{\url{https://github.com/ocxtal/comb}}.
+His implemenation supports graph to graph alignment as described in section \label{sec:translation}, but the exponential expansion of the alignment problem is fundamentally limiting.
+Eizenga, Suzuki and I discussed methods to merge the bands together after traversal of unifications in the graph, but we could not establish a safe generic method to merge them.
+Furcated bands may only be merged directly if they map to the same query coordinate.
+This is unlikely to happen if the different paths in the graph that they have traversed have different lengths or if there are apparent indels in the alignment.
+
+During a biohackathon meeting in Kyoto, Suzuki presented an alternative banding model based on the ``X-drop DP'' algorithm from BLAST.
+In this model, the alignment is matrix broken into vertical non-striped windows that tile across the DP matrices over fixed subsequences in the query.
+To efficiently resolve the data dependencies between successive steps, a SIMD shuffle operation is applied to the cell values stored in each window.
+Forward progression of each window stops when the highest score in the forefront cells drops $X$ from the previously-observed maximum.
+This approach thus allows the band to spread as wide as needed to accomodate larger insertions, but can be parameterized through the modification of the $X$-drop parameter.
+The result is an approach that is more sensitive than the antidiagonal banded alignment in libgaba, but runs a factor of 2 slower for equivalent band sizes.
+
+I have since worked with Suzuki to integrate his implementation of this algorithm \emph{dozeu}\footnote{\url{https://github.com/ocxtal/dozeu}} into {\tt vg}.
+Due to difficulties in handling paired end rescue, the approach is not yet performing as well as GSSW for {\tt vg map}.
+This remains a work in progress, but is a promising approach to enable the direct alignment of long sequences against the graph.
+It is orthogonal to the ``chunked'' alignment approach which I implemented and describe in section \ref{sec:chunked_alignment}.
+In principle they can be applied together to build a SV-aware, chunked and banded alignment process.
+Future work in this direction may yield a new VG alignment algorithm, but this lies outside the scope of this thesis.
 
 \subsection{Chunked alignment}
 %*1p 1h*
+\label{sec:chunked_alignment}
 
 For very long reads, where in the worst case the local dynamic programming can become prohibitively expensive, we break the reads into ``bands'' of a fixed width $w$ (default 256 base pairs) with overlap between successive bands of $w/8$.
 We align these bands independently, trim the overlaps from the alignments, and build a Markov model from them similar to that built for MEM chaining, 
