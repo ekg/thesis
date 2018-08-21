@@ -782,11 +782,16 @@ This model allows {\tt vg} to map noisy reads of arbitrary length, and is used a
 
 
 \subsection{Alignment surjection}
-%*1p 1h*
 
-
-%\subsection{Finding the alignment}
-%*0.5p 0.5h*
+Alignments to graphs that include linear reference sequences as paths can be transformed into alignments against those paths.
+To be well-defined, this lossy transformation, \emph{surjection}, requires that the alignment path matches the reference path for some portion of their length.
+The simplest surjection technique extracts the reference path region matching an alignment and realigns the read against it.
+Doing so without global alignment will often result in soft clipping, such as where non-reference alleles in the graph have allowed full length alignment.
+This can be resolved to some extent by applying global alignment of the alignment query sequence against the reference.
+But a more rigorous approach rebuilds the alignment in parts.
+For each piece that is not aligned to the reference, we extract the intervening reference sequence and align only the subset of the query that is no longer matching to this region.
+A kind of anchored semi-global alignment may be used on the ends of the reads, where the opposite reference-matching end is not defined.
+The resulting alignment to a graph built only from a particular reference path may easily be expressed in the BAM format and thus used by downstream variant calling and analysis methods.
 
 \subsection{Base quality adjusted alignment}
 %*2p 2h*
