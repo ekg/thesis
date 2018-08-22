@@ -461,7 +461,7 @@ This encoding does simplify positional queries, but to do so each path must be s
 Recording collections of paths is an important requirement for the use of VG in resequencing, as the markovian property of the bare sequence graph $G = (N, E, P= \emptyset)$ means it can encode exponentially many paths relative to the true input path set used to build the graph.
 This introduces significant issues during read mapping and genome inference.
 With increasing variant density the number of haplotypes grows exponentially, and this can lead to spurious mismapping as discussed in section \ref{sec:1000GP_sim}.
-The exponential growth of the path space of the graph has relevance for sequence indexing with GCSA2, and as described in \label{sec:graph_sequence_indexes}, simplification of the graph input to GCSA2 indexing is required to reliably build indexes.
+The exponential growth of the path space of the graph has relevance for sequence indexing with GCSA2, and as described in \ref{sec:graph_sequence_indexes}, simplification of the graph input to GCSA2 indexing is required to reliably build indexes.
 A haplotype index is the only way that the pruning operation applied to the graph may preserve known haplotypes, rather than defaulting to the reference genome in such cases.
 Efficient path indexes could be used for many operations in variant calling and phasing, and may have utility in assembly problems, for instance to losslessly record a read set embedded in a squish graph representing their mutual alignment (section \ref{sec:from_pairwise_alignments}).
 
@@ -747,7 +747,7 @@ This is similar to the X-drop parameter used in BLAST to stop alignment extensio
 Although it improves performance it can hurt sensitivity to indels.
 
 Suzki had already implemented a version alignmen over graphs by transforming the graph into a tree through a dynamic unrolling process akin to that described in \ref{sec:DAGify} and aligning to the tree using libgaba\footnote{\url{https://github.com/ocxtal/comb}}.
-His implemenation supports graph to graph alignment as described in section \label{sec:translation}, but the exponential expansion of the alignment problem is fundamentally limiting.
+His implemenation supports graph to graph alignment as described in section \ref{sec:translation}, but the exponential expansion of the alignment problem is fundamentally limiting.
 Eizenga, Suzuki and I discussed methods to merge the bands together after traversal of unifications in the graph, but we could not establish a safe generic method to merge them.
 Furcated bands may only be merged directly if they map to the same query coordinate.
 This is unlikely to happen if the different paths in the graph that they have traversed have different lengths or if there are apparent indels in the alignment.
@@ -851,17 +851,119 @@ In practice, we do not compare the optimal alignment to all possible alignments,
 
 
 \section{Visualization}
-%*0.5p 0.5h*
+
+It is impossible to understand variation graphs without visualization.
+While text-mode renderings are sufficient for understanding results in resequencing against the linear reference, this is simply impractical when the reference is a graph.
+A set of dotplots can allow us to understand the relationship between many paths embedded in a graph.
+But this scales quadratically with the number of embedded paths and quickly becomes impossible to interpret.
+The only reasonable solution is to render graphs visually using a coherent set of visual motifs.
+If this language can capture the full information in the graph then it can yield complete understanding of small graph regions.
+Here I describe several such techniques designed specifically for variation graphs.
+The simplest leverage standard utilities for graph drawing, and the most performant of these are hierarchical models that benefit from linear ordering which is often available in reference-ordered variation graphs.
+Force-directed layouts techniques developed for assembly graph interpretation allow us to interrogate larger-scale graphs.
+Thus far none encode paths, and these are thus lossless with respect to variation graphs.
+While it may be topologically complex, any graph is composed of sets which can be ordered linearly.
+By exploiting a linear sort of the graph I provide a linear-time layout algorithm that will scale to arbitrary data scales, allowing the visualization of both paths and read coverages against any graph.
 
 \subsection{Hierarchical layout}
 %*0.5p 0.5h*
 
+To develop a visualization method quickly, I relied most heavily on the four-phase hierarchical graph layout algorithm {\tt dot} \cite{gansner1993technique} that is part of the Graphviz package \cite{gansner2000open,ellson2001graphviz}.
+This approach heuristically attempts to generate a layout in which hierarchical structures in the graph are exposed, visual anomalies such as edge crossings and sharp edge bends are avoided, edges are short, and the layout is overal balanced or symmetric.
+It first uses a partial sort on the graph to derive a rank for each node.
+This aspect of the algorithm means it is most tenable when used on DAGs.
+Then the unordered regions of the partially sorted graph are ordered to reduce edge crossings.
+Finally, the actual layout is derived and splines are drawn to show edges.
+The output of {\tt dot} as well as other tools in Graphviz is a vector graphic, so the resulting renderings may be viewed in a number of ways.
+This allows us to view rather large chunks of graphs, up to tens of kilobases, provided the graph is partially orderable.
+
+To generate a visualization that captures the structure of the variation graph, I transform the graph into a visualization oriented structure in which the graph paths are rendered as nodes and edges.
+The layout is then driven entirely by the chosen algorithm in Graphviz, which is typically {\tt dot}.
+
+The set of nodes may be rendered as boxes labeled by $id(n_i)$ and $seq(n_i)$.
+The edges have four types, and to indicate these we use the top and bottom of the node boxes.
+The top left corner of each node $n_i$ receives incoming edges $e_{ji} \forall j : e_{ji} \in E$.
+While the bottom right corner of each node box represents edges arriving at $\overline{n_i}$ and thus $e_{j\overline{i}} \forall j : e_{j\overline{i}} \in E$.
+Similarly, the top right corner of each node box represents edges leaving $n_i$, and we add an edge for each $e_{ij} \forall j : e_{ij} \in E$.
+Finally, the bottom left corner represents the ``end'' of the reverse complement of the node $\overline{n_i}$, and, so we add edges for $e_{\overline{i}j} \forall j : e_{\overline{i}j} \in E$.
+As each edge implies its own reverse complement, we tend to replace edges $e_{\overline{ij}}$ with $e_{ji}$, and this is done both in normalization as in Graphviz based rendering.
+
+Paths are not naturally supported in the Graphviz data model, and must be added as subgraphs with a different rendering style to identify them.
+In order to achieve a visually meaningful layout, these subgraphs must be also anchored appropriately into the graph.
+For each path, I hash the path name $name(p_i)$ into a set of colors and unicode emoji, yielding $8 \times 766 = 6128$ possible color/symbol combinations.
+This generates a symbol for each path that is unlikely to collide with another given the typical application rendering a graph with tens of embedded paths.
+The hashing process also ensures the same rendering is returned as long as the same VG (and path names) are given.
+For each mapping $m_i\ldots m_{|p_j|} \in p_j$ I add invisible edges to the graph that link the mapping to the particular node it maps to as well as a visible edge in the path color from $m_{i-1} \to m_i$ when $i > 1$ and from $m_i \to m_{i+1}$ when $i < |p_j|$.
+A hint is given to {\tt dot} to force the rank of each mapping to be the same as the node it maps to.
+Otherwise, the invisible edges encourage {\tt dot} to render the path mappings close to the node they refer to.
+The resulting layout tends to look like a kind of multiple alignment matrix, as can be seen in figure \ref{fig:vg_view_dot}.
+
+\begin{figure}[htbp!] 
+\centering    
+\includegraphics[width=1.0\textwidth]{Chapter2/Figs/Vector/vg_view_dp_H-3136_dot.pdf}
+\caption{The beginning of a variation graph built by progressive assembly of the GRCh38 haplotypes in HLA gene H-3136 visualized using {\tt dot}.}
+\label{fig:vg_view_dot}
+\end{figure}
+
 \subsection{Force directed models}
 %*1p 1.5h*
 
-\subsection{Linear time visualization}
-%*1p 2h*
+Not all graphs yield easily to hierachical layout algorithms.
+Graphviz also includes a force-directed layout algorithm {\tt neato} that simulates the layout which would occur if connected nodes ``pull'' each other together and non-connected nodes ``repel'' each other apart.
+While the same input to {\tt dot} may be used with {\tt neato}, in practice the node labels become impossible to read and the edge types are confusing to infer, so a simplified rendering is produced without specific sequence labels on the nodes.
+This can still capture the overall structure of the graph as seen in figure \ref{fig:vg_view_neato}.
 
+\begin{figure}[htbp!] 
+\centering    
+\includegraphics[width=1.0\textwidth]{Chapter2/Figs/Vector/vg_view_dpS_H-3136_neato.pdf}
+\caption{A larger region of the same variation graph in figure \ref{fig:vg_view_dot} rendered using {\tt neato}.}
+\label{fig:vg_view_neato}
+\end{figure}
+
+While this rendering captures the path space of the graph even in arbitrary graphs, it cannot scale to graphs of significant size due to its approximately $O(|N|^3)$ scaling.
+The largest graphs I have used this method to visualize contain tens of kilobases of sequence.
+{\tt Bandage} \cite{wick2015bandage} is an alternative method which is oriented towards visualizing assembly graphs.
+It reads GFA as input and provides an interactive rendering of the graph topology.
+This assembly graph oriented approach allows for much better scaling for rendering variation graphs, and graphs of up to tens of megabases may be rendered.
+Figure \ref{fig:vg_view_bandage} shows the properties of this technique using the same region of H-3136.
+
+\begin{figure}[htbp!] 
+\centering    
+\includegraphics[width=1.0\textwidth]{Chapter2/Figs/Vector/vg_view_H-3136_Bandage.pdf}
+\caption{The graph from figure \ref{fig:vg_view_neato} rendered using {\tt Bandage}.}
+\label{fig:vg_view_bandage}
+\end{figure}
+
+\subsection{Linear time visualization}
+
+Graph layout algorithms are computationally complex due to their need to iteratively relate all components of the graph to all others.
+In these layouts, we can observe large scale features about the topology and organization of the graph.
+These views are helpful in many contexts, but the computational complexity of obtaining them should not prevent us from quickly visualizing graphs as we can with linear sequences.
+Furthermore, they do not scale efficiently to large path sets, and it is often difficult to understand alignments or other path-related on the graph using them.
+Standard graph visualization algorithms exist outside of {\tt vg} as external tools.
+
+To resolve these issues I developed a linear time rendering algorithm that projects a given VG, as indexed by XG, into a vector graphics format using the widely-available graphics library {\tt libcairo}.
+The key idea is to use the sequence basis vector $S_\textbf{iv}$ as a coordinate system to position all elements of the graph.
+The graph topology itself is laid out in accordance with the node representation in $S_\textbf{iv}$, flowing from left to right at the top of the rendering.
+Node lengths are shown using a black bar, with the sequence labels given below.
+The graph topology is rendered above the node set, and layout of these edges can be completed in linear time as they are rendered as simple splines connecting node ends.
+Paths, or other annotations such as coverage per read set, are displayed below as colored bars matching the subset of the node space that they cover.
+Where paths traverse a given node multiple times, an annotation is added to indicate the copy number.
+This technique is implemented as {\tt vg viz}, and an example rendering is given in figure \ref{fig:vg_viz}.
+
+\begin{figure}[htbp!] 
+\centering    
+\includegraphics[width=1.0\textwidth]{Chapter2/Figs/Vector/vg_viz_H-3136.pdf}
+\caption{The same variation graph in figure \ref{fig:vg_view_dot} rendered using {\tt vg viz}.}
+\label{fig:vg_viz}
+\end{figure}
+
+It is important to recognize that this approach is lossy.
+Path ordering is not clearly represented, as the paths are treated like masks over the sequence space of the graph.
+Furthermore, it can be difficult to interpret complex graphs as the topology of the graph is obscured in the simplistic rendering.
+{\tt vg viz}'s linear layout treats the graph sequences as a basis space in which other paths or alignments may be interpreted.
+This simplistic view is central to many potential applications of {\tt vg}, which I further discuss in section \ref{sec:basis_space}.
+The linear scaling of the algorithm should allow it to be applied to whole genomes, provided suitable front-end visualization software can be built, such as in a web interface.
 
 \section{Graph mutating algorithms}
 %*0.5p 0.5h*
@@ -882,6 +984,7 @@ In practice, we do not compare the optimal alignment to all possible alignments,
 
 
 \section{Graphs as basis spaces for sequence data}
+\label{sec:basis_space}
 %*2p 2h*
 
 \subsection{Coverage maps}
