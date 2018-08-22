@@ -110,9 +110,9 @@ However, both paths in each pair could be relative to the same graph, in which c
 
 If each node in both graphs is represened in some graph translation in $\Phi$ then it provides an isomorphic relationship between the coordinates and sequences in both graphs.
 Provided each $\Phi$ encodes an isomorphism, then we can layer a series of $\Phi_i$ together to provide a coherent coordinate space across any number of updates to a given graph.
-Consider a function pattern $translate$, which allows the projection of paths relative to $G_f$ through translations $\Phi$ to yield paths in $G_t$: $translate(p_i, \Phi) \Rightarrow p_j \in G_t$, and similarly allows the transformation of a base graph into a target graph: $translate(G_f, \Phi) \Rightarrow G_t$.
-If we have a series of $(G_i, \Phi_1) \ldots (G_\rho, \Phi_\rho)$, where $translate(G_i, \Phi_i) \Rightarrow G_{i+1}$ and thus each $\Phi_i$ describes an isomorphism between $G_i$ and $G_{i+1}$, then we can generate a graph translation $\Phi_\Delta$ providing $translate(G_1, \Phi_\Delta) \Rightarrow G_\rho$.
-We build this graph translation with the function $layer(\Phi_\alpha, \Phi_\beta) \Rightarrow \Phi_{\alpha \cup \beta}$ by rewriting each path translation $\phi_i \in \Phi_\alpha$ so that its $p_t$ refers to $G_\beta$.
+Consider a function pattern $translate$, which allows the projection of paths relative to $G_f$ through translations $\Phi$ to yield paths in $G_t$: $translate(p_i, \Phi) \to p_j \in G_t$, and similarly allows the transformation of a base graph into a target graph: $translate(G_f, \Phi) \to G_t$.
+If we have a series of $(G_i, \Phi_1) \ldots (G_\rho, \Phi_\rho)$, where $translate(G_i, \Phi_i) \to G_{i+1}$ and thus each $\Phi_i$ describes an isomorphism between $G_i$ and $G_{i+1}$, then we can generate a graph translation $\Phi_\Delta$ providing $translate(G_1, \Phi_\Delta) \to G_\rho$.
+We build this graph translation with the function $layer(\Phi_\alpha, \Phi_\beta) \to \Phi_{\alpha \cup \beta}$ by rewriting each path translation $\phi_i \in \Phi_\alpha$ so that its $p_t$ refers to $G_\beta$.
 We do so by projecting the $p_t$ through $\Phi_\beta$, and finally adding any $\phi_j \in \Phi_\beta$ for which $p_f = \emptyset$, as these represent insertions of new sequence in $G_\beta$ relative to $G_\alpha$.
 
 \subsection{Genotypes}
@@ -128,11 +128,11 @@ Given this definition of a genomic locus it is clear that existing genotyping mo
 \subsection{Extending the graph}
 \label{sec:extending}
 
-Given an alignment $a_i$, we can edit the graph $G$ so that it includes the alignment and the sequence it represents as an embedded path, $augment(G, a_i) \Rightarrow (G', \Phi)$, such that $translate(p_i, \Phi) \in G'$.
+Given an alignment $a_i$, we can edit the graph $G$ so that it includes the alignment and the sequence it represents as an embedded path, $augment(G, a_i) \to (G', \Phi)$, such that $translate(p_i, \Phi) \in G'$.
 To update the path space of the graph we project all paths, including that of $a_i$, through the translation implied by the augmentation of the graph with $p_i$.
 Any other $a_j$ whose path $p_j$ overlaps $p_i$ would no longer be valid, although it could be projected through the graph translation $\Phi$ as well to express it in the space of the new graph $G'$.
 Updating the graph one alignment at a time is inefficient as we need to build and layer a new translation for each alignment.
-It is simpler to edit the graph in a single step, taking a collection of alignments and including them in the graph, $edit(G, A) \Rightarrow (G', \Phi)$.
+It is simpler to edit the graph in a single step, taking a collection of alignments and including them in the graph, $edit(G, A) \to (G', \Phi)$.
 
 One way to accomplish this is to first take the set of unique mappings represented in the paths of $A$, $\Omega = \{ m_1 \ldots m_{|\Omega|}\}$, and for each $m_i$ cut $n_i$ at the breakpoints where any new variation would need to be added in, adding new nodes to represent the cut portions.
 Then, walking through each alignment we add in unique novel sequences and their linkages to the preexisting nodes or new breakpoints to the graph.
@@ -157,8 +157,8 @@ Equivalently, it is a $\lambda$-minimal augmentation of $G$ required to include 
 We can build a variation graph progressively from a set of sequences.
 If we have a series of $k$ queries $q_1 \ldots q_k$, then we can build a progressive alignment by a series of edit and alignment operations applied to the variation graph.
 First, take the empty graph $G_\emptyset$, to which any alignment will yield a path $p_1$ that has no mappings an which encodes the query sequence $q_1$ as a replacement sequence in the path.
-We then edit the graph to add the sequence using $edit(G_\emptyset, p_1) \Rightarrow G_1$.
-For each subsequent $q_j$ we obtain the next graph by finding the alignment $align(q_j, G_j) \Rightarrow p_j$ and editing the graph with it to yield the next graph $edit(G_j, p_j) \Rightarrow G_{j+1}$ until $j = k$ and we obtain our final graph $G_{\cup \forall q_i}$.
+We then edit the graph to add the sequence using $edit(G_\emptyset, p_1) \to G_1$.
+For each subsequent $q_j$ we obtain the next graph by finding the alignment $align(q_j, G_j) \to p_j$ and editing the graph with it to yield the next graph $edit(G_j, p_j) \to G_{j+1}$ until $j = k$ and we obtain our final graph $G_{\cup \forall q_i}$.
 This simple approach is attractive as it allows the variation graphs to be built from whole sequences using only techniques that are native to the variation graph model itself.
 I later describe an implementation of this process multiple sequence graph alignment, {\tt vg msga}.
 
@@ -169,7 +169,7 @@ We can consider how to build a variation graph using the core operation $edit$.
 First, we build a variation graph from the reference genome $Q_\textbf{ref}$ : $G_\textbf{ref}$.
 This graph contains one path $p_\textbf{ref}$ : $seq(p_\textbf{ref}) = Q_\textbf{ref}$.
 As described in section \ref{sec:genotypes} each locus reported in VCF can be encoded as a set of paths $P_\textbf{vcf} = p_1 \ldots p_V$, each representing a different one of the $V$ alleles in the VCF.
-We now edit the graph to embed these allele paths, $edit(G_\textbf{ref}, P_\textbf{vcf}) \Rightarrow G_\textbf{vcf}$.
+We now edit the graph to embed these allele paths, $edit(G_\textbf{ref}, P_\textbf{vcf}) \to G_\textbf{vcf}$.
 Note that the graph has losslessly encoded the variant input and reference genome, and it is possible to regenerate the VCF file input by walking the positions of $p_\textbf{ref}$ and enumerating the overlapping paths as alleles in VCF format.
 
 For efficiency, we have not implemented VCF to variation graph conversion with specifically this algorithm, but instead build up $G_\textbf{vcf}$ by walking along the reference genome $Q_\textbf{ref}$ and processing each locus independently.
@@ -199,7 +199,7 @@ Although haplotype sets are equivalent to large collections of paths, we term th
 
 A reference-based RNA splicing graph is usually expressed as a set of alignments, perhaps as named intervals in BED or the General Feature Format (GFF).
 As with the generic VCF generation algorithm, we can convert the transcripts to alignments $A$ relative to the graph.
-Then we can then embed the transcript paths in the graph $edit(G_\textbf{ref}, A) \Rightarrow G_\textbf{splice}$.
+Then we can then embed the transcript paths in the graph $edit(G_\textbf{ref}, A) \to G_\textbf{splice}$.
 Any transcript in our set is thus encoded by the graph, and can be matched to it directly with alignment.
 We also allow for novel isoforms with local similarity to the known set.
 
@@ -228,8 +228,8 @@ Variation graphs do not support such a feature in their basic definition, as it 
 This process is known as \emph{bluntification}, as the edges lose information and sequences given by traversing the graph are represented directly in the concatenation of node sequences.
 
 If we reduce an overlap between a pair of nodes, it will render other overlaps on the same nodes incorrect.
-Thus it is essential that the bluntification algorithm work by the reduction of sets of overlaps on edges which are transitively closed by connection to the same ends of each node, $net(e_{ij}) \Rightarrow \forall e_{i*} \in G \cup \forall e_{*j} \in G$, considering both strands of the graph when doing so.
-For each net we apply a function $pinch(net(e_{ij})) \Rightarrow G_{\textbf{pinch}_{ij}}$, which reduces the overlaps between the nodes in the net into a blunt-edged variation graph.
+Thus it is essential that the bluntification algorithm work by the reduction of sets of overlaps on edges which are transitively closed by connection to the same ends of each node, $net(e_{ij}) \to \forall e_{i*} \in G \cup \forall e_{*j} \in G$, considering both strands of the graph when doing so.
+For each net we apply a function $pinch(net(e_{ij})) \to G_{\textbf{pinch}_{ij}}$, which reduces the overlaps between the nodes in the net into a blunt-edged variation graph.
 We then link $G_{\textbf{pinch}_{ij}}$ back into the rest of the graph by connecting with the inbound links to each node involved in the net.
 We may thus rewrite the input overlap graph as a variation graph.
 
@@ -397,7 +397,7 @@ We store the path $p_i = m_1 \ldots m_{|p_i|}$ by decomposing its mappings into 
 To allow rank and select queries on the node ids, we can store $p_{i_\textbf{ids}}$ in a wavelet tree, although in practice performance is greatly improved by also recording a minimum node id, so as to decrease the alphabet size of the wavelet tree, which has a large effect on WT size.
 So that we may transform nodes to path positions, we use an integer vector to store a path position for each node traversal in the path, $p_{i_\textbf{pos}}$.
 To go from path offset to node, we build a bitvector that marks the beginning of each node traversal in the path in a manner similar to that used to mark the sequence beginning of each node in $S_\textbf{iv}$, such that $p_{i_\textbf{offset}}$ is a bitvector of length $\sum_{j=1}^{|p_i|} |seq(p_i[j])|$ where we have marked 1 for each node start in the path, $p_{i_\textbf{offset}}[j] = \left( 1 \iff \exists n_k \in p : j = \sum_{m=1}^{k} |seq(p_i[m])| \right) \lor 0$.
-By implementing $p_{i_\textbf{offset}}^{rank_1}$ we can find the node at a given path position $\mathcal{Q}$ by $p_{i_\textbf{offset}}^{rank_1}(\mathcal{Q}) \Rightarrow j : \left( \sum_{k=1}^{j} |seq(p_i[k])| \leq \mathcal{Q} \land \sum_{k=1}^{j+1} |seq(p_i[k])| > \mathcal{Q} \right)$.
+By implementing $p_{i_\textbf{offset}}^{rank_1}$ we can find the node at a given path position $\mathcal{Q}$ by $p_{i_\textbf{offset}}^{rank_1}(\mathcal{Q}) \to j : \left( \sum_{k=1}^{j} |seq(p_i[k])| \leq \mathcal{Q} \land \sum_{k=1}^{j+1} |seq(p_i[k])| > \mathcal{Q} \right)$.
 We can also find the position of the $j$th node in a path as $p_{i_\textbf{offset}}^{select_1}(j)$.
 A CSA and rank dictionary $P_\textbf{csa}$ and $P_\textbf{name}^{rank_1}$ map from path name to internal rank of the path in $P$, which ensures maximum scalability of the path set names.
 
@@ -498,7 +498,7 @@ The GBWT can thus benefit from a formulation in similar positional terms as thos
 The isolation of each node's context can also allow the construction of the GBWT to be completed in parallel over isolated segments of the variation graph, such as separate chromosomes, and these may be merged easily.
 
 In the GBWT we break the full FM-index into per-node records, each of which encodes a header consisting of a description of the local edge transition alphabet $\Sigma_{n_i}$ through which the graph topology is maintained, and a body $BWT_{n_i}$ which is the subset of the full BWT specific to paths traversing $n_i$.
-The GBWT supports essential FM-index operations including: $find(X) \Rightarrow [sp, ep]$ yielding the lexicographic range of suffixes starting with pattern $X$; $locate(sp, ep) \Rightarrow$ paths occuring in $SA[sp, ep]$; and $extract(j) \Rightarrow p_j$ which returns the $j$th path in the graph.
+The GBWT supports essential FM-index operations including: $find(X) \to [sp, ep]$ yielding the lexicographic range of suffixes starting with pattern $X$; $locate(sp, ep) \to$ paths occuring in $SA[sp, ep]$; and $extract(j) \to p_j$ which returns the $j$th path in the graph.
 By encoding all paths in both orientations, the GBWT can be treated as a kind of FMD-index for haplotypes, allowing bidirectional search.
 In principle, this means that the GBWT turn supports MEM-based haplotype matching, which has potential uses in genotype imputation, phasing, association mapping, and other population genetic and evolutionary assays.
 
@@ -586,7 +586,7 @@ We then return the best alignment, or multiple candidates if multiple mappings a
 
 \subsection{Distance estimation}
 %*1p 1h*
-To cluster our MEMs we require a distance function that returns the minimum distance between any two positions $dist(b_i, b_j) \Rightarrow \min_{\forall p \in N \times N}{|p|} : pos(p[1]) = b_i \land pos(p[|p|]) = b_j$.
+To cluster our MEMs we require a distance function that returns the minimum distance between any two positions $dist(b_i, b_j) \to \min_{\forall p \in N \times N}{|p|} : pos(p[1]) = b_i \land pos(p[|p|]) = b_j$.
 Distance measurement between nodes in a variation graph is non-trivial, with exact solutions to the problem theoretically requiring $O(E \log \log L)$ where $L = \max_{\forall n_i \in N} |n_i|$ is the maximum node length \cite{karlsson1983mlog}.
 Precomputation of the full set of distances would thus require $O(N^2 E \log \log L)$ time and $O(N^2)$ space, which is infeasible for any large graph.
 Many variation graphs are mostly linear, which we can exploit to build an approximate distance metric.
@@ -974,7 +974,7 @@ Algorithms in graph theory are frequently based on graph transformations, and I 
 
 \subsection{Edit}
 
-As discussed in section \ref{sec:extending}, the extension of a variation graph to include new sequences and paths can be thought of as a transformation yielding a bijection between the new and old graphs $edit(G, A) \Rightarrow (G', \Phi)$.
+As discussed in section \ref{sec:extending}, the extension of a variation graph to include new sequences and paths can be thought of as a transformation yielding a bijection between the new and old graphs $edit(G, A) \to (G', \Phi)$.
 The particular implementation of this editing process is worth considering, as the variation graph data model has a number of particular features which add complexity to editing.
 The main issue is that nodes represent more than a single character.
 If nodes did represent a single character, then nodes are basically atomic through graph extension.
