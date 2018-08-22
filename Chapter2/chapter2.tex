@@ -134,7 +134,7 @@ Any other $a_j$ whose path $p_j$ overlaps $p_i$ would no longer be valid, althou
 Updating the graph one alignment at a time is inefficient as we need to build and layer a new translation for each alignment.
 It is simpler to edit the graph in a single step, taking a collection of alignments and including them in the graph, $edit(G, A) \Rightarrow (G', \Phi)$.
 
-One way to accomplish this is to first take the set of unique mappings represented in the paths of $A$, $\Omega = \{ m_1 \ldots m_{|\Omega|}\}$, and for each $m_i$ edit $n_i$ at the breakpoints where any new variation would need to be added in.
+One way to accomplish this is to first take the set of unique mappings represented in the paths of $A$, $\Omega = \{ m_1 \ldots m_{|\Omega|}\}$, and for each $m_i$ cut $n_i$ at the breakpoints where any new variation would need to be added in, adding new nodes to represent the cut portions.
 Then, walking through each alignment we add in unique novel sequences and their linkages to the preexisting nodes or new breakpoints to the graph.
 This process will disrupt the identifier space of the nodes and edges of the graph, but it naturally yields a translation that can be used as described in section \ref{sec:translation}.
 Note that both alignments and genotypes are based on paths, so this mechanism can be used to extend the graph based on any sequence level differences that we observe either through alignment or variant calling.
@@ -966,10 +966,31 @@ This simplistic view is central to many potential applications of {\tt vg}, whic
 The linear scaling of the algorithm should allow it to be applied to whole genomes, provided suitable front-end visualization software can be built, such as in a web interface.
 
 \section{Graph mutating algorithms}
-%*0.5p 0.5h*
+
+Traversing the topology of the graph and querying its sequence space are important operations when using variation graphs as reference systems.
+But to build these graphs, we need to be able to modify them.
+Algorithms in graph theory are frequently based on graph transformations, and I have discussed some of them in the context of assembly and whole genome alignment.
+{\tt vg} implements many algorithms that alter the graph, but a number are of importance to its development as a system for resequencing, and I detail them here.
 
 \subsection{Edit}
-%*1p 1h*
+
+As discussed in section \ref{sec:extending}, the extension of a variation graph to include new sequences and paths can be thought of as a transformation yielding a bijection between the new and old graphs $edit(G, A) \Rightarrow (G', \Phi)$.
+The particular implementation of this editing process is worth considering, as the variation graph data model has a number of particular features which add complexity to editing.
+The main issue is that nodes represent more than a single character.
+If nodes did represent a single character, then nodes are basically atomic through graph extension.
+This approach is that used by POA.
+
+Editing a ``basepair'' graph $G = (N, E, P) : \forall n \in N |seq(n)| = 1$ is much simpler.
+We walk through the alignments to it $A = a_1\ldots a_{|A|}$, adding novel bases represented by the alignment ($seq(A) \notin G = N_A$) as new nodes.
+Then for each alignment $a_i$, we add edges connecting all of the nodes by edges in the order they would be traversed by the path of the alignment embedded in the graph $p_{a_i} \in G'$, yielding $E_A$.
+Finally, we add paths representing the embedded alignments $P_A$.
+The resulting graph unifies these additions $G' = (N \cup N_A, E \cup E_A, P \cup P_A)$.
+
+To achieve lower representation costs in graphs with sparse variation, we compress the graph so that nodes may have $seq(n_i) > 1$ and thus we must consider the editing process hierarchically.
+We first modify graph $G$ so that every novel sequence will be added at the start or end of a node.
+We do this by breaking nodes into multiple derivative nodes when they overlap mappings that do not match the graph using $break(G, A) \to (G', \Phi)$.
+For instance, if $seq(n_i) = {\tt GATTACA}$ and we have a SNP ${\tt T} \to {\tt C}$ at offset 4, we would obtain $n_i \to n_i', n_i'', n_i''' : seq(n_i') = {\tt GAT} \land seq(n_i'') = {\tt T} \land seq(n_i'') = {\tt ACA}$.
+We can then apply $translate(A, \Phi) \to A'$, and add edges to $G'$ implied by the alignments as we would when editing a graph with single character nodes.
 
 \subsection{Pruning}
 %*2.5p 3h*
