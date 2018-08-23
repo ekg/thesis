@@ -901,7 +901,7 @@ The resulting layout tends to look like a kind of multiple alignment matrix, as 
 \begin{figure}[htbp!] 
 \centering    
 \includegraphics[width=1.0\textwidth]{Chapter2/Figs/Vector/vg_view_dp_H-3136_dot.pdf}
-\caption{The beginning of a variation graph built by progressive assembly of the GRCh38 haplotypes in HLA gene H-3136 visualized using {\tt dot}.}
+\caption[Hierarchical visualization with Graphviz's {\tt dot}]{The beginning of a variation graph built by progressive assembly of the GRCh38 haplotypes in HLA gene H-3136 visualized using {\tt dot}.}
 \label{fig:vg_view_dot}
 \end{figure}
 
@@ -916,7 +916,7 @@ This can still capture the overall structure of the graph as seen in figure \ref
 \begin{figure}[htbp!] 
 \centering    
 \includegraphics[width=1.0\textwidth]{Chapter2/Figs/Vector/vg_view_dpS_H-3136_neato.pdf}
-\caption{A larger region of the same variation graph in figure \ref{fig:vg_view_dot} rendered using {\tt neato}.}
+\caption[Force-directed layout with Graphviz's {\tt neato}]{A larger region of the same variation graph in figure \ref{fig:vg_view_dot} rendered using {\tt neato}.}
 \label{fig:vg_view_neato}
 \end{figure}
 
@@ -930,7 +930,7 @@ Figure \ref{fig:vg_view_bandage} shows the properties of this technique using th
 \begin{figure}[htbp!] 
 \centering    
 \includegraphics[width=1.0\textwidth]{Chapter2/Figs/Vector/vg_view_H-3136_Bandage.pdf}
-\caption{The graph from figure \ref{fig:vg_view_neato} rendered using {\tt Bandage}.}
+\caption[Force-directed layout with Bandage]{The graph from figure \ref{fig:vg_view_neato} rendered using {\tt Bandage}.}
 \label{fig:vg_view_bandage}
 \end{figure}
 
@@ -954,7 +954,7 @@ This technique is implemented as {\tt vg viz}, and an example rendering is given
 \begin{figure}[htbp!] 
 \centering    
 \includegraphics[width=1.0\textwidth]{Chapter2/Figs/Vector/vg_viz_H-3136.pdf}
-\caption{The same variation graph in figure \ref{fig:vg_view_dot} rendered using {\tt vg viz}.}
+\caption[Linearized variation graph visualization]{The same variation graph in figure \ref{fig:vg_view_dot} rendered using {\tt vg viz}.}
 \label{fig:vg_viz}
 \end{figure}
 
@@ -994,8 +994,50 @@ We can then apply $translate(A, \Phi) \to A'$, and add edges to $G'$ implied by 
 
 \subsection{Pruning}
 %*2.5p 3h*
-\subsubsection{$k$-mer complexity reduction}
+
+The number of paths in a sequence graph grows exponentially with the number of variable sites.
+As I have discussed, this causes problems for alignment algorithms and graph sequence indexing.
+While we can use efficient disk-backed index construction algorithms like GCSA2 to mitigate the effects of this exponential scaling, only a handful of dense clusters of variation in the graph can increase the memory requirements of path enumeration beyond any reasonable level.
+Thus there is no reasonable choice but to restructure the graph to limit recombinations in the global sequence index.
+
+We have explored two main techniques for the reduction of graph complexity.
+In the first, we prune regions of the graph which have high path complexity using a depth-first search (DFS).
+We can optionally add back known haplotypes, in order to mitigate the loss of information from the index.
+For VCF-based VGs, where we have haplotype panels, the performance of local alignment is unaffected by the topological complexity, so we only need to apply this pruning to the graph input to GCSA2 indexing.
+In assembly graphs, we find that some nodes which represent repeats can have extremely high degree, which causes problems both for indexing and local alignment to the graph.
+There, we must remove these nodes in order to use the graph at all.
+
+\subsubsection{$k$-mer ${\cal x}$-edge complexity reduction}
+
+In $k$-mer complexity reduction, we enumerate the $k$-mers of the graph, removing edges when a given $k$-mer crossing them would cross $\geq {\cal x}$ edges.
+This can be done by creating a subgraph through a destructive complexity reduction filter, $prune(G, k, {\cal x}) \to G_\textbf{simple}$
+We use the same $k$-mer enumeration algorithm that generates a DBG from the variation graph.
+For each offest in each node $n_i$ and $\overline{n_i}$, we run a DFS forward until we have read $k$ characters of the graph.
+During the pruning operation, instead of emitting the $k$-mers with their contexts, we stop the DFS when we have crossed ${\cal x}$ edges.
+We record the edge in $E_\textbf{complex} = \{ e_{ij} : \exists p \in G |p| > {\cal x} \land node(p_{|p|-1} = i \land node(p_{|p|}) = j \}$.
+We thus derive the subgraph from the current graph by removing the complexity-inducing edges: $(N, E \setminus E_\textbf{complex}, P) \to G_\textbf{simple}$.
+It can be helpful to remove any short subgraphs that result from this pruning, which can be done with a linear subgraph enumeration algorithm and the measurement of the sequence length of each.
+A subgraph $G_\textbf{sub} \in G_\textbf{simple} : \forall_{e_{ij} \in N_\textbf{sub}} n_i \in N_\textbf{sub} \land n_j \in N_\textbf{sub}$ must have length $\sum_{\forall n \in N_\textbf{sub}} |seq(n)| \geq {\cal J}$.
+By default we use $k=24$, ${\cal x}=3$, and ${\cal J}=33$.
+
+\subsubsection{Filling gaps with haplotypes}
+
+Although removing complex regions will reduce the number of recombinant haplotypes represented by the graph, but it will also remove known haplotypes.
+We can retain the complexity reduction without losing sequences in known haplotypes by replacing the pruned regions in $G_\textbf{simple}$ with unfolded copies of each haplotype sequence.
+When we have a single reference path, we can accomplish this by overlaying $G_\textbf{simple}$ and $G_\textbf{ref}$.
+However, this will not achieve the desired result with even two overlapping paths, as where these differ they would reintroduce the re-combinatorial explosion that we hope to resolve with pruning.
+An alternative is to copy the haplotypes in the GBWT index that stretch from one border to the other of each removed region into the removed subgraphs in $G_\textbf{simple}$.
+Doing so, we must preserve a mapping between the new nodes and the previous underlying ones in $G$.
+This allows matches to the haplotypes to be converted into matches in the base graph.
+The exact method by which this filling implemented is described in \cite{siren2018haplotype}.
+
 \subsubsection{High degree filter}
+
+As they separate dense variation into heterozygous bubbles, assembly graphs may feature greater ``smoothness'' than VCF-based graphs locally.
+But, in the context of repeats, they can contain nodes with exceptionally high degree.
+These highly-connected regions introduce degeneracy in the path space of the graph, and cause problems for $k$-mer enumeration and GCSA2 indexing.
+Furthermore, the local alignment methods in VG do not directly support alignment through such dense regions.
+To filter out high-degree regions, we remove nodes with more than ${\cal D}$ edges.
 
 \subsection{Graph sorting}
 %*1p 1h*
