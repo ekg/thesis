@@ -977,10 +977,10 @@ Algorithms in graph theory are frequently based on graph transformations, and I 
 As discussed in section \ref{sec:extending}, the extension of a variation graph to include new sequences and paths can be thought of as a transformation yielding a bijection between the new and old graphs $edit(G, A) \to (G', \Phi)$.
 The particular implementation of this editing process is worth considering, as the variation graph data model has a number of particular features which add complexity to editing.
 The main issue is that nodes represent more than a single character.
+
 If nodes did represent a single character, then nodes are basically atomic through graph extension.
 This approach is that used by POA.
-
-Editing a ``basepair'' graph $G = (N, E, P) : \forall n \in N |seq(n)| = 1$ is much simpler.
+It is simple to edit a ``basepair'' graph of this type: $G = (N, E, P) : |N| = \sum_{\forall n \in N} |seq(n)|$.
 We walk through the alignments to it $A = a_1\ldots a_{|A|}$, adding novel bases represented by the alignment ($seq(A) \notin G = N_A$) as new nodes.
 Then for each alignment $a_i$, we add edges connecting all of the nodes by edges in the order they would be traversed by the path of the alignment embedded in the graph $p_{a_i} \in G'$, yielding $E_A$.
 Finally, we add paths representing the embedded alignments $P_A$.
@@ -1007,7 +1007,7 @@ For VCF-based VGs, where we have haplotype panels, the performance of local alig
 In assembly graphs, we find that some nodes which represent repeats can have extremely high degree, which causes problems both for indexing and local alignment to the graph.
 There, we must remove these nodes in order to use the graph at all.
 
-\subsubsection{$k$-mer ${\cal x}$-edge complexity reduction}
+\subsubsection{$k$-mer ${\cal x}$-edge crossing complexity reduction}
 
 In $k$-mer complexity reduction, we enumerate the $k$-mers of the graph, removing edges when a given $k$-mer crossing them would cross $\geq {\cal x}$ edges.
 This can be done by creating a subgraph through a destructive complexity reduction filter, $prune(G, k, {\cal x}) \to G_\textbf{simple}$
@@ -1037,14 +1037,99 @@ As they separate dense variation into heterozygous bubbles, assembly graphs may 
 But, in the context of repeats, they can contain nodes with exceptionally high degree.
 These highly-connected regions introduce degeneracy in the path space of the graph, and cause problems for $k$-mer enumeration and GCSA2 indexing.
 Furthermore, the local alignment methods in VG do not directly support alignment through such dense regions.
-To filter out high-degree regions, we remove nodes with more than ${\cal D}$ edges.
+This filter is relatively simple, in that we remove nodes with more than ${\cal D}$ edges linking them to the graph, yielding $G_\textbf{prune} : {\cal D} > |\{ e_{ij} \cup e_{ji} \cup e_{\overline{i}j} \cup e_{j\overline{i}} \} \forall i,j \in N_\textbf{prune}|$.
+
+It is not necessary that our local alignment suffers from high-degree nodes.
+The problem is that GSSW is provided an alignable graph that is an extracted subset of the full graph.
+If this subgraph is extracted using context expansion in the graph, then high-degree nodes will generate extremely large subgraphs.
+One solution would be to use the bit-parallel string to graph alignment approach in \cite{rautiainen2018bit}, as this achieves optimal bounds an the size of transformed graph to which we align.
+Alternatively, the graph exploration should be more directly linked to the alignment process.
+The X-drop aligner {\tt dozeu} could easily be adapted to this approach, as the X-drop parameter would provide a natural limit to the graph exploration.
+Such approaches may allow us to tolerate a larger ${\cal D}$, but it seems unlikely that they will allow alignment to be driven through the most-tangled areas of the graph without a large performance penalty relative to graphs with lower maximum degree.
 
 \subsection{Graph sorting}
 %*1p 1h*
 
-\subsection{Graph simplification}
-%*0.5p 0.5h*
+Order and orient the nodes in the graph using a topological sort.
+The sort is guaranteed to be machine-independent given the initial graph's node and edge ordering.
+The algorithm is well-defined on non-DAG graphs, but the order is necessarily not a topological order.
+To do this we use a bidirected adaptation of Kahn's topological sort \cite{kahn1962topological}, which is extended to handle graph components with no heads or tails.
+This algorithm can be understood as a kind of seeded depth first search through the graph.
+Where the graph has nodes which are pure heads, it begins there
+Otherwise, a set of seed nodes which are stably selected given a particular graph are used to begin the sort.
+The details of this procedure are provided in algorithm \ref{alg:pseudotoposort}.
 
+If the reference graph has been sorted, then we can use the given order to generate node identifiers.
+These then allow us to efficiently sort subsets of the graph during read mapping.
+The extracted subgraph may be sorted by id, and if $\exists e_{ij} : id(n_i) > id(n_j)$ then we know a cycle must exist.
+The graph can then be passed to the DAGification procedure.
+This allows us to avoid expensive sort operations during read alignment.
+
+Similarly, the sort allows us to project data in the context of the graph into a single dimension.
+Provided the graph is manifoldly partially ordered, this projection preserves local structures, which is a desirable property.
+This makes the sort applicable to visualization techniques as in figure \ref{fig:vg_viz}.
+
+\begin{algorithm}
+  \caption[Pseudo-topological sort]{Pseudo-topological sort}
+  \label{alg:pseudotoposort}
+  \begin{algorithmic}
+    \State $G = (N, E, P)$
+    \Comment{A copy of our input graph which we will destructively modify}
+    \State $L \gets [ \ldots ]$
+    \Comment{Stores the pseudo-topological order}
+    \State $S \gets \emptyset$
+    \Comment{Set of nodes which have been oriented but not yet traversed}
+    \State $V \gets \{ n_i \} \in N : \not \exists e_{ji} \forall n_j \in N$
+    \Comment{We start from the head nodes of the graph}
+    \If{$V = \emptyset$}
+    \Comment{If there are no head nodes, we use ``seed'' nodes}
+    \State $V \gets \text{Stably-selected seed nodes} \in N$
+    \EndIf
+    \While{$V \neq \emptyset$}
+      \State $n \gets n \in V$
+      \Comment{Select a seed node}
+      \State $V \gets V \setminus \{n\}$
+      \Comment{Remove it from the input node set $V$}
+      \State $S \gets S \cup \{n\}$
+      \Comment{Store it in our working set $S$}
+      \While{$S \neq \emptyset$}
+        \State $n_i \gets n_i \in S$
+        \Comment{Remove an oriented node from $S$}
+        \State $S \gets S \setminus \{n_i\}$
+        \State $L \gets [L[1] \ldots L[|L|], n_i]$
+        \Comment{Append it to our output order $L$}
+        \For{$\forall n_j : e_{ij} \in E$}
+          \State $E \gets E \setminus \{e_{ij}\}$
+          \Comment{Remove the edge from our edge set}
+          \If{$\not \exists e_{kj} \forall k \in N$}
+          \Comment{$n_j$ has no other edges to that side}
+          \If{$e_{i\overline{j}}$}
+            \State $n_j \gets \overline{n_j}$
+            \Comment{Orient $n_j$ so the side the edge comes to is first}
+          \EndIf
+          \State $N \gets N \setminus \{ n_j \}$
+          \Comment{Remove $n_j$ from $N$}
+          \State $S \gets S \cup \{ n_j \}$
+          \Comment{Insert $n_j$ into $S$}
+          \Else
+          \Comment{This helps start at natural entry points to cycles}
+            \State $V \gets V \cup \{ n_j \}$
+            \Comment{Record $n_j$ as a place to start when $S$ is empty}
+          \EndIf
+        \EndFor
+      \EndWhile
+    \EndWhile \\
+  \Return{$L$} \Comment{Return our pseudo-topologically sorted order and orientation}
+\end{algorithmic}
+\end{algorithm}
+ 
+
+\subsection{Graph simplification}
+
+Assembly algorithms often employ a \emph{bubble popping} phase, in which small bubbles, which are graph components connected to the rest of the graph through a single source and sink node, are replaced by linear components representing the most-likely path through the bubble given the read data.
+In {\tt vg} we implement a similar technique based on the bubble decomposition of the graph.
+Unlike assembly graph bubble popping, we must retain information about the embedded paths and annotations in the variation graph.
+Simplification has a number of potential applications, for instance in reducing the complexity of visualizations of large variation graphs.
 
 \section{Graphs as basis spaces for sequence data}
 \label{sec:basis_space}
