@@ -539,6 +539,7 @@ The sorted disk-backed array does have the useful property of allowing prefix qu
 Finally, on the networked storage available in my instutitional setting, the construction costs for disk-backed index models were usually much worse than those of the XG and GCSA2 models.
 
 \subsection{Coverage index}
+\label{sec:coverage_index}
 
 As variation graphs can remove specific bias towards any particular sequence, they imply a uniform vector space in which all samples can be placed for later analysis.
 One reductive form that this can take is a coverage map, which is similar to the labeling required to implement ``colors'' on a DBG.
@@ -1133,20 +1134,50 @@ Simplification has a number of potential applications, for instance in reducing 
 
 \section{Graphs as basis spaces for sequence data}
 \label{sec:basis_space}
-%*2p 2h*
+
+A reference genome allows us to interpret new sequences.
+We can consider coverage over the reference genome, but this is incomplete because new sequences may contain variation that we have not seen.
+Furthermore, the genome of the new sample may be diploid or polyploid, meaning the genomic state of the sample at a given locus is not trivially expressed as a single sequence.
+This leads to the need for variant calling against linear reference genomes.
+
+These steps do not change when our reference is a variation graph, but the scope in which they are relevant may be adjusted to meet our analysis needs.
+If we can construct a graph which embeds all of the sequences of all genomes which we are interested in, then all sequences in our study are represented in the sequence space of the graph.
+This resolves the separation between reference sequence and variation that is present in standard resequencing.
+It also suggests that the intermediate steps in resequencing may be made redundant.
+If variation is already available during alignment then there is no need for a variant detection phase.
+
+However, if the graph does not include variation in our samples, then variant calling is required.
+In {\tt vg} we have implemented several methods to do so.
+Similarly, we have implemented coverage transformations of read sets that may be used directly in downstream analyses.
 
 \subsection{Coverage maps}
-%*1p 1h*
+
+Numerous population genetic analyses are based on matrix transformations of a collection of genomes.
+Such models can be used to infer population structure and phylogeny, as well as to associate phenotypes to features in the genome such as causative variants.
+If the variation graph used as a reference contains all sequences relevant to our anaylsis, then a matrix of per-base coverage of the graph by sample will provide nearly-full information to downstream analyses.
+We cannot observe structural variation that does not result in coverage changes, such as balanced events like inversions.
+Also, some local patterns of variation between successive small variation will not be differentiable.
+If we were to annotate edge coverages, this method would produce a result equivalent in information content to a markov model.
+It is thus clear that any coverage based index will be lossy relative to the full read set.
+However, the lossiness reduces the information cost of storing and processing these coverage maps.
+As I described in section \ref{sec:coverage_index}, in {\tt vg} I developed an efficent method to accumulate coverage information of this kind across the graph, but I have limited experimental results describing its utility.
+
+\subsection{Bubbles}
+
+In a sequence graph, a \emph{bubble} is a pair of paths which start and end at the same node \cite{zerbino2008velvet}.
+Bubbles encompass our intuition about genetic variation in graphs.
+A homologous sequence corresponding to the common start and end nodes in the bubble flanks two or more alternative alleles in the middle.
+They can nest, giving rise to the idea of a \emph{superbubble}, which is a directed, acyclic component of a graph with a single head and tail node \cite{onodera2013detecting,brankovic2016linear}.
+Internally, the superbubble may contain more bubbles.
+Along with Benedict Paten and others, I worked to further generalize the idea of a genetic site to work on arbitrary bidirectional sequence graphs \cite{paten2018superbubbles}.
+Paten observed that the tree of bubbles Cactus graph transformation of a variation graph corresponded to the standard concept of superbubbles.
+However, in the case of an unordered graph there can be bubbles which have a single head and tail node, and we called these \emph{ultrabubbles}.
 
 \subsection{Variant calling}
 %*3p 2h*
 
-\subsection{Bubble decompositions and likelihood spaces}
-%*2p 4h*
-
 \subsection{MEM matching to the bidirectional GBWT}
 %*1p 3h*
-
 
 \section{Contributions to related computational methods}
 
