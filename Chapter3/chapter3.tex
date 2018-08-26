@@ -51,15 +51,70 @@ Finally, I demonstrate that the data models and indexes in {\tt vg} are capable 
 \section{Human}
 %*0.5p 0.5h*
 
+For a species such as human, with only 0.1\% nucleotide divergence on average between individual genome sequences, over 90\% of 100-bp reads will derive from sequence exactly matching the reference.
+Therefore, new mappers should perform at least as well for linear reference mapping as the current standard, which we take to be {\tt bwa mem} with default parameters.
+We show that vg does this, and then that vg maps more informatively around divergent sites.
+
 \subsection{1000GP graph construction and indexing}
 %*3p 3h*
+
+The final phase of the 1000 Genomes Project (1000GP) produced a data set of ~80 million variants in 2,504 humans 16.
+We made a series of vg graphs containing all variants or those with minor allele frequency thresholds at 0.1\%, 1\%, or 10\%, as well as a graph corresponding to the standard GRCh37 linear reference sequence without any variation.
+The full vg graph uses 3.92 GB when serialized to disk, and contains 3.181 Gbp of sequence, which is exactly equivalent to the length of the input reference plus the length of the novel alleles in the VCF file.
+Complete file sizes including indices range from 25 GB to 63 GB, with details including build and mapping times given in table \ref{table:1000GP}.
+
+\begin{table}[h]
+\begin{tabular}{l||c|cc|cc|cc}
+\itshape Reference set & \itshape N vars & \multicolumn{2}{c}{\itshape vg} & \multicolumn{2}{c}{\itshape index} & \multicolumn{2}{c}{\itshape search time}\\
+& \itshape (M) & \itshape time & \itshape size & \itshape time & \itshape size & \itshape  PE & \itshape SE\\
+\hline
+GRCh37 & 0 & 1:09:54 & 1.76 & 23:30:41 & 25.11 & 33:34 & 28:33 \\
+1000GP AF0 & 84.8 & 3:42:01 & 3.92 & 51:05:07 & 63.28 & 45:10 & 39:46 \\
+1000GP AF0.001 & 30.2 & 2:00:08 & 2.58 & 31:45:12 & 38.10 & 39:33 & 32:53 \\
+1000GP AF0.01 & 14.3 & 1:35:02 & 2.17 & 27:18:53 & 30.94 & 33:13 & 27:09\\
+1000GP AF0.1 & 6.8 & 1:23:04 & 1.97 & 26:06:38 & 27.79 & 32:35 & 28:43 \\
+\end{tabular}
+\caption{Numbers of variants, file sizes in gigabytes (GB) and build and search times in hours:minutes:seconds for various human vg graphs and associated indexes. Reference sets are the linear reference GRCh37, the full 1000 Genomes Project set 1000GP AF0, and subsets of 1000GP AF0 including only variants with allele frequency above thresholds 0.001 (0.1\%), 0.01 (1\%) and 0.1 (10\%) respectively.  The number of variants in millions for each of these data sets is shown.  Search times are for 10 million 150+150bp read pairs simulated from NA24385.
+}
+\label{table:1000GP}
+\end{table}
 
 \subsection{Simulations based on phased HG002}
 \label{sec:1000GP_sim}
 %*2p 2.5h*
 
+We next aligned ten million 150-bp paired-end reads simulated with errors from the parentally phased haplotypes of an Ashkenazi Jewish male NA24385, sequenced by the Genome in a Bottle (GIAB) Consortium \cite{zook2016extensive} and not included in the 1000GP sample set, to each of these graphs as well as to the linear reference using {\tt bwa mem}.
+Figure 2a shows the accuracy of these alignments compared with bwa mem for the 1\% allele frequency threshold graph, in terms of receiver operating characteristic (ROC) curves.
+Comparable plots for other data are given in (Supplementary Fig. 1).
+
+Reads that come from parts of the sequence without differences from the reference (middle panel of Fig. 2a) mapped slightly better to the reference sequence (green) than to the 1000GP graph (red), which we attribute to a combination of the increase in options for alternative places to map reads provided by the variation graph, and the fact that we needed to prune some search index k-mers in the most complex regions of the graph.
+As expected, this difference increased as the allele frequency threshold was lowered and more variants were included in the graph (Supplementary Fig. 1).
+
+For reads that were simulated from segments containing non-reference alleles (~10\% of reads), which are the reads relevant to variant calling, vg mapping to the 1000GP graph (red) gave better performance than either vg (green) or bwa mem (blue) mapping to the linear reference (Fig. 2b), because many variants present in NA24385 are already represented in the 1000GP graph.
+This is particularly clear for single-end mapping, since many paired-end reads are rescued by the mate read mapping.
+Overall, vg performed at least as well as bwa mem, even on reference-derived reads, and substantially better on reads containing non-reference variants.
+
+\subsection{Aligning and analyzing a real genome}
+
+We also mapped a real human genome read set with ~50× coverage of Illumina 150-bp paired-end reads from the NA24385 sample to the 1000GP graph. vg produced mappings for 98.7\% of the reads, 88.7\%
+with reported mapping quality score 30 on the Phred scale, and 76.8\% with perfect, full-length sequence identity to the reported path on the graph.
+For comparison, we also used vg to map these reads to the linear reference.
+Similar proportions of reads mapped (98.7\%) and with reported quality score 30 (88.8\%), but considerably fewer with perfect identity (67.6\%).
+Markedly different mappings were found for 1.0\% of reads (0.9\% mapping to widely separated positions on the two graphs, and 0.1\% mapping to one graph but not the other).
+The reads mapping to widely separated positions were strongly enriched for repetitive DNA. For example, the linear reference mappings for 27.5\% of these read pairs overlapped various types of satellite DNA identified by RepeatMasker, compared to 3.0\% of all read pairs.
+
+To illustrate the consequences of mapping to a reference graph rather than a linear reference, we stratified the sites independently called as heterozygous in NA24385 by deletion or insertion length (0 for single-nucleotide variants) and by whether the site was present in 1000GP, and measured the fraction of reads mapped to the alternate allele for each category.
+The results show that mapping with vg to the population graph when the variant was present in 1000GP (95.4\% of sites) gave nearly balanced coverage of alternate and reference alleles independent of variant size, whereas mapping to the linear reference either with {\tt vg} or {\tt bwa mem} led to a progressively increasing bias with increasing deletion and (especially) insertion length (Fig. 2b), so that for insertions around 30 bp, a majority of insertions containing reads were missing (there were over twice as many reference reads as alternate reads).
+
 \subsection{Whole genome variant calling experiments}
 %*1p 2h*
+
+We explored the application of {\tt vg} to whole genome alignment and variant calling in the PrecisionFDA challange.
+
+We also explored integration of vg with the recently published GraphTyper \cite{eggertsson2017graphtyper} method, which calls genotypes by remapping reads to a local, partially ordered variation graph built from a VCF file, relying on initial global assignment to a region of the genome by mapping with bwa to a linear reference.
+Therefore, although GraphTyper also scales to the whole human genome because it is essentially a local method, its functionality is complementary to that of vg, which maps to a global variation graph and does not directly call genotypes.
+In experiments where we used vg rather than bwa as the primary mapper for GraphTyper, true positives increased marginally (0.02\% for single-nucleotide polymorphisms (SNPs) and 0.06\% for indels) while false positives increased for SNPs by 0.15\% and decreased for indels by 0.03\%.
+We note, however, that GraphTyper was developed by its authors for {\tt bwa mem} mapping.
 
 \subsection{HGSVC from VCF and progressive alignment of human chromosomes}
 %*2.5p 5h*
@@ -67,6 +122,10 @@ Finally, I demonstrate that the data models and indexes in {\tt vg} are capable 
 \subsection{CHiP-Seq}
 %*1p 1h*
 
+This removal of bias is important when mapping functional genomics data such as ChIP-seq data, where allele-specific expression analysis can reveal genetic variation that affects function but is confounded
+by reference mapping bias \cite{mcdaniell2010heritable}, especially given that read lengths are typically shorter for these experiments.
+We compared mapping with {\tt bwa mem} and {\tt vg} for data set ENCFF000ATK from the ENCODE project \cite{encode2012integrated}, which contains 14.9 million 51-bp ChIP-seq reads for the H3K4me1 histone methylation mark from the NA12878 cell line.
+When mapping with bwa the ratio of reference to alternate allele matches at heterozygous sites was 1.20, whereas with vg to the 1000GP graph the ratio was 1.01, effectively eliminating reference bias.
 
 \section{Ancient DNA}
 %*0.5p 0.5h*
