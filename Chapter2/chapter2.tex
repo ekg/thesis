@@ -1164,20 +1164,56 @@ As I described in section \ref{sec:coverage_index}, in {\tt vg} I developed an e
 
 \subsection{Bubbles}
 
-In a sequence graph, a \emph{bubble} is a pair of paths which start and end at the same node \cite{zerbino2008velvet}.
+In a sequence graph, a \emph{bubble} is a pair of paths which start and end at the same nodes ($s$, $t$) but are otherwise disjoint in the graph \cite{zerbino2008velvet}.
 Bubbles encompass our intuition about genetic variation in graphs.
 A homologous sequence corresponding to the common start and end nodes in the bubble flanks two or more alternative alleles in the middle.
-They can nest, giving rise to the idea of a \emph{superbubble}, which is a directed, acyclic component of a graph with a single head and tail node \cite{onodera2013detecting,brankovic2016linear}.
-Internally, the superbubble may contain more bubbles.
-Along with Benedict Paten and others, I worked to further generalize the idea of a genetic site to work on arbitrary bidirectional sequence graphs \cite{paten2018superbubbles}.
-Paten observed that the tree of bubbles Cactus graph transformation of a variation graph corresponded to the standard concept of superbubbles.
-However, in the case of an unordered graph there can be bubbles which have a single head and tail node, and we called these \emph{ultrabubbles}.
+These structures were first considered only in the process of finding small variation, and it was only in recent years that methods were developed to efficiently enumerate all bubbles of any size in DAGs \cite{birmele2012efficient}.
+
+Bubbles can nest and contain more complicated internal structures between the paths through them.
+The bubble may be generalized to the idea of a \emph{superbubble}, which is a directed, acyclic component of a graph with a single head and tail node \cite{onodera2013detecting}.
+As for bubbles, efficient enumeration of superbubbles is possible in a DAG \cite{brankovic2016linear}.
+The optimal method relies on a recursive topological sort of the graph to structure the nested bubbles.
+Candidate node starts ($s$) and ends ($t$) are found following the definition of a superbubble.
+The set of candidates is then validated by range min queries (RMQ) to produce the set of superbubbles.
+As sort is linear $O(|N| + |E|)$, and the candidate enumeration and RMQ may be implemented on the sorted graph in $O(1)$ each, this yields a linear time algorithm for the enumeration of superbubbles.
+
+The DAG requirement of this method is a significant limitation as it prevents us from directly applying the bubble finding to an arbitrary graph.
+In order to apply the superbubble enumeration to a graph we must first DAGify it.
+In response, along with Benedict Paten and others, I worked to further generalize the idea of a genetic site to work on arbitrary bidirectional sequence graphs \cite{paten2018superbubbles}.
+To formulate a generalization of superbubbles, we introduce the concept of a \emph{snarl}, which is any graph component connected to the rest of the graph by less than two bordering nodes\footnote{In the paper the formulation is based on a biedged graph akin to the Enredo graph, but as we note a node-based formulation is equivalent and matches the other models in this section.}.
+Snarls whose internal separated component are acyclic and do not contain any tips are \emph{ultrabubbles}.
+
+Paten observed that trees embedded in the Cactus graph transformation of a variation graph corresponded to the standard concept of superbubbles.
+Specifically, the cactus graph is transformed into a \emph{cactus tree} in which each simple cycle in the cactus graph becomes a special kind of node.
+Various rootings of this tree may then be used to define a hierarchy of bubbles.
+The bidirectional nature of the variation graph mean that snarls can embed each other in a manner akin to how the twist used to generate a M\"{o}bius strip results in it having a single surface and border.
+In these cases the resulting cactus tree will support multiple ultrabubble tree rootings, and so unlike the bubble and superbubble decompositions for DAGs the ultrabubble decomposition is not complete.
+We can enumerate a subset of these by identifying bridge edges (typically representing tips) in the ``bridge forest'', which is the result of a contraction of the cycles in the cactus graph into a set of top-level cycle representing nodes, and then use them to produce various rootings of the cactus tree.
+
+Ultrabubbles and superbubbles provide a complete framework in which to reason about the hierarchy of variable genetic sites embedded in a graph.
+As such they provide the basis for generic models of genotype inference based on variation graphs which are capable of genotyping any kind of genetic variation, including structural variation as well as nested variation in the same model as SNPs and indels.
 
 \subsection{Variant calling}
-%*3p 2h*
 
-\subsection{MEM matching to the bidirectional GBWT}
-%*1p 3h*
+Given a definition of variable genetic loci in the graph, we can build a genotyping system capable of generating genotype calls in the context of the graph.
+In {\tt vg} we have explored two such methods.
+The first, originally implemented in {\tt vg call}, generalizes the concepts first implemented in {\tt samtools mpileup} to work on the graph.
+A set of alignments are first reduced to pointwise edits against the graph and per base coverage of the graph.
+This graph ``pileup'' is then processed by a genotyping algorithm that considers genetic sites using the ultrabubble model.
+The second model, implemented in {\tt vg genotype}, embeds the alignments in the variation graph using $edit(A, G_\textbf{base}) \to (G_\textbf{aug}, \Phi_{\textbf{aug}\to\textbf{base}})$, and then genotypes across the ultrabubbles of $G_\textbf{aug}$ which are supported by reference paths in $G_\textbf{base}$ or reads.
+As the resulting genotypes are represented as unordered sets of paths in $G_\textbf{aug}$, they are projected back into the coordinate space of $G_\textbf{base}$ using the translation $\Phi_{\textbf{aug}\to\textbf{base}}$.
+
+While principled, the full augmentation model in {\tt vg genotype} is very expensive to compute.
+The pileup model has proven to be more efficient.
+Over time {\tt vg call} has been adjusted to implement a variant of the full graph augmentation model in {\tt vg genotype} where the graph is augmented only with sequences supported by some number of alignments at a given quality threshold.
+Both methods employ a diploid specification of the genotyping model in freebayes \cite{garrison2012haplotype} to develop their posterior estimates of variant quality.
+The generalization of SNP and indel calling to haplotype calling implemented in freebayes corresponds to the same allele model used in both {\tt vg} variant calling methods.
+In all alleles correspond to DNA sequences of arbitrary length, anchored at the ends to the reference genome (in the case of freebayes) or to the rest of the graph (as in the ultrabubbles used in {\tt vg}).
+
+The complexity of running genotyping in the graph has slowed development of these methods.
+Currently they are outperformed by standard variant calling methods based on the linear reference, as indicated by our results in the PrecisionFDA variant calling challenge that I will describe in the next chapter.
+
+%\subsection{MEM matching to the bidirectional GBWT}
 
 \section{Contributions to related computational methods}
 
