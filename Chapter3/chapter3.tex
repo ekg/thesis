@@ -11,7 +11,28 @@
     \graphicspath{{Chapter3/Figs/Vector/}{Chapter3/Figs/}}
 \fi
 
-%*0.5p 1h*
+In the first two chapters I have provided an overview of the theoretical basis of my work and placed it within the history of related approaches.
+Here, I will demonstrate how the methods I develop can aid biological insight in a number of species domains.
+To do so, I will use methods described in chapter 2 as implemented in {\tt vg}.
+
+The small genome of \emph{Saccharomyces cerevisiae} and ready availability of sources for pangenomic data models made it very useful to my development of {\tt vg}.
+I do so for a variety of pangenome constructions and also a variety of read lengths.
+
+However, much interest in bioinformatics is with larger genomes, specifically human.
+I use evaluations based on the human genome to validate the ability of {\tt vg} to scale to large genomes.
+Through simulation and the analysis of real genomes, I show that {\tt vg} yields exactly the same quality of alignment as {\tt bwa mem} with runtime within five to ten-fold slower.
+I develop a variation graph for the reference-guided genome assemblies from the HGSVC project and demonstrate the strong effect of reference bias in ChIP-seq.
+
+One context where reference bias has very significant effects is in the analysis of ancient DNA (aDNA).
+Here short reads and high intrinsic error rates encourage a high rate of reference bias.
+I show that alignment against a pangenome graph ameliorates this issue.
+
+{\tt vg} can be applied to any kind of variation graph.
+To demonstrate the utility of this, I use de Bruijn assemblers to generate reference variation graphs.
+I recreate a classical pangenomic analysis of core and accessory pangenome by analyzing the coverage of alignments mapped to an assembly graph built from 10 \emph{E. coli} strains.
+{\tt vg} enables the full length alignment of reads to a complex assembly graph built from an arctic viral metagenome.
+
+Finally, I demonstrate that the data models and indexes in {\tt vg} are capable of encoding splicing graphs, and that aligning to these splicing graphs allows the direct observation of the transcriptome.
 
 \section{Yeast}
 %*0.5p 0.5h*
@@ -49,6 +70,10 @@
 
 \section{Ancient DNA}
 %*0.5p 0.5h*
+With aDNA, read lengths are limited by the degredation of DNA due to environmental exposure.
+Furthermore, degredation causes a high intrinsic error rate.
+In combination these issues cause a strong bias against non-reference variation.
+This has significant effect on population genetic inference and implications for many aDNA studies.
 
 \subsection{Simulations with human origins panel}
 %*1p 2h*
@@ -66,7 +91,7 @@
 \subsection{E. coli pangenome from illumina reads}
 %*2p 4h*
 
-\subsubsection{Evaluating the core and accessory pangenome}
+\subsection{Evaluating the core and accessory pangenome}
 %*2p 4h*
 
 
