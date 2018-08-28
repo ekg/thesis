@@ -101,38 +101,67 @@ A small fraction of reads (0.46\%) map better to the linear than to the pangenom
 \subsection{Cactus progressive assembly}
 %*0.5p 0.5h*
 
+Variation graphs are generic objects capable of representing any kind of alignment between genomes or assembly of read data from them.
+To test the ability of {\tt vg} to use graphs of complex topology, we constructed a whole genome alignment graph of \emph{de novo} assemblies produced from Pacbio sequencing of seven strains of \emph{S. cerevisiae}.
+In this assembly each chromosome of each assembly in \cite{yue2017contrasting} was progressively aligned using the phylogenetic guide tree methodology implemented in Cactus \cite{Paten:2011fva}.
+As illustrated in figure \ref{fig:cactus_yeast_zoom}, this graph encodes a complex global topology that captures the structural variation between the species also reported in \cite{yue2017contrasting} as well as a local DAG-like topology which we expect when homologous sequences are represented compactly in a graph.
+This illustrates the ability of vg to represent paths corresponding to both colinear (inset) and structurally rearranged (main figure) regions of genomic variation.
 
-\begin{figure}[htbp!] 
+\begin{figure}[htbp!]
   \centering
   \includegraphics[width=1.0\textwidth]{Chapter3/Figs/cactus_yeast_zoom.pdf}
-  \caption{
-    A region of a yeast genome variation graph. This displays the start of the subtelomeric region on the left arm of chromosome 9 in a multiple alignment of the strains sequenced in \cite{yue2017contrasting} , built using vg from a full-genome multiple alignment generated with the Cactus alignment package \cite{Paten:2011fva}.
-    The inset shows a subregion of the alignment at single-base level. The colored paths correspond to separate contiguous chromosomal segments of these strains.
-    This illustrates the ability of vg to represent paths corresponding to both colinear (inset) and structurally rearranged (main figure) regions of genomic variation.
-    }
+  \caption[Cactus yeast variation graph]{
+  A region of a yeast genome variation graph.
+  This displays the start of the subtelomeric region on the left arm of chromosome 9 in a multiple alignment of the strains sequenced in \cite{yue2017contrasting} as assembled by Cactus \cite{Paten:2011fva}.
+  The inset shows a subregion of the alignment at single-base level.
+  The colored paths correspond to separate contiguous chromosomal segments of these strains.
+  }
   \label{fig:cactus_yeast_zoom}
 \end{figure}
 
-\begin{figure}[htbp!] 
+A simulation study based on the SK1 strain provides some insight into the capabilities of {\tt vg} and tradeoffs inherent in different graph designs.
+I compared four vg graphs: a linear reference graph from the standard S288c strain, a linear reference from the SK1 strain, a pangenome graph of all seven strains, and a ``drop SK1'' variation graph in which all sequence private to the strain SK1 was removed from the pangenome graph.
+The multiple genome graphs were constructed with the Cactus progressive aligner, which generates graphs that typically contain cycles and are not partially ordered, and then filtered down to the various subgraphs using path subsetting facilities in {\tt vg mod}.
+
+\begin{figure}[htbp!]
   \centering
-  \begin{subfigure}[t]{0.57\textwidth}
-    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/e68fc338_test_sim_yeast_cactus-roc.pdf}
-    \caption{Cactus yeast simulation} \label{subfig:cactus_sim}
-  \end{subfigure}
-  \begin{subfigure}[t]{0.42\textwidth}
-    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/compare-msga_dropSK1_vs_S288c.png}
-    \caption{MSGA yeast holdout} \label{subfig:msga_SK1}
-  \end{subfigure}
-  \caption{Mapping short and long reads with vg to yeast genome references.
-    (\ref{subfig:cactus_sim}) ROC curves obtained by mapping 100,000 simulated SK1 yeast strain 150-bp paired-end reads against a variety of references described in the text.
-    (\ref{subfig:msga_SK1}) A density plot of identity fraction when mapping 43,337 Pacific Biosciences long reads from the SK1 strain to the drop.SK1 reference graph or the S288c reference.}
-  \label{fig:yeast_generic_graphs}
+  \includegraphics[width=0.65\textwidth]{Chapter3/Figs/e68fc338_test_sim_yeast_cactus-roc.pdf}
+  \caption[Cactus yeast simulation]{Mapping short reads with vg to yeast genome references.
+    ROC curves obtained by mapping 100,000 simulated SK1 yeast strain 150-bp paired-end reads against a variety of references described in the text.}
+  \label{fig:cactus_yeast_sim}
 \end{figure}
 
-\subsection{Constructing and comparing variation graphs from whole genome assemblies}
+
+Similarly to the human experiments, we simulated 100,000 150-bp paired-end reads from the SK1 reference, modeling sequencing errors, and mapped them to the four references (ROC curves, Figure \ref{fig:cactus_yeast_sim}).
+Not surprisingly, the best performance was obtained by mapping to a linear reference of the SK1 strain from which the data were simulated, with substantially higher sensitivity and specificity compared to mapping to the standard linear reference from the strain S288c with either {\tt vg} or {\tt bwa mem}.
+Mapping to the variation graphs gave intermediate performance, with >1\% more sensitivity and lower false-positive rates than mapping to the standard reference.
+There was surprisingly little difference between mapping to graphs with and without the SK1 private variation, probably because much of what is novel in SK1 compared to the reference is also seen in other strains.
+We saw lower sensitivity compared to mapping just to the SK1 sequence, likely because of suppression of GCSA2 index $k$-mers in complex or duplicated regions, which our indexing strategy was not designed to address.
+
+\subsection{Constructing diverse \emph{cerevisiae} variation graphs} %Constructing and comparing variation graphs from whole genome assemblies}
 %*3p 2.5h*
 
-\subsection{Long read mapping} % from paper / my experiments
+%We further explored a variety of 
+
+\subsection{Using long read mapping to evaluate \emph{cerevisiae} graphs} % from paper / my experiments
+
+In Figure \ref{fig:pacbio_yeast} we show the benefit of aligning long reads to a pangenome graph compared to the S288c reference, using a set of 43,337 Pacific Biosciences SK1 reads (mean length 4.7 kb) from \cite{yue2017contrasting}.
+
+\begin{figure}[htbp!]
+  \includegraphics[width=1.0\textwidth]{Chapter3/Figs/montage_vs_S288c_3x2.png}
+  \caption{Density plots of alignment identity when mapping 43,337 Pacific Biosciences long reads from the SK1 strain to different variation graphs.
+    \emph{Linear assemblies}:
+    (Top left) Comparing the SGD\_2010 reference to the S288c assembly from \cite{yue2017contrasting}.
+    (Top middle) Comparing the S288c assembly to the SGRP2 SNP pangenome.
+    \emph{Assembly graphs from Illumina data}:
+    (Bottom left) Comparing the minia contig graph to the S288c assembly.
+    (Bottom middle) Comparing the minia unitig graph to the S288c assembly.
+    \emph{Whole genome alignment graphs}:
+    (Top right) Comparing the Cactus progressive alignment to the S288c assembly.
+    (Bottom right) Comparing the {\tt vg msga} progressive alignment to the S288c assembly.
+  }
+  \label{fig:pacbio_yeast}
+\end{figure}
 
 \section{Human}
 %*0.5p 0.5h*
