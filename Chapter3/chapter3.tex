@@ -88,7 +88,7 @@ A small fraction of reads (0.46\%) map better to the linear than to the pangenom
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/NCYC_SGRP2_SGD_comparison_id_hist_color.pdf}
     \caption{Difference in alignment identity} \label{subfig:NCYC_id_diff_hist}
   \end{subfigure}
-  \caption[Reads from 12 NCYC strains aligned against the linear reference and SGRP2]{
+  \caption[Comparing alignment to the linear reference and SGRP2]{
     Alignment of 100k read pairs from 12 NCYC \emph{S. cerevisiae} strains(NCYC1006, NCYC1026, NCYC1187, NCYC1228, NCYC1245, NCYC1681, NCYC78, NCYC84, NCYC88, NCYC92, NCYC93, NCYC97) against the SGD\_2010 reference genome (SGD) or the SGRP2 pangenome (SGRP2).
     In (\ref{subfig:NCYC_score}) alignment scores are plotted for each read.
     The shift in density to the right relative to $y=x$ indicates improved alignments to the pangenome.
@@ -100,6 +100,34 @@ A small fraction of reads (0.46\%) map better to the linear than to the pangenom
 
 \subsection{Cactus progressive assembly}
 %*0.5p 0.5h*
+
+
+\begin{figure}[htbp!] 
+  \centering
+  \includegraphics[width=1.0\textwidth]{Chapter3/Figs/cactus_yeast_zoom.pdf}
+  \caption{
+    A region of a yeast genome variation graph. This displays the start of the subtelomeric region on the left arm of chromosome 9 in a multiple alignment of the strains sequenced in \cite{yue2017contrasting} , built using vg from a full-genome multiple alignment generated with the Cactus alignment package \cite{Paten:2011fva}.
+    The inset shows a subregion of the alignment at single-base level. The colored paths correspond to separate contiguous chromosomal segments of these strains.
+    This illustrates the ability of vg to represent paths corresponding to both colinear (inset) and structurally rearranged (main figure) regions of genomic variation.
+    }
+  \label{fig:cactus_yeast_zoom}
+\end{figure}
+
+\begin{figure}[htbp!] 
+  \centering
+  \begin{subfigure}[t]{0.57\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/e68fc338_test_sim_yeast_cactus-roc.pdf}
+    \caption{Cactus yeast simulation} \label{subfig:cactus_sim}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.42\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/compare-msga_dropSK1_vs_S288c.png}
+    \caption{MSGA yeast holdout} \label{subfig:msga_SK1}
+  \end{subfigure}
+  \caption{Mapping short and long reads with vg to yeast genome references.
+    (\ref{subfig:cactus_sim}) ROC curves obtained by mapping 100,000 simulated SK1 yeast strain 150-bp paired-end reads against a variety of references described in the text.
+    (\ref{subfig:msga_SK1}) A density plot of identity fraction when mapping 43,337 Pacific Biosciences long reads from the SK1 strain to the drop.SK1 reference graph or the S288c reference.}
+  \label{fig:yeast_generic_graphs}
+\end{figure}
 
 \subsection{Constructing and comparing variation graphs from whole genome assemblies}
 %*3p 2.5h*
