@@ -439,9 +439,21 @@ The group had regular meetings where its members entertained proposals for new v
 By chance, a meeting of the GA4GH in June, 2015 in Leiden overlapped a conference held at the Lorentz Centre on ``Future Perspectives in Computational Pan-Genomics''\footnote{\url{https://www.lorentzcenter.nl/lc/web/2015/698/info.php3?wsid=698\&venue=Oort}}, whose participants were discussing ways to apply the concept of pangenomics to many problems in genomics.
 Can Alkan, who had been invited to both meetings, brought members of the GA4GH's RefVar group to the concurrent workshop, where both groups presented on their work and ultimately joined efforts.
 This exchange motivated members of the RefVar group to consider many alternative resequencing and genome modeling problems.
-For the consortium, our software {\tt vg} became a template for the pangenomic resequencing concept that it would present in the paper resulting from the meeting \cite{computational2016computational}.
+For the consortium, our software {\tt vg} became a template for the pangenomic resequencing concept that it would present in the paper resulting from the meeting \cite{computational2016computational} (figure \ref{fig:pangenomic_processes}).
 And in turn, the consortium imagined the missing pieces that would be required to fully enable a pangenomic reference system and allow common genome inference patterns using it.
 Much of the work I will present in the latter chapters of this thesis follows the design developed by this group.
+
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=1.0\textwidth]{Chapter1/Figs/cpang_fig2.pdf}
+  \caption[Computational pangenomics]{
+    An overview of techniques required to support pangenome-based resequencing.
+    In {\tt vg}, we have implemented virtually all of the presented components and algorithms.
+    Reprinted from \cite{computational2016computational}.
+    }
+  \label{fig:pangenomic_processes}.
+\end{figure}
+
 
 % various approaches to encoding the pangenome
 
@@ -451,24 +463,49 @@ Much of the work I will present in the latter chapters of this thesis follows th
 
 \label{sec:on_pangenomic_models}
 
-Much of this work relates to a particular model for encoding a pangenome. Here, I will briefly describe alternative models and justify the use of a graphical one which I present, while the remainder of the chapter will provide background on more-closely related graphical approaches related to my work.
+Much of this work relates to a particular model for encoding a pangenome.
+Here, I will briefly describe alternative models and justify the use of a graphical one which I present, while the remainder of the chapter will provide background on more-closely related graphical approaches related to my work.
 
 Traditional techniques from microbial pangenomics have focused on cataloging the distribution of ORFs across bacterial species \cite{page2015roary}.
 In this sense the pangenome is not so much a sequence-based object, but a matrix encoding the presence or absence of genes across the species of a given clade.
+
 If we want to use pangenomic principles to resolve issues with resequencing, then we must take the concept of pangenome more literally, and build a representation that losslessly encodes genomes together with a focus on their sequence content.
 In this perspective, the classical pangenome becomes a derivative product that we can produce using analyses on our sequence-oriented pangenomic reference.
+I will mostly focus on sequence-based pangenomic models.
+The main classes are described visually in figure \ref{fig:pangenomic_models}.
 
-We could then describe a sequence-aware pangenome with the whole genome assemblies of many species or individuals, in an unfolded pangenome in which all sequence homologies and relationships are implicit.
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=1.0\textwidth]{Chapter1/Figs/cpang_fig3.pdf}
+  \caption[Graphical pangenomic models]{
+    Various pangenomic models of a small collection of sequences.
+    (A) shows an unfolded pangenome,
+    (B) provides a MSA encoding the same sequences,
+    (C) shows the DBG with $k=3$,
+    (D) is an acyclic version of the pangenome, akin to the alignment in (B),
+    and (E) represents a compressed alignment graph allowing cycles to represent copy number variants. 
+    Reprinted from \cite{computational2016computational}.
+    }
+  \label{fig:pangenomic_models}.
+\end{figure}
+
+We could describe a sequence-aware pangenome with the whole genome assemblies of many species or individuals.
+In this unfolded pangenome all sequence homologies and evolutionary relationships are implicit (figure \ref{fig:pangenomic_models}A).
 This naturalistic design is the simplest possible for a sequence-aware pangenome.
 In principle the unfolded pangenome could resolve reference bias and allow simple augmentation of the pangenome with new data by adding new genome sequences, although this operation already exposes a weakness, which is that adding a new genome always adds all the sequence in that genome to our system.
-Techniques from compressed data structures have been used to resequence short reads against the unfolded pangenome, as implemented in the CHIC aligner \cite{valenzuela2017chic}, but numerous problems have prevented the exploration of this modality.
-We can use this work to understand some of the limitations of this approach.
-The CHIC aligner employs an indexing strategy which uses Lempel-Ziv (LZ77) \cite{ziv1977universal} parsing of the pangenome to generate a ``kernel'' sequence encoding the pangenome that may be indexed and used by a standard short read aligner (the authors use BOWTIE2).
-In effect, the seeding step is aware of alternative sequences embedded in the pangenome, but the local alignment step is ultimately run against the linear reference.
-It is worth noting that an approach which aligned directly to the unfolded pangenome would not be able to correctly estimate MQ, as the reference does not encode any model about the relationships between the genomes that comprise the pangenome and consequently we cannot determine when multiple alignments match to homologs in different genomes or paralagous copies dispersed across one or many genomes.
-The linear growth in data scale can add algorithmic complexity when sequencing many genomes, and so it is understandable that experiments using the CHIC aligner only used up to 100 genomes at a time.
 Because it does not model homologies between sequences, an unfolded pangenome cannot represent novel recombination between known sequences.
-Finally, by relying on the linear reference to report alignments, CHIC gains the ability to hook into standard resequencing workflows, but it loses the ability to describe variation in sequence that is not contained in the reference.
+
+A MSA (figure \ref{fig:pangenomic_models}B) provides a matrix describing the relationships between the sequences as well as the sequences themselves.
+This is not without some additional complexity.
+We must introduce a concept of a gap character to pad the matrix.
+The MSA is a linear object, and cannot represent structural variation in a compact manner.
+It does provide us with a link between sequence and relationship for all the genomes we are considering.
+An MSA has an equivalent representation as a sequence DAG, as in figure \ref{fig:pangenomic_models}D.
+
+Assembly graphs, in particular DBGs (figure \ref{fig:pangenomic_models}C), provide a simple decomposition of collections of genomes.
+However, a strict DBG without any labeling loses the mapping back to the original genomes, and thus is a poor foundation for a reference system.
+Sequence graphs, as in figure \ref{fig:pangenomic_models}E, when annotated with the full set of input patsh, are a lossless representation of the input genomes.
+If they are also bidirectional like DBGs (not shown in figure \ref{fig:pangenomic_models}E) then they can represent copy number variations and inversions directly in their structure in their most compact form.
 
 \subsection{The variation graph}
 \label{sec:the_variation_graph}
@@ -485,7 +522,7 @@ This also allows the model to represent de Bruijn graphs, whose nodes are labele
 Because DNA is double-stranded, any such a language implies a reverse complement language which recognizes the reverse complement of any sequence in the first.
 Formalizing this by allowing edges to transition between different strands of the graph allows the model to directly represent sequence inversions.
 
-If we combine these adjustments, we arrive at a kind of regular language model that resembles DNA and allows the representation of collections of related sequences in a compressed manner by allowing us to represent homologous sequences and all kinds of natural polymorphism\footnote{Note that the model does not encode } between them.
+If we combine these adjustments, we arrive at a kind of regular language model that resembles DNA and allows the representation of collections of related sequences in a compressed manner by allowing us to represent homologous sequences and all kinds of natural polymorphism between them.
 Formally, this structure is often referred to as a \emph{bidirectional DNA sequence graph}, indicating that the graph is sequence-centric, directed, stranded, and allows transitions between strands.
 \emph{Sequence graph}, then implies a simpler concept in which the graph is meant to model sequences but only one strand is considered.
 Assembly and multiple sequence alignment methods have employed sequence graphs of both types since the earliest computational analyses of biosequences, and it is sensible that we might employ them to represent collections of genomes.
@@ -718,9 +755,20 @@ This expedient approach provides almost all of the benefits of the kind of pange
 
 Whenever a researcher uses BLAST or BLAT to search a large database of sequence they are engaging in a kind of ``unfolded'' pangenomic alignment.
 This pattern could be thought of as the default in bioinformatics.
-Historically, a huge amount of
+Historically, a huge amount of analysis is based on it.
+
 In terms of methods specifically designed to align large sequence read sets against an unfolded pangenome, few are currently under development.
-Of note, the CHIC aligner provides an initial implementation of such an idea \cite{valenzuela2017chic}, but it is not clear yet if this model will be usable with practical inputs, and it is clear that it will not be able to encode other commonly-used graphical models for representing populations of genomes.
+Of note, the CHIC aligner provides an initial implementation of such an idea \cite{valenzuela2017chic}
+This method is based on an indexing strategy which uses Lempel-Ziv (LZ77) \cite{ziv1977universal} parsing of the pangenome to generate a ``kernel'' sequence encoding the pangenome that may be indexed and used by a standard short read aligner (the authors use BOWTIE2).
+In effect, the seeding step is aware of alternative sequences embedded in the pangenome, but the local alignment step is ultimately run against the linear reference.
+As this approach aligns directly to the unfolded pangenome it is not be able to correctly estimate MQ, as the reference does not encode any model about the relationships between the genomes that comprise the pangenome and consequently we cannot determine when multiple alignments match to homologs in different genomes or paralagous copies dispersed across one or many genomes.
+The linear growth in data scale can add algorithmic complexity when sequencing many genomes, and so it is understandable that experiments using the CHIC aligner only used up to 100 genomes at a time.
+By relying on the linear reference to report alignments, CHIC gains the ability to hook into standard resequencing workflows, but it loses the ability to describe variation in sequence that is not contained in the reference.
+
+%It is not clear yet if this model will be usable with practical inputs, and it is clear that it will not be able to encode other commonly-used graphical models for representing populations of genomes.
+%Techniques from compressed data structures have been used to resequence short reads against the unfolded pangenome, as implemented in the CHIC aligner \cite{valenzuela2017chic}, but numerous problems have prevented the exploration of this modality.
+%We can use this work to understand some of the limitations of this approach.
+
 
 \subsubsection{Alignment to tiled pangenomic references}
 

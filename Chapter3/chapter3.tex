@@ -46,6 +46,7 @@ Recently, whole genome \emph{de novo} assembly with long single-molecule reads h
 In this section, I use data from independent sequencing of the UK's National Center for Yeast Collections (NCYC) as well as long reads from \cite{yue2017contrasting} to demontrate the capabalities of {\tt vg} and compare the utility of various variation graph models built from these population surveys.
 
 \subsection{A SNP-based SGRP2 graph}
+\label{sec:SGRP2_graph}
 %*1p 1h*T
 %I consider only \emph{S. cerevisiae}, using the SGD reference genome and the SNP variation results from the SGRP2.
 The earliest rigorous testing of {\tt vg}'s alignment method was against a variation graph constructed from the SGRP2's released VCF for \emph{S. cerevisiae}\footnote{\url{http://www.moseslab.csb.utoronto.ca/sgrp/data/SGRP2-cerevisiae-freebayes-snps-Q30-GQ30.vcf.gz}}.
@@ -100,6 +101,7 @@ A small fraction of reads (0.46\%) map better to the linear than to the pangenom
 
 \subsection{Cactus progressive assembly}
 %*0.5p 0.5h*
+\label{sec:yeast_cactus}
 
 Variation graphs are generic objects capable of representing any kind of alignment between genomes or assembly of read data from them.
 To test the ability of {\tt vg} to use graphs of complex topology, we constructed a whole genome alignment graph of \emph{de novo} assemblies produced from Pacbio sequencing of seven strains of \emph{S. cerevisiae}.
@@ -138,30 +140,121 @@ Mapping to the variation graphs gave intermediate performance, with >1\% more se
 There was surprisingly little difference between mapping to graphs with and without the SK1 private variation, probably because much of what is novel in SK1 compared to the reference is also seen in other strains.
 We saw lower sensitivity compared to mapping just to the SK1 sequence, likely because of suppression of GCSA2 index $k$-mers in complex or duplicated regions, which our indexing strategy was not designed to address.
 
-\subsection{Constructing diverse \emph{cerevisiae} variation graphs} %Constructing and comparing variation graphs from whole genome assemblies}
-%*3p 2.5h*
+\subsection{Constructing diverse \emph{cerevisiae} variation graphs}
+\label{sec:constructing_yeast_graphs}
 
-%We further explored a variety of 
+With {\tt vg}, our goal is to build a toolkit that allows the use of any genome graph as a reference.
+To validate this capability, I used data sources for \emph{S. cerevisiae} to build seven variation graphs, whose dimensions are listed in table \ref{table:yeast_graphs}.
+In the next section (\ref{sec:yeast_long_read}) I present an evaluation of these graphs using long reads from the SK1 strain.
+
+
+\begin{table}[h]
+  \centering
+\begin{tabular}{l||c|c|c|c|c}
+\itshape name & \itshape size (MB) & \itshape length & \itshape nodes & \itshape edges & \itshape subgraphs \\
+\hline
+SGD\_2010 & 7.3 & 12163423 & 380115 & 380097 & 18 \\
+S288c & 7.3 & 12249246 & 382797 & 382781 & 18 \\
+SGRP2 & 21 & 12407052 & 714533 & 969690 & 18 \\
+minia unitigs & 15 & 14419206 & 1232804 & 1332994 & 46131 \\
+minia contigs & 6.4 & 12233279 & 421125 & 425683 & 2961 \\
+Cactus & 31 & 13243056 & 1059173 & 1304205 & 580 \\
+{\tt vg msga} & 42 & 13793955 & 1156295 & 1387903 & 2 \\
+\hline
+\end{tabular}
+\caption{A summary of seven different variation graphs contructed to represent variation in \emph{S. cerevisiae}.
+  As described in section \ref{sec:SGRP2_graph}, the SGD\_2010 graph is built from the reference, while SGRP2 adds SNPs in the SGRP2 population survey.
+  The Illumina data from \cite{yue2017contrasting} was used to build the minia unitigs and minia contigs graphs, while the whole genome, chromosome-resolved PacBio assemblies from the same work were used to build the Cactus and {\tt vg msga} progressive assemblies.
+  S288c is the \emph{de novo} assembly of the reference strain produced in \cite{yue2017contrasting}.
+}
+\label{table:yeast_graphs}
+\end{table}
+
+Three of the graphs are effectively linear or DAG-like, with the exception of their mitochondria and plasmid chromosomes, which are included as circular components.
+SGD\_2010 and S288c represent two assemblies of the reference genome, the former from the SGD genome sequencing project, and the latter is a \emph{de novo} assembly from \cite{yue2017contrasting}.
+The difference in quality between the two approaches will be made apparent in the subsequent section.
+As described in section \ref{sec:SGRP2_graph}, the SGRP2 graph adds SNP variation from the population survey in \cite{bergstrom2014high} to build a pangenome reference.
+The SGD\_2010 reference contains the mitochondria and 6kb plasmid sequence, while the S288c assembly excludes them due to the sequencing protocol, where size selection in the library preparation stage removed these short sequences, so to enable direct comparison in later tests these were added to the S288c graph.
+
+The remaining four graphs are different forms of assembly graph.
+Using the Illumina data published in \cite{yue2017contrasting}, I build two assemblies with minia3, using a $k$-mer size of 51 and a high abundance threshold (50) to limit the resulting graph complexity.
+In the first, I take the unitig graph that represents all non-branching paths in the compacted DBG as nodes.
+The second is the result of the minia contigification process that pops bubbles and cleans the graph to attempt to arrive at longer contigs.
+Both results are expressed as overlap graphs in GFA, and I can import them as variation graphs using bluntification and graph pseudotopological sorting.
+As shown in table \ref{table:yeast_graphs}, the unitig graph is considerably more complex in terms of node density than the contig graph.
+It also contains more sequence, presumably because some regions that are collapsed in the contig graph are not in the unitig graph.
+The number of disjoint components in these graphs is very high (2961 for the contig graph and 46131 for the unitig graph), suggesting that pruning of the assembly graph has yielded a greatly fragmented result.
+The resulting graphs are difficult to align long reads to.
+I conclude that further tuning of the paramaters used during \emph{de novo} assembly from short reads will be required to use assemblies like this as reference graph.
+
+Finally, I used the whole genome \emph{de novo} assemblies of long read data from \cite{yue2017contrasting} to build whole genome alignment graphs using Cactus (as described in section \ref{sec:yeast_cactus}) and {\tt vg msga}.
+The multiple sequence to graph alignment (MSGA) process implemented in {\tt vg msga} is akin to the progressive POA method, but generalized to arbitrary graphs of any size.
+Rather than using a local alignment algorithm to expand the graph, the long read alignment algorithm described in section \ref{sec:chunked_alignment} allows the direct alignment of whole chromosomes to the graph.
+Where the Cactus progressive assembly uses a phylogenetic guide tree to sturcture its construction, {\tt vg msga} simply aligns the chromosomes in order from longest to shortest to the growing graph.
+The long read alignment in {\tt vg} is structured to enforce long range synteny, and the resulting graph is substantially different in sturcture than that of Cactus.
+I find that {\tt vg msga} is less likely to collapse repeats than Cactus, at least in the configuration used for this assembly.
+We can see this in figure \ref{fig:yeast_bandage}, where the Cactus graph (\ref{subfig:cactus_yeast_bandage}) shows two dense repeat structures in its core connected by loops of unique sequence, while the {\tt vg msga} graph appears to have much longer loops, with collapsed repeats embedded in these loops.
+This observation is supported by the length statistics in table \ref{table:yeast_graphs}, with {\tt vg msga} producing a graph that is 550,899bp longer than that of Cactus.
+At the same time, the node count of the {\tt vg msga} graph is higher, which perhaps reflects a different local alignment result.
+
+\begin{figure}[htbp!]
+  \begin{subfigure}[t]{0.9\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/cactus_yeast.png}
+    \caption{Cactus assembly} \label{subfig:cactus_yeast_bandage}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.9\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/vg_msga_yeast.png}
+    \caption{{\tt vg msga} assembly} \label{subfig:msga_yeast_bandage}
+  \end{subfigure}
+  \caption[Whole genome alignment graphs for \emph{S. cerevisiae}]{
+    Whole genome alignment graphs for \emph{S. cerevisiae} visualized using Bandage.
+    The scale in \ref{subfig:msga_yeast_bandage} is greater than that in \ref{subfig:cactus_yeast_bandage}, with the latter showing a greater propensity to collapse repeat structures.
+  }
+  \label{fig:yeast_bandage}
+\end{figure}
 
 \subsection{Using long read mapping to evaluate \emph{cerevisiae} graphs} % from paper / my experiments
+\label{sec:yeast_long_read}
 
-In Figure \ref{fig:pacbio_yeast} we show the benefit of aligning long reads to a pangenome graph compared to the S288c reference, using a set of 43,337 Pacific Biosciences SK1 reads (mean length 4.7 kb) from \cite{yue2017contrasting}.
+In this section I evaluate the graphs I constructed in section \ref{sec:constructing_yeast_graphs} and simultaneously demonstrate the ability of {\tt vg} to align long reads to graphs of any type.
+For each of the seven graphs I aligned a set of 43,337 Pacific Biosciences SK1 reads (mean length 4.7 kb) from \cite{yue2017contrasting} to the graph.
+We can then compare the alignment identity for each read across the various graphs.
+I do so using the same dot plot techinque used to demonstrate alignment quality improvement using the Illumina data from the NCYC strains.
+In figure \ref{fig:pacbio_yeast} I present a number of pairwise comparisons based on this read set.
+
+I find that the SGD\_2010 reference provides a better match for the SK1 PacBio reads than the S288c assembly (top left), which can be seen in a subset of reads that map nearly perfectly to the SGD\_2010 graph but not to the S288c one.
+This may be due to the higher quality and curation of the SGD reference, which was initially based on BACs and capillary sequencing, but I have not determined the exact cause of this discrepancy.
+This same effect is clear in the comparison of S288c and the SGRP2 (top middle, figure \ref{fig:pacbio_yeast}), although there the SNPs in the SGRP2 graph tend to improve the overall match between the SK1 reads and the graph, which can be seen in a shift in density upwards from the diagonal.
+For other comparisons I focused on using the S288c reference, as it forms a part of the progressive alignments and the source data for the minia assemblies comes from the same paper.
+
+The minia graphs appear to provide very low quality as a reference for the alignment of long reads (bottom left and middle, figure \ref{fig:pacbio_yeast}).
+The minia unitig graph is too fragmented for any practical use.
+In almost no case does it provide a better a better match for the long reads.
+However, while the minia contig graph is also outperformed by the S288c graph, for a notable subset of the reads it provides a perfect match, while the S288c graph fails to match them at all.
+This suggests that some contigs in the Illumina assembly match the SK1 strain, which is to be expected and demonstrates that in principle this kind of graph can represent multiple genomes.
+
+Finally, the whole genome alignment graphs are notable in their similarity.
+Despite the fact that they were constructed using different algorithms, both provide a similar basis for alignment of the SK1 reads.
+It is notable that alignment time against the {\tt vg msga} graph was the highest of any of the tested graphs, and significantly higher than that for the Cactus graph.
+This may relate to the un-collapsed state of the repeats in the graph.
+The alignment algorithm will attempt more alignments for each band where there is ambiguity, and the ``patching'' at the end of the alignment process will be more intensive.
 
 \begin{figure}[htbp!]
   \includegraphics[width=1.0\textwidth]{Chapter3/Figs/montage_vs_S288c_3x2.png}
-  \caption{Density plots of alignment identity when mapping 43,337 Pacific Biosciences long reads from the SK1 strain to different variation graphs.
+  \caption[Long read alignment against various \emph{S. cerevisiae} pangenome graphs]{Density plots of alignment identity when mapping 43,337 Pacific Biosciences long reads from the SK1 strain to different variation graphs.
     \emph{Linear assemblies}:
-    (Top left) Comparing the SGD\_2010 reference to the S288c assembly from \cite{yue2017contrasting}.
-    (Top middle) Comparing the S288c assembly to the SGRP2 SNP pangenome.
+    (Top left) the SGD\_2010 reference vs. the S288c assembly from \cite{yue2017contrasting}.
+    (Top middle) the S288c assembly vs. the SGRP2 SNP pangenome.
     \emph{Assembly graphs from Illumina data}:
-    (Bottom left) Comparing the minia contig graph to the S288c assembly.
-    (Bottom middle) Comparing the minia unitig graph to the S288c assembly.
+    (Bottom left) the minia contig graph vs. the S288c assembly.
+    (Bottom middle) the minia unitig graph vs. the S288c assembly.
     \emph{Whole genome alignment graphs}:
-    (Top right) Comparing the Cactus progressive alignment to the S288c assembly.
-    (Bottom right) Comparing the {\tt vg msga} progressive alignment to the S288c assembly.
+    (Top right) the Cactus alignment vs. the S288c assembly.
+    (Bottom right) the {\tt vg msga} alignment vs. the S288c assembly.
   }
   \label{fig:pacbio_yeast}
 \end{figure}
+
 
 \section{Human}
 %*0.5p 0.5h*

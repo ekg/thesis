@@ -1200,8 +1200,28 @@ In {\tt vg} we have explored two such methods.
 The first, originally implemented in {\tt vg call}, generalizes the concepts first implemented in {\tt samtools mpileup} to work on the graph.
 A set of alignments are first reduced to pointwise edits against the graph and per base coverage of the graph.
 This graph ``pileup'' is then processed by a genotyping algorithm that considers genetic sites using the ultrabubble model.
+A schematic overview of the method is shown in figure \ref{fig:vg_call}.
+
+\begin{figure}[htbp!]
+  \includegraphics[width=1.0\textwidth]{Chapter2/Figs/vg_call.pdf}
+  \caption{
+    Pileup variant calling with {\tt vg call}
+    }
+  \label{fig:vg_call}.
+\end{figure}
+
 The second model, implemented in {\tt vg genotype}, embeds the alignments in the variation graph using $edit(A, G_\textbf{base}) \to (G_\textbf{aug}, \Phi_{\textbf{aug}\to\textbf{base}})$, and then genotypes across the ultrabubbles of $G_\textbf{aug}$ which are supported by reference paths in $G_\textbf{base}$ or reads.
 As the resulting genotypes are represented as unordered sets of paths in $G_\textbf{aug}$, they are projected back into the coordinate space of $G_\textbf{base}$ using the translation $\Phi_{\textbf{aug}\to\textbf{base}}$.
+An overview of the process is shown in figure \ref{fig:vg_genotype}.
+
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=0.7\textwidth]{Chapter2/Figs/vg_genotype.pdf}
+  \caption{
+    Graph augmentation-based variant calling in {\tt vg genotype}
+    }
+  \label{fig:vg_genotype}.
+\end{figure}
 
 While principled, the full augmentation model in {\tt vg genotype} is very expensive to compute.
 The pileup model has proven to be more efficient.
