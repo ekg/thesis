@@ -368,9 +368,55 @@ Therefore, although GraphTyper also scales to the whole human genome because it 
 In experiments where we used vg rather than bwa as the primary mapper for GraphTyper, true positives increased marginally (0.02\% for single-nucleotide polymorphisms (SNPs) and 0.06\% for indels) while false positives increased for SNPs by 0.15\% and decreased for indels by 0.03\%.
 We note, however, that GraphTyper was developed by its authors for {\tt bwa mem} mapping.
 
-\subsection{HGSVC from VCF and progressive alignment of human chromosomes}
+\subsection{A graph of structural variation in humans}
 %*2.5p 5h*
 
+The Human Genome Structural Variation Consortium (HGSVC)\footnote{\url{http://www.internationalgenome.org/human-genome-structural-variation-consortium/}} has continued the difficult process of cataloging structural variation in humans.
+Recently, the group has developed a set of haplotype-resolved structural variation callsets for six individuals \cite{chaisson2018multi}.
+These variant calls are derived from many sources, and are unified into a common framework in phased VCF files.
+I built a graph from these variants and the GRCh38 reference against which they are represented, then used {\tt vg map} to align short reads from a sample in the HGSVC set (NA19240) as well as a sample that wasn't included (HG002/NA24385).
+
+Although I mapped only 1M read pairs, alignments to the HGSVC graph were significantly better (when measured via the identity metric) than alignments to the GRCh38 linear reference.
+This was much more significant in the case of NA19240 (two sample T-test $p$-value = 0.008529) than for NA24385 ($p$-value = 0.06813).
+Presumably the lower number of shared alleles with NA24385 means a large subset of reads would need to be mapped to obtain a clear result.
+The HGSVC graph did not significantly improve alignment for 1M random reads (only 2.4\% align, with $p$-value = 0.9889), or for reads sample without error ($p$-value = 0.4665) or with 0.5\% SNP error and 0.1\% indel error from GRCh38 ($p$-value = 0.9106).
+
+\begin{figure}[htbp!] 
+  \centering
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/NA19240_hg38_vs_HGSVC_scatter.png}
+    \caption{NA19240 HGSVC vs. GRCh38}
+    \label{subfig:hgsvc_NA19240_scatter}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/NA24385_hg38_vs_HGSVC_scatter.png}
+    \caption{NA24385 HGSVC vs. GRCh38}
+    \label{subfig:hgsvc_NA24385_scatter}
+  \end{subfigure}
+
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/NA19240_hg38_vs_HGSVC_hist.png}
+    \caption{NA19240 HGSVC - GRCh38}
+    \label{subfig:hgsvc_NA19240_hist}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/NA24385_hg38_vs_HGSVC_hist.png}
+    \caption{NA24385 HGSVC - GRCh38}
+    \label{subfig:hgsvc_NA24385_hist}
+  \end{subfigure}
+  \caption[Alignment against the HGSVC graph]{
+    1M 2x150bp Illumina read pairs from NA19240 (which is in the HGSVC graph) and NA24385/HG002, which is not, aligned against both the HGSVC graph and the GRCh38 reference, then compared.
+    In panels \ref{subfig:hgsvc_NA19240_scatter} and \ref{subfig:hgsvc_NA24385_scatter} the difference in performance is seen by the alignments which have positive identity against the HGSVC graph but 0 identity against the GRCh38 reference.
+    Panels \ref{subfig:hgsvc_NA19240_hist} and \ref{subfig:hgsvc_NA24385_hist} are log-scaled histograms of the difference in alignment score.
+   }
+\label{fig:hgsvc_alignment}
+\end{figure}
+
+
+\subsection{Progressive alignment of human chromosomes}
+
+There are only a handful of truly \emph{de novo} human genome assemblies which achieve near-complete chromosomes, and so a reference-guided variant detection approach has prevailed for the discovery of novel structural variation \cite{fan2017hysa}.
+Using the reference-guided assemblies 
 
 \subsection{CHiP-Seq}
 %*1p 1h*
@@ -379,6 +425,35 @@ This removal of bias is important when mapping functional genomics data such as 
 by reference mapping bias \cite{mcdaniell2010heritable}, especially given that read lengths are typically shorter for these experiments.
 We compared mapping with {\tt bwa mem} and {\tt vg} for data set ENCFF000ATK from the ENCODE project \cite{encode2012integrated}, which contains 14.9 million 51-bp ChIP-seq reads for the H3K4me1 histone methylation mark from the NA12878 cell line.
 When mapping with bwa the ratio of reference to alternate allele matches at heterozygous sites was 1.20, whereas with vg to the 1000GP graph the ratio was 1.01, effectively eliminating reference bias.
+
+
+\begin{figure}[htbp!] 
+  \centering
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/ENCFF486KYD_RO_vg_pan_vs_bwa.png}
+    \caption{Reference observations}
+    \label{subfig:chip_seq_ref_obs}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/ENCFF486KYD_AO_vg_pan_vs_bwa.png}
+    \caption{Alternate observations}
+    \label{subfig:chip_seq_alt_obs}
+  \end{subfigure}
+  \caption[Resolving reference bias in 36-bp CHiP-seq]{
+    Resolving reference bias in 36-bp CHiP-seq data from ENCODE sample ENCDO115AAA, using CHiP-seq targeting H3K4me1 (experiment ENCFF000ATK).
+    We compare the counts of reference-supporting (panel \ref{subfig:chip_seq_ref_obs}) or alternate-supporting (panel \ref{subfig:chip_seq_alt_obs}) alignments between {\tt vg map} and {\tt bwa mem} at sites called as heterozygous in the sample which were also polymorphic in the 1000GP.
+   }
+\label{fig:chip_seq}
+\end{figure}
+
+The effect is dramatically stronger when using 36-bp reads.
+To illustrate, I aligned the ultra-short reads from ENCODE experiment ENCSR290YLQ\footnote{\url{https://www.encodeproject.org/experiments/ENCSR290YLQ/}} to the full 1000GP graph using {\tt vg map} and to the GRCh37 reference genome using {\tt bwa mem}.
+To simplify analysis, the {\tt vg} mappings were surjected to the GRCh37 reference.
+This sample came from an adult donor, and so we have no ``truth'' set as with NA12878, but we can use a subset of sites called as variable using {\tt freebayes} which also are known to be polymorphic in the 1000GP to examine the effect of reference bias.
+By plotting the reference and alternate counts obtained from each aligner relative to each other, we can observe the effect of reference bias on a per-site basis\footnote{The longer 51-bp reads are more realistic, but the genome coverage of these sets appears to be lower, and thus it was not possible to generate plots of this kind.}, which can be seen in figure \ref{fig:chip_seq}.
+I find that {\tt bwa mem} and {\tt vg map} obtain insignificantly different counts of reference observations at the heterozygous sites (panel \ref{subfig:chip_seq_ref_obs}), but as can be seen in panel \ref{subfig:chip_seq_alt_obs}, aligning to the graph uncovers dramatically more alternate observations at these loci, as is shown by the strong increase in density below the diagonal.
+The strength of this effect indicates that small variation will disrupt alignment even with reads of relatively high quality and low error rates.
+The issue becomes even more dramatic when we consider data sources with higher error.
 
 \section{Ancient DNA}
 %*0.5p 0.5h*
