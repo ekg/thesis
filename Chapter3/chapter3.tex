@@ -434,9 +434,28 @@ The resulting graph contains 76,875,262bp of sequence, while the input FASTA fil
 This result serves to demonstrate that the hierarchical alignment process can scale to many tens of megabases.
 The low performance of the method prevented its application to the whole genome.
 
-\subsection{Inducing the assembly graph from the MHC}
+\subsection{Building graphs from the MHC}
 
-To evaluate the performance of the {\tt seqwish} algorithm described in section \ref{sec:from_pairwise_alignments}, I applied it to the same sequences used in 
+In \cite{novak2017genome} we explored methods to build graphs from the GRCh38's ALT sequences and reference genome.
+One of the most challenging regions is the MHC on chr6.
+In this $\approx$5Mb region, balancing selection has encouraged a high level of genetic diversity, resulting in some 40 million years divergence between alternative copies of the locus, dating back far into the primate lineage.
+Previous efforts to build reference graphs from this region have often required hand curation to achieve reliable results \cite{dilthey2015improved}.
+
+Automatically building a sensible MHC graph with tools in {\tt vg} requires that the tools work correctly, and over the course of my work I have used this region as an important test case.
+It took nearly a year for {\tt vg msga} to mature enough to build the MHC graph without crashing, and another two years before my long read alignment implementation became capable of developing a sensible result.
+
+My further interest in the problem of building graphs from sequences yielded {\tt seqwish} (section \ref{sec:from_pairwise_alignments}).
+{\tt seqwish} losslessly induces the variation graph implied by a set of sequence alignments.
+It implements a disk-backed bidirectional alignment graph akin to that described in \cite{kehr2014genome}, and with a similar objective as tools developed in \cite{jandrasits2018seq}.
+The goal is to build a pangenome graph in which pairwise alignments between the sequences define the graph.
+Unlike {\tt vg msga}, it is fully dependent on an input alignment set, and is not progressive.
+
+As an exposition of the differing solutions to this problem offered by these two methods, I built the MHC graph from the 9 haplotypes overlapping the MHC in GRCh38\footnote{These were collected for use in the GA4GH-DWG by the human genome variation map (HGVM) project \cite{blow2015decoding}.}.
+To build the {\tt seqwish} graph, I used \cite{li2018minimap2} to generate an all versus all alignment, and induce the graph from this\footnote{{\tt minimap2 MHC.fa MHC.fa -c -X -x asm20 -t 32 >MHC.paf \&\& seqwish -s MHC.fa -a MHC.paf -b MHC.seqwish >MHC.gfa}}.
+With {\tt vg msga} I supplied suitable parameters to encourage greater coliniearity in the alignment, but otherwise used defaults\footnote{{\tt vg msga -f MHC.fa -w 512 -J 16384 -b ref -D >MHC.vg}}.
+{\tt seqwish} used very little memory, never more than around a gigabyte, but wrote 12GB of intermediate files to disk during graph induction.
+{\tt vg msga} used several times this much RAM at peak, indicating that it will be difficult to scale its application beyond small genomic regions.
+Both processes took around 2 hours to complete on the 256GB/32vCPU server I used for most of the experiments in this thesis.
 
 \begin{figure}[htbp!]
   \begin{subfigure}[t]{0.49\textwidth}
@@ -461,6 +480,48 @@ To evaluate the performance of the {\tt seqwish} algorithm described in section 
     The core of the graph forms a hairball of repeats, as in panel \ref{subfig:seqwish_mhc_neato} flanked by low-copy loops which are locally directed and acyclic as in panel \ref{subfig:seqwish_mhc_viz}, which adjoins the subgraph plotted in panel \ref{subfig:seqwish_mhc_neato}.
   }
   \label{fig:seqwish_mhc}
+\end{figure}
+
+The {\tt seqwish} MHC graph contains 9764108bp of sequence, in 224873 nodes and 321990 edges, while the {\tt vg msga} assembly is larger, with 10900412bp of sequence in 480734 nodes and 536592 edges.
+Unlike the {\tt vg msga} graph, whose nodes are cut to be shorter than 32bp to enable GCSA2 indexing during progressive construction, the seqwish graph is fully compressed by default, and this results in its much lower node count.
+We can compare the aggregate results for {\tt seqwish} (figure \ref{subfig:seqwish_mhc_bandage}) to those for {\tt vg msga} (figure \ref{fig:vg_msga_mhc}).
+It becomes clear from these visualizations that the {\tt seqwish} graph compresses its repeats much more than {\tt vg msga} (figure \ref{subfig:seqwish_mhc_neato}).
+However, the alignment in general is sensible in that unique alignments between the input sequences generate linear components, as seen in panel \ref{subfig:seqwish_mhc_viz}.
+This compression tends to confuse operations on the graph, as it reduces the distance between all positions in the graph and causes overlaps of many genomic regions in the pangenome grah.
+A different parameterization of the aligner might need to be used to reconstruct the approximately nature of this genomic locus.
+
+\begin{figure}[htbp!]
+  \includegraphics[width=1.0\textwidth]{Chapter3/Figs/MHC_vg-msga_v1_9_0-115-gc20e80f_gfa.png}
+  \caption[{\tt vg msga} assembly of the MHC in GRCh38.]{
+    {\tt vg msga} assembly of the MHC in GRCh38 as visualized by Bandage.
+  }
+  \label{fig:vg_msga_mhc}
+\end{figure}
+
+To appreciate the effect of repeat collapse on the resulting graph, I applied {\tt vg dotplot}, which generates dotplots from indexed variation graphs, to compare the in-graph alignments of the same pair of sequences in both the {\tt seqwish} and {\tt vg msga} graphs.
+These results are presented in figure \ref{fig:mhc_dotplots}.
+It is clear (in \ref{subfig:seqwish_mhc_dotplot}) that the {\tt minimap2} based alignment process does not sufficiently filter repeat structures from the alignment, which results in the large off-diagonal blocks of graph positional matches between the sequences.
+In contrast (panel \ref{subfig:vg_msga_mhc_dotplot}) shows that the sequences can naturally align through the graph in an approximately linear fashion, with little repeat collapse.
+This linearity is enforced by setting a high bandwidth parameter ({\tt -J 16384}) in the alignment chaining model (described in section \ref{sec:chunked_alignment}).
+With an overlap of 1/8th band at each alignment chunk end and a bandwidth of 512, this corresponds to a chain model bandwidth of 6,291,456bp, which roughly covers the entire MHC for any input sequence.
+Setting a shorter bandwidth allows repeat collapse to occur in a manner similar to what occurs when inducing the graph from the {\tt minimap2} alignments.
+
+\begin{figure}[htbp!]
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/seqwish_GI568335954_GI568335994_dotplot.png}
+    \caption{{\tt seqwish}}
+    \label{subfig:seqwish_mhc_dotplot}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/vg_msga_GI568335954_GI568335994_dotplot.png}
+    \caption{{\tt vg msga}}
+    \label{subfig:vg_msga_mhc_dotplot}
+  \end{subfigure}
+  \caption[Dotplots from assemblies of the MHC in GRCh38.]{
+    Comparing {\tt seqwish} and {\tt vg msga} assemblies of the MHC in GRCh38.
+    In both panels we see a dotplot between GI568335954 ($x$-axis) and GI568335994 ($y$-axis) as they are embedded in the graph, with \ref{subfig:seqwish_mhc_dotplot} showing the dotplot for {\tt seqwish} and \ref{subfig:vg_msga_mhc_dotplot} that for {\tt vg msga}.
+  }
+  \label{fig:mhc_dotplots}
 \end{figure}
 
 \subsection{CHiP-Seq}
