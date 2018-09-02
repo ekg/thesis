@@ -532,7 +532,6 @@ by reference mapping bias \cite{mcdaniell2010heritable}, especially given that r
 We compared mapping with {\tt bwa mem} and {\tt vg} for data set ENCFF000ATK from the ENCODE project \cite{encode2012integrated}, which contains 14.9 million 51-bp ChIP-seq reads for the H3K4me1 histone methylation mark from the NA12878 cell line.
 When mapping with bwa the ratio of reference to alternate allele matches at heterozygous sites was 1.20, whereas with vg to the 1000GP graph the ratio was 1.01, effectively eliminating reference bias.
 
-
 \begin{figure}[htbp!] 
   \centering
   \begin{subfigure}[t]{0.49\textwidth}
@@ -571,11 +570,85 @@ This has significant effect on population genetic inference and implications for
 \subsection{Simulations with human origins panel}
 %*1p 2h*
 
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=1.0\textwidth]{Chapter3/Figs/bwa_vs_vg_ancient_data_simulations_120218.pdf}
+  \caption{
+    ...
+  }
+  \label{fig:aDNA_downsampling}
+\end{figure}
+
 \subsection{Using 1000GP graph for samples from Martiniano et al 2016}
 %*2p 4h*
 
+
+\begin{comment}
+Aligned data from the following studies using vg and bwa (-l1024 -q15 -n0.02). Filtered bam files with samtools view -q30 and removed duplicates with sambamba markups
+
+• Schiffels et al., 2016 (Anglo-Saxons, Iron Age)
+• Martiniano et al., 2016 (Anglo-Saxons, Iron Age, Roman)
+• Damgaard et al., 2018 (High-coverage Yamnaya and Botai)
+\end{comment}
+
+
+
+\begin{figure}[htbp!] 
+  \centering
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/aDNA_d_stats_absolute.pdf}
+    \caption{D-stats absolute values}
+    \label{subfig:aDNA_dstats_absolute}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/aDNA_d_stats_z_score.pdf}
+    \caption{D-stats z-scores}
+    \label{subfig:aDNA_dstats_zscore}
+  \end{subfigure}
+  \caption[Bias towards the reference genome in aDNA]{
+    xxx
+  }
+\label{fig:aDNA_dstats}
+\end{figure}
+
+
+% Chapter3/Figs/aDNA_downsampling.pdf
+
+\begin{comment}
+  For Dstats:
+
+ - Used the Human Origins dataset distributed with https://www.nature.com/articles/nature19310#ref13
+-  for each sample:
+- ran samtools pileup, calling ~1.2 million SNPs
+- converted pileup to plink format, selecting one allele at random, and converting each sample to homozygous for the selected allele. This was done 5 times (5 replicates of randomly selected alleles for each sample)
+- Selected the Href/hg19 and Chimp sample from the dataset above and filtered by genotyping rate, excluding poorly genotyped SNPs (--geno 0.05), resulting in 1142867 SNPs
+- merged individual plink files with hg19 and chimp
+- converted plink to eigenstrat format using convertf and ran D-stats using qpDstat (Patterson
+ et al. (2012) Ancient Admixture in Human History) of the form D(vg, bwa; GRCh37,Chimp) to test for excess of shared alleles between vg and bwa aligned samples with the reference.
+\end{comment}
+
 \subsection{Evaluation of a high-coverage Botai sample}
 %*2p 4h*
+
+
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=0.7\textwidth]{Chapter3/Figs/aDNA_downsampling.pdf}
+  \caption{
+    The comparitive effect of downsampling of an ancient DNA sample on {\tt bwa aln} and {\tt vg map} alignment.
+  }
+  \label{fig:aDNA_downsampling}
+\end{figure}
+
+
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=0.7\textwidth]{Chapter3/Figs/yamna_1000GP_AB_het_violin.pdf}
+  \caption{
+    ...
+  }
+  \label{fig:yamna_het_violins}
+\end{figure}
 
 
 \section{Neoclassical bacterial pangenomics}
@@ -584,9 +657,36 @@ This has significant effect on population genetic inference and implications for
 \subsection{E. coli pangenome from illumina reads}
 %*2p 4h*
 
+%ecoli_10strain_kmer51abund10_contigs_vg_gfa.png
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=1.0\textwidth]{Chapter3/Figs/ecoli_10strain_kmer51abund10_contigs_vg_gfa.png}
+  \caption{
+    ...
+  }
+  \label{fig:ecoli_pangenome}
+\end{figure}
+
 \subsection{Evaluating the core and accessory pangenome}
 %*2p 4h*
 
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=1.0\textwidth]{Chapter3/Figs/ecoli_10strain_cov_col_pos_0_1M.png}
+  \caption{
+    ...
+  }
+  \label{fig:ecoli_cov_strains}
+\end{figure}
+
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=0.7\textwidth]{Chapter3/Figs/ecoli_cov_strains_hist.pdf}
+  \caption{
+    ...
+  }
+  \label{fig:ecoli_cov_strains}
+\end{figure}
 
 \section{Metagenomics}
 %*0.5p 0.5h*
@@ -594,9 +694,45 @@ This has significant effect on population genetic inference and implications for
 \subsection{Arctic viral metagenome}
 %*2p 1.5h*
 
+
+\begin{figure}[htbp!]
+  \centering
+  \begin{subfigure}[t]{1.0\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/raw_viral_metagenome_zoom.png}
+    \caption{A subset of the raw viral metagenome assembly graph}
+  \end{subfigure}
+  \begin{subfigure}[t]{1.0\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/smoothed_viral_metagenome_zoom.png}
+    \caption{A subset of the smoothed viral metagenome assembly graph}
+  \end{subfigure}
+  \caption{
+    ...
+  }
+  \label{fig:viral_metagenome_bandage}
+\end{figure}
+
+Viral
+
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=0.7\textwidth]{Chapter3/Figs/ERR414817_holdout_bwa_vs_vg_k51_m3.png}
+  \caption{
+    ...
+  }
+  \label{fig:viral_metagenome_scatter}
+\end{figure}
+
 \subsection{Human gut microbiome}
 %*2p 8h*
 
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=1.0\textwidth]{Chapter3/Figs/SRS105153_k51a3_contigs_gfa.png}
+  \caption{
+    ...
+  }
+  \label{fig:human_gut_microbiome}
+\end{figure}
 
 \section{RNAseq}
 %*0.5p 0.5h*
