@@ -561,39 +561,101 @@ The strength of this effect indicates that small variation will disrupt alignmen
 The issue becomes even more dramatic when we consider data sources with higher error.
 
 \section{Ancient DNA}
-%*0.5p 0.5h*
-With aDNA, read lengths are limited by the degredation of DNA due to environmental exposure.
-Furthermore, degredation causes a high intrinsic error rate.
+
+In suitable conditions, DNA can survive for tens or even hundreds of thousands of years \emph{ex vivo}, providing a unique window into the past history of life \cite{dabney2013ancient}.
+However, the sequencing analysis of Ancient DNA poses several significant challanges.
+The amount of DNA available is often limited, and sequencing costs are increased in the presence of high rates of contamination by organisms that inhabit the sample after its death.
+Read lengths are limited by the degredation of DNA due to necrotic processes and subsequent environmental exposure.
+Post-mortem damage (PMD) of the DNA occurs at a high rate, introducing apparent deaminations in the tails of the short DNA molecules, which occur in a single-stranded and relatively unprotected state \cite{link2017atlas}.
+This manifests mostly as the conversion of cytosines to uracil, but also can lead to apurination \cite{dabney2013ancient}.
+Ancient DNA data thus often of short length, low coverage, and high intrinsic error rate.
+
 In combination these issues cause a strong bias against non-reference variation.
 This has significant effect on population genetic inference and implications for many aDNA studies.
+Ancient DNA may be treated with uracil-DNA-glycosylase (UDG) and endonuclease VIII to remove uracil residues and abasic sites, which leaves undamaged portions of the DNA fragments intact \cite{briggs2009removal}.
+However, this process results in a reduction of read length and library depth, which is disadvantages, and it is not guaranteed to proceed without introducing new bias.
+There have also been many attempts to mitigate the effects of reference bias and low coverage, such as by implementing a model of reference bias in gentoyping \cite{pruefer2018snpad}, or by working with genotype likelihoods throughout all downstream population genetic analyses \cite{link2017atlas}.
+To avoid genotyping or even the generation of genotype likelihoods, standard practice often involves modeling each genome as a collection of haploid chromosomes modeled by reads.
 
-\subsection{Simulations with human origins panel}
-%*1p 2h*
+Here I report on the results of an ongoing collaboration with Rui Martiniano and Eppie Jones to explore the use of {\tt vg} to mitigate reference bias in ancient DNA samples.
+They have completed most of the analyses, while I have supported their work and developed the alignment (and surjection) algorithms that are essential to them.
+
+\subsection{Evaluating reference bias in aDNA using simulation}
+
+Using simulation, Eppie Jones and I completed an exploratory analysis which demonstrates that the high degree of reference bias inherent in ancient DNA analysis may be mitigated at known sites by aligning against a pangenome graph.
+We simulated all possible 50 bp reads which spanned variant sites on chromosome 11 of the Human Origins SNP panel \cite{patterson2012ancient,lazaridis2014ancient}, which is a set of SNPs designed to maximize coverage over ancient genomes and human ancestors.
+In each read the SNP position was mutated to the alternate allele.
+Reads with the base found in the reference genome and reads with the alternate base were mapped back to the 1000GP graph or GRCh37 linear genome using {\tt vg map} and {\tt bwa aln} respectively, with {\tt vg}'s surjection process used to produce a BAM file from the alignment for direct comparison.
+Different levels of ancient DNA damage estimated using 100 ancient genomes from \cite{allentoft2015population} were simulated in these data using {\tt gargammel} \cite{renaud2016gargammel}.
+We filtered the resulting alignments for those above mapping quality 30, which has approximately the same significance in both {\tt vg} and {\tt bwa}.
+Our results are shown in figure \ref{fig:aDNA_simulations}.
 
 \begin{figure}[htbp!]
   \centering
-  \includegraphics[width=1.0\textwidth]{Chapter3/Figs/bwa_vs_vg_ancient_data_simulations_120218.pdf}
-  \caption{
-    ...
+  \includegraphics[width=0.7\textwidth]{Chapter3/Figs/bwa_vs_vg_ancient_data_simulations_mq30_recolored.pdf}
+  \caption[Comparing {\tt bwa aln} and {\tt vg map} using simulated ancient DNA]{
+    Comparing {\tt bwa aln} and {\tt vg map} performance when aligning reads simulated from chromosome 11 of the Human Origins panel.
+  }
+  \label{fig:aDNA_simulations}
+\end{figure}
+
+At high levels of error alignment against the linear reference prevents the observation of non-reference alleles in a large fraction of cases.
+This effect is notable at damage rates as low as 10\%, and with 30\% PMD error the rate of alignment to non-reference alleles is reduced by nearly 15\%.
+While {\tt bwa aln} suffers a significant reference bias with increasing simulated PMD rates (dashed dark blue versus orange fit lines representing alternate and reference alleles), we observe no such effect for {\tt vg map} (light blue and yellow) (figure \ref{fig:aDNA_simulations}).
+Presumably, most of the alleles in the Human Origins panel are also in the 1000GP, which suggests that modern sources are useful when constructing a pangenomic reference for ancient samples.
+Furthermore, it can be seen that even alleles that are not in the reference may be detected, and presumably these could be included in a stepwise fashion in the reference genome in order to then improve genotype or genotype likelihood estimation.
+
+\subsection{Aligning ancient samples against the 1000GP pangenome}
+%*2p 4h*
+
+To evaluate whether pangenomic read mapping techniques could mitigate reference bias in real samples, we collected data from a number of recently published ancient DNA studies.
+This includes Iron Age, Roman, and Anglo-Saxon individuals sequenced at low coverage in \cite{schiffels2016iron} and \cite{martiniano2016genomic}, and high-coverage Yamnaya and Botai individuals from \cite{de2018first}.
+We used {\tt vg map} to align the samples to the 1000GP pangenome of variants above 0.1\% frequency, and {\tt bwa aln} to align them to the GRCh37 reference plus decoys, using standard parameters for the analysis of ancient DNA ({\tt -l1024 -q15 -n0.02}).
+For both alignment results we filtered the resulting BAMs using {\tt samtools view -q30} to remove reads with mapping quality less than 30, and removed duplicates using {\tt sambamba markdup} \cite{tarasov2015sambamba}.
+
+We first considered the high-coverage Yamnaya sample from \cite{de2018first}, which provides approximately 20-fold coverage of the genome.
+This is very high for ancient samples and thus allows us to complete some experiments which would be otherwise very difficult.
+We called variants on chromosome 21 using bcftools \cite{li2009sequence} for both {\tt vg} and {\tt bwa} alignments.
+To evaluate the effect of reference bias with decreasing coverage, we then used these callsets as ground truth and measured our ability to recover the heterozygous variants in the full coverage set at coverage levels of 0.1, 0.2, 0.3, 0.4, 0.5 of the original.
+As seen in figure \ref{fig:aDNA_downsampling}, at lower coverages common in ancient DNA sequencing, {\tt bwa aln} recovers notably fewer heterozygous SNPs than {\tt vg map} alignment to the 1000GP graph.
+At the sampling rate of 0.2, which corresponds to coverage $\approx$4, {\tt vg map} recovers almost 10\% more heterozygotes as a fraction of the total.
+{\tt vg map} recovers more heterozygous SNPs than {\tt bwa aln} at all of the coverage levels, although at higher levels the difference is less pronounced.
+We expect this would have a significant effect on population genetic analyses depending on these alignments.
+
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=0.7\textwidth]{Chapter3/Figs/aDNA_downsampling.pdf}
+  \caption[Downsampling a high-coverage aDNA sample]{
+    The comparitive effect of downsampling of an ancient DNA sample on {\tt bwa aln} and {\tt vg map} alignment.
   }
   \label{fig:aDNA_downsampling}
 \end{figure}
 
-\subsection{Using 1000GP graph for samples from Martiniano et al 2016}
-%*2p 4h*
+In an illustrative, if less well-controlled experiment, we simply examined the distribution of the ratio between reference and alternate allele observations in the set of variants called by {\tt freebayes} from the surjected {\tt vg map} Yamnaya alignments.
+We first subset the called alleles into heterozygous transversions, and further divided the resulting set of putative transversions into those alleles in the 1000GP graph, and those which are not.
+As shown in figure \ref{fig:yamnaya_het_violins}, we observe that if the variant is in the graph we have effectively removed bias towards the reference allele.
+However, those called variants which are not in the graph are indistinguishable from error, with the average allele balance mostly dominated by the default variant calling thresholds in {\tt freebayes}\footnote{In the version used for this analysis, a non-reference allele support of 0.2 was required to call the variant.}.
+This is expected even in an ancient sample, as the vast majority of variation in any human should be contained in the 1000GP graph.
+An improvement to this analysis would be to provide the same breakdown under the two different aligners.
+The current configuration does not clarify the effect we might see if we were to align against the linear reference.
 
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=0.7\textwidth]{Chapter3/Figs/yamna_1000GP_AB_het_violin.pdf}
+  \caption[Allele balance in the Yamnaya sample]{
+    Allele balance in the Yamnaya sample versus presence in the 1000GP graph.
+    Horizontal lines in the violin density plots indicate quartile boundaries.
+  }
+  \label{fig:yamnaya_het_violins}
+\end{figure}
 
-\begin{comment}
-Aligned data from the following studies using vg and bwa (-l1024 -q15 -n0.02). Filtered bam files with samtools view -q30 and removed duplicates with sambamba markups
+We expect reference bias of the degree demonstrated in these experiments to affect population genetic inference.
+Demonstrating this using a small set of samples has proven to be difficult.
+We attempted to use PCA based projections to observe if the {\tt vg} alignments systematically shifted the low-coverage samples towards or away from a projection of GRCh37.
+Certain effects do appear for given groups, but this proved inconclusive at least when evaluating the results in the first two principal components.
+To systematically evaluate if alignment against the pangenome would reduce reference bias, we apply the ABBA BABA test of phylogenetic tree topology based on Patterson's D statistic of admixture \cite{green2010draft}.
 
-• Schiffels et al., 2016 (Anglo-Saxons, Iron Age)
-• Martiniano et al., 2016 (Anglo-Saxons, Iron Age, Roman)
-• Damgaard et al., 2018 (High-coverage Yamnaya and Botai)
-\end{comment}
-
-
-
-\begin{figure}[htbp!] 
+\begin{figure}[htbp!]
   \centering
   \begin{subfigure}[t]{0.49\textwidth}
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/aDNA_d_stats_absolute.pdf}
@@ -612,12 +674,12 @@ Aligned data from the following studies using vg and bwa (-l1024 -q15 -n0.02). F
 \end{figure}
 
 
-% Chapter3/Figs/aDNA_downsampling.pdf
 
 \begin{comment}
   For Dstats:
 
- - Used the Human Origins dataset distributed with https://www.nature.com/articles/nature19310#ref13
+  - Used the Human Origins dataset distributed with https://www.nature.com/articles/nature19310#ref13
+  \cite{lazaridis2014ancient}
 -  for each sample:
 - ran samtools pileup, calling ~1.2 million SNPs
 - converted pileup to plink format, selecting one allele at random, and converting each sample to homozygous for the selected allele. This was done 5 times (5 replicates of randomly selected alleles for each sample)
@@ -627,28 +689,8 @@ Aligned data from the following studies using vg and bwa (-l1024 -q15 -n0.02). F
  et al. (2012) Ancient Admixture in Human History) of the form D(vg, bwa; GRCh37,Chimp) to test for excess of shared alleles between vg and bwa aligned samples with the reference.
 \end{comment}
 
-\subsection{Evaluation of a high-coverage Botai sample}
+%\subsection{Evaluation of a high-coverage Botai sample}
 %*2p 4h*
-
-
-\begin{figure}[htbp!]
-  \centering
-  \includegraphics[width=0.7\textwidth]{Chapter3/Figs/aDNA_downsampling.pdf}
-  \caption{
-    The comparitive effect of downsampling of an ancient DNA sample on {\tt bwa aln} and {\tt vg map} alignment.
-  }
-  \label{fig:aDNA_downsampling}
-\end{figure}
-
-
-\begin{figure}[htbp!]
-  \centering
-  \includegraphics[width=0.7\textwidth]{Chapter3/Figs/yamna_1000GP_AB_het_violin.pdf}
-  \caption{
-    ...
-  }
-  \label{fig:yamna_het_violins}
-\end{figure}
 
 
 \section{Neoclassical bacterial pangenomics}
@@ -724,6 +766,9 @@ Viral
 
 \subsection{Human gut microbiome}
 %*2p 8h*
+
+Human gut flora are primarily comprised of two main phyla, the Firmicutes and the Bacteroidetes \cite{mahowald2009characterizing}.
+Presumably the two ends of dumbell-like main component of the graph represent these phyla, with the connection between them generated by horizontal transfer of genes or spurious correlation due to recurrent $k$-mers in the assembly graph.
 
 \begin{figure}[htbp!]
   \centering
