@@ -162,7 +162,8 @@ Cactus & 31 & 13243056 & 1059173 & 1304205 & 580 \\
 {\tt vg msga} & 42 & 13793955 & 1156295 & 1387903 & 2 \\
 \hline
 \end{tabular}
-\caption{A summary of seven different variation graphs contructed to represent variation in \emph{S. cerevisiae}.
+\caption[\emph{S. cerevisiae} variation graphs]{
+  A summary of seven different variation graphs contructed to represent variation in \emph{S. cerevisiae}.
   As described in section \ref{sec:SGRP2_graph}, the SGD\_2010 graph is built from the reference, while SGRP2 adds SNPs in the SGRP2 population survey.
   The Illumina data from \cite{yue2017contrasting} was used to build the minia unitigs and minia contigs graphs, while the whole genome, chromosome-resolved PacBio assemblies from the same work were used to build the Cactus and {\tt vg msga} progressive assemblies.
   S288c is the \emph{de novo} assembly of the reference strain produced in \cite{yue2017contrasting}.
@@ -283,7 +284,7 @@ GRCh37 & 0 & 1:09:54 & 1.76 & 23:30:41 & 25.11 & 33:34 & 28:33 \\
 1000GP AF0.1 & 6.8 & 1:23:04 & 1.97 & 26:06:38 & 27.79 & 32:35 & 28:43 \\
 \hline
 \end{tabular}
-\caption{Numbers of variants, file sizes in gigabytes (GB) and build and search times in hours:minutes:seconds for various human vg graphs and associated indexes. Reference sets are the linear reference GRCh37, the full 1000 Genomes Project set 1000GP AF0, and subsets of 1000GP AF0 including only variants with allele frequency above thresholds 0.001 (0.1\%), 0.01 (1\%) and 0.1 (10\%) respectively.  The number of variants in millions for each of these data sets is shown.  Search times are for 10 million 150+150bp read pairs simulated from NA24385.
+\caption[1000GP variation graphs]{Numbers of variants, file sizes in gigabytes (GB) and build and search times in hours:minutes:seconds for various human vg graphs and associated indexes. Reference sets are the linear reference GRCh37, the full 1000 Genomes Project set 1000GP AF0, and subsets of 1000GP AF0 including only variants with allele frequency above thresholds 0.001 (0.1\%), 0.01 (1\%) and 0.1 (10\%) respectively.  The number of variants in millions for each of these data sets is shown.  Search times are for 10 million 150+150bp read pairs simulated from NA24385.
 }
 \label{table:1000GP}
 \end{table}
@@ -359,7 +360,7 @@ mlin-fermikit & 98.8629 & 98.2311 & 99.5029 & 95.5997 & 94.8918 & 96.3183 \\
 rpoplin-dv42 & 99.9587 & 99.9447 & 99.9728 & 98.9802 & 98.7882 & 99.1728 \\
 \hline
 \end{tabular}
-\caption{A selected subset of PrecisionFDA Truth Challenge results showing the best-performing methods as well as a number of other notable submissions.}
+\caption[Selected results from the PrecisionFDA Truth Challenge]{A selected subset of PrecisionFDA Truth Challenge results showing the best-performing methods as well as a number of other notable submissions.}
 \label{table:PFDA}
 \end{table}
 
@@ -792,35 +793,55 @@ Naturally, the rate at which this failure occurs is dependent on read depth.
 It is possible that this effect is driven by the high abundance count (10) used in constructing the compressed DBG, and possibly it could be mitigated by tuning this parameter and the $k$-mer length.
 
 \section{Metagenomics}
-%*0.5p 0.5h*
+
+\emph{Metagenomics} is conceptally close to pangenomics.
+But, where pangenomics considers a single clade, metagenomics considers the total DNA in an environmental context.
+This adds significant complexity to the analysis of metagenomic data.
+To obtain high coverage across all the extant genomes in a sample may be impossible, as many exist at extremely low copy.
+Furthermore, doing so could be extremely expensive.
+In response, reductive approaches focused on sequencing 16S ribosomal DNA or common orthologs have been popular \cite{tringe2005comparative}.
+These methods are only applicable to contexts where such homologous sequences are available, and so cannot be applied to viral contexts \cite{edwards2005viral}.
+As sequencing costs have decreased, assembly techniques have become more important to metagenomics \cite{nurk2017metaspades}.
+A typical workflow involves assembling contigs out of a DBG, mapping these contigs into annotated databases using sensitive alignment with BLAT or BLAST, and computing abundance by aligning the read set back to the contig set.
+Contigs, in being unary, suppress variation that could be useful in analysis.
+Furthermore, in graphs that are dense, contigs will be very short, and singular read alignment will fail to completely capture the set of contigs that a given read maps to.
+This will result in distortion in coverage estimatess, and at very least loss of information due to the breakage of sequences that cross contigs boundaries.
+The information loss suggests that a techinque based on alignment to the assembly graph itself could benefit downstream analysis.
+In this section I use analyses of viral and bacterial metagenomes to demonstrate that {\tt vg} enables contiguous alignments against topogolically complex metagenomic assembly graphs.
 
 \subsection{Arctic viral metagenome}
-%*2p 1.5h*
 
+To explore this issue, I built an assembly graph from a single sequencing data set from a study of freshwater viruses in Svalbard \cite{de2015biodiversity}\footnote{Data from \url{https://www.ebi.ac.uk/ena/data/view/ERS396648}} and compared the performance of alignment against the graph with alignment against the contig set.
+As with other assembly graph based variation graphs, I used {\tt minia} to construct the graph, with $k=51$ and a minimum abundance of 3.
+To enable efficient alignment against the graph, I chopped its long nodes into nodes of a maximum of 32bp.
+The resulting graph has 39,503,775bp of sequence in 1,387,287 nodes and 1,326,573.
+The low ratio of nodes to edges suggests a locally linear structure, which enables direct use of the graph by {\tt vg}.
+To successfully index the graph I found I had to remove complex regions using {\tt vg prune}, cutting edges that induced 3 furcations in any 16-mer.
+Indexing yielded a 119MB {\tt xg} index and 158MB {\tt GCSA2} index.
 
 \begin{figure}[htbp!]
   \centering
-  \begin{subfigure}[t]{1.0\textwidth}
-    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/raw_viral_metagenome_zoom.png}
-    \caption{A subset of the raw viral metagenome assembly graph}
-  \end{subfigure}
-  \begin{subfigure}[t]{1.0\textwidth}
-    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/smoothed_viral_metagenome_zoom.png}
-    \caption{A subset of the smoothed viral metagenome assembly graph}
-  \end{subfigure}
-  \caption{
-    ...
+  \includegraphics[width=1.0\textwidth]{Chapter3/Figs/svalbard_metagenome_minia_k51_m3_contigs_gfa.png}
+  \caption[An arctic freshwater viral metagenome]{
+    An arctic freshwater viral metagenome visualized with Bandage.
   }
   \label{fig:viral_metagenome_bandage}
 \end{figure}
 
-Viral
+As expected given the small genome size of most viruses, the graph contains many small components (figure \ref{fig:viral_metagenome_bandage}).
+The graph contains few large components, and many of the small components are circular, which is expected given the nature of many DNA viruses.
+Some components are topologically complex, which can be seen in figure \ref{fig:viral_metagenome_bandage} as ``hairball'' like structures.
+When using $k=31$, indexing and alignment against the graph were impossible without a high-degree filter which removed nodes in such regions, however in the case of $k=51$ it is possible to index with only standard pruning of the DBG.
+
+I held out 100,000 reads from the input to the assembly graph.
+To evaluate the utility of using this graph as a reference for alignment, I aligned 100,000 reads which had been held out of the assembly using {\tt vg map} and {\tt bwa mem} to the assembly graph and linear contig set respectively.
+Although both methods mapped ~96\% of the reads, {\tt vg} had an average identity score of 95\% compared to 87\% for {\tt bwa}, reflecting that the {\tt bwa} alignments in many cases are not full length while those of {\tt vg} are (figure \ref{fig:viral_metagenome_scatter}).
 
 \begin{figure}[htbp!]
   \centering
   \includegraphics[width=0.7\textwidth]{Chapter3/Figs/ERR414817_holdout_bwa_vs_vg_k51_m3.png}
-  \caption{
-    ...
+  \caption[Comparing {\tt vg} and {\tt bwa} alignment to the viral metagenome]{
+    Comparison of alignment score between {\tt vg map} and {\tt bwa mem} when aligning against the pangenome graph or assembled contig set of the graph.
   }
   \label{fig:viral_metagenome_scatter}
 \end{figure}
