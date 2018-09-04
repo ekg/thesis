@@ -437,7 +437,7 @@ The low performance of the method prevented its application to the whole genome.
 \subsection{Building graphs from the MHC}
 
 In \cite{novak2017genome} we explored methods to build graphs from the GRCh38's ALT sequences and reference genome.
-One of the most challenging regions is the MHC on chr6.
+One of the most challenging regions is the MHC on chromosome 6.
 In this $\approx$5Mb region, balancing selection has encouraged a high level of genetic diversity, resulting in some 40 million years divergence between alternative copies of the locus, dating back far into the primate lineage.
 Previous efforts to build reference graphs from this region have often required hand curation to achieve reliable results \cite{dilthey2015improved}.
 
@@ -653,82 +653,143 @@ We expect reference bias of the degree demonstrated in these experiments to affe
 Demonstrating this using a small set of samples has proven to be difficult.
 We attempted to use PCA based projections to observe if the {\tt vg} alignments systematically shifted the low-coverage samples towards or away from a projection of GRCh37.
 Certain effects do appear for given groups, but this proved inconclusive at least when evaluating the results in the first two principal components.
-To systematically evaluate if alignment against the pangenome would reduce reference bias, we apply the ABBA BABA test of phylogenetic tree topology based on Patterson's D statistic of admixture \cite{green2010draft}.
+To systematically evaluate if alignment against the pangenome would reduce reference bias, we apply the ABBA BABA test of phylogenetic tree topology based on Patterson's $D$-statistic of population relationship \cite{green2010draft}.
+To do so, we used the Human Origins dataset distributed with \cite{lazaridis2014ancient}.
+For each sample we ran samtools pileup yielding $\approx$1.2 million SNPs.
+We converted the pileup results to plink format, selecting one allele at random, and converting each sample to homozygous for the selected allele.
+This was done 5 times, generating 5 replicates of randomly selected alleles for each sample.
+We then selected the GRCh37 and Chimp sample from the dataset above and filtered by genotyping rate, excluding poorly genotyped SNPs\footnote{We used the plink filter {\tt --geno 0.05}.}, resulting in 1,142,867 SNPs.
+Finally, we merged individual plink files with those for GRCh37 and Chimpanzee, converted plink to eigenstrat format using {\tt convertf} and calculated $D$-statistics using qpDstat \cite{patterson2012ancient} of the form $D(\text{vg}, \text{bwa}; \text{GRCh37}, \text{Chimp})$ to test for excess of shared alleles between {\tt vg} and {\tt bwa}-aligned samples with the reference.
 
 \begin{figure}[htbp!]
   \centering
   \begin{subfigure}[t]{0.49\textwidth}
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/aDNA_d_stats_absolute.pdf}
-    \caption{D-stats absolute values}
+    \caption{$D$-statistic absolute values}
     \label{subfig:aDNA_dstats_absolute}
   \end{subfigure}
   \begin{subfigure}[t]{0.49\textwidth}
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/aDNA_d_stats_z_score.pdf}
-    \caption{D-stats z-scores}
+    \caption{$D$-statistic z-scores}
     \label{subfig:aDNA_dstats_zscore}
   \end{subfigure}
-  \caption[Bias towards the reference genome in aDNA]{
-    xxx
+  \caption[$D$-statistic based ABBA-BABA test of reference bias in aDNA]{
+    $D$-statistic based ABBA-BABA test of reference bias in aDNA.
+    Panel \ref{subfig:aDNA_dstats_absolute} provides the absolute values for the given $D$-statistic, calculated as described in the text, while panel \ref{subfig:aDNA_dstats_zscore} shows estimated significance level for the various samples.
+    On both panels, points to the left of the dashed line at 0 indicate excess allele sharing between {\tt bwa} alignments of the samples and GRCh37 (the ABBA pattern), while those to the right indicate an excess of sharing between {\tt vg} alignments and GRCh37 (the BABA pattern).
+    The two patterns are illustrated by the trees above the panels, where $A$ alleles are given as blue lines on the tree and $B$ alleles that arose between the split with the outgroup (Chimpanzee) are shown in red.
   }
 \label{fig:aDNA_dstats}
 \end{figure}
 
-
-
-\begin{comment}
-  For Dstats:
-
-  - Used the Human Origins dataset distributed with https://www.nature.com/articles/nature19310#ref13
-  \cite{lazaridis2014ancient}
--  for each sample:
-- ran samtools pileup, calling ~1.2 million SNPs
-- converted pileup to plink format, selecting one allele at random, and converting each sample to homozygous for the selected allele. This was done 5 times (5 replicates of randomly selected alleles for each sample)
-- Selected the Href/hg19 and Chimp sample from the dataset above and filtered by genotyping rate, excluding poorly genotyped SNPs (--geno 0.05), resulting in 1142867 SNPs
-- merged individual plink files with hg19 and chimp
-- converted plink to eigenstrat format using convertf and ran D-stats using qpDstat (Patterson
- et al. (2012) Ancient Admixture in Human History) of the form D(vg, bwa; GRCh37,Chimp) to test for excess of shared alleles between vg and bwa aligned samples with the reference.
-\end{comment}
-
-%\subsection{Evaluation of a high-coverage Botai sample}
-%*2p 4h*
-
+Our results, summarized in figure \ref{fig:aDNA_dstats}, indicate an excess of allele sharing between the {\tt bwa}-aligned samples and GRCh37 relative to the {\tt vg}-aligned ones and GRCh37.
+All but a handful of replicates have negative $D$-statistics, which implies that alignment against GRCh37 makes the samples appear more like the reference (subfigure \ref{subfig:aDNA_dstats_absolute}).
+The effect is most pronounced for samples whose ancestries are less likely to be captured by the reference genome, which we expect to represent a synthetic European and African admixture with a greater European contribution.
+This can be seen by the strong significance of the $D$-statistics for the Yamna and Botai samples in subfigure \ref{subfig:aDNA_dstats_zscore}, as these individuals are from an ancient central Asian population.
+In contrast the effect is less extreme for the ancient Anglo Saxon, Roman, and Iron Age British individuals.
+We conclude that reference bias is strong enough to affect common population genetic analysis completed with ancient DNA, and this can be mitigated at least for known alleles by aligning against a pangenomic reference.
 
 \section{Neoclassical bacterial pangenomics}
 %*0.5p 0.5h*
 
-\subsection{E. coli pangenome from illumina reads}
-%*2p 4h*
+As I have discussed, in much of the past decade pangenomic concepts have been employed in microbiology to characterize the relationship between strains that frequently share DNA through horizontal gene transfer and exhibit wide variability in gene content.
+It is often helpful to consider the ``core'' and ``accessory'' pangenome of a given clade, with core genes being those present in all strains and accessory ones those present in only a subset.
+Techniques to evaluate these features of a pangenome are often based on gene counting approaches that could be driven by simple $k$-mer matching.
 
-%ecoli_10strain_kmer51abund10_contigs_vg_gfa.png
+In this section I demonstrate that {\tt vg} can be applied to derive the same kind of result by directly working on a pangenome graph reference built from diverse strains of \emph{Escheria coli}\footnote{I developed this technique during the Computational Pangenomics (CPANG18) course at the Instituto Gulbenkian de Ci\'{e}ncia in Oieras, Portugal. See \url{https://gtpb.github.io/CPANG18/}. This particular practical was explored on the third day of the course \url{https://gtpb.github.io/CPANG18/pages/bacteria.html}.}.
+The basic idea is to build a pangenome using a standard DBG assembler, then align all the strain level data we have available against the resulting assembly graph. 
+The advance that {\tt vg} offers is precision.
+Rather than considering gene-level counts, alignment with {\tt vg} provides per-base, per-sample coverage information.
+The results can be used as in resequencing to find new variants and genotype existing ones in the graph.
+This approach is similar to colored de Bruijn graphs \cite{iqbal2013}, but it allows for out-of-core computation, retains full alignment information, and is consequently lossless with respect to the input reads.
+
 \begin{figure}[htbp!]
   \centering
-  \includegraphics[width=1.0\textwidth]{Chapter3/Figs/ecoli_10strain_kmer51abund10_contigs_vg_gfa.png}
-  \caption{
-    ...
+  \begin{subfigure}[t]{1.0\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/ecoli_10strain_kmer51abund10_contigs_vg_gfa.png}
+    \caption{The full \emph{E. coli} assembly graph.}
+    \label{subfig:ecoli_pangenome_bandage}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.7\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/ecoli_n298051_c100.pdf}
+    \caption{A linear region of the assembly graph, with variation.}
+    \label{subfig:ecoli_pangenome_linear}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.7\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/ecoli_n213909_c100.pdf}
+    \caption{A semi-tangled region of the assembly graph.}
+    \label{subfig:ecoli_pangenome_tangle}
+  \end{subfigure}
+  \caption[An \emph{E. coli} pangenome]{
+    An assembly graph built from 10 \emph{E. coli} strains using minia.
+    In the full graph we observe a single giant component (panel \ref{subfig:ecoli_pangenome_bandage}).
+    The graph is largely linear (\ref{subfig:ecoli_pangenome_linear}).
+    However, in some regions it is densely tangled (\ref{subfig:ecoli_pangenome_tangle}).
   }
   \label{fig:ecoli_pangenome}
 \end{figure}
 
-\subsection{Evaluating the core and accessory pangenome}
+
+\subsection{An \emph{E. coli} pangenome assembly}
 %*2p 4h*
 
-\begin{figure}[htbp!]
-  \centering
-  \includegraphics[width=1.0\textwidth]{Chapter3/Figs/ecoli_10strain_cov_col_pos_0_1M.png}
-  \caption{
-    ...
-  }
-  \label{fig:ecoli_cov_strains}
-\end{figure}
+In line with early work on bacterial pangenomics \cite{medini2005microbial}, I used a handful of genomes to demonstrate the utility of pangenomic approaches in \emph{E. coli}.
+I collected Illumina data from 10 strains published in \cite{earle2016identifying}\footnote{SRA accessions SRR3050857, SRR3050919, SRR3050929, SRR3050978, SRR3050990, SRR3050992, SRR3050994, SRR3051002, SRR3051049, and SRR3051079.}.
+These data total 2.3GB of compressed FASTQ in 2x151bp paired end format.
+I built a compressed DBG using {\tt minia} with $k=51$ and an abundance minimum of 10, which was selected due to the very high genomic coverage offered by this data, although I did not observe large changes in assembly structure when varying it.
+I then processed the resulting graph with {\tt vg} to decompress long nodes into nodes with a maximum length of 32bp, then sort it pseudotopologically and compact its node identifier space.
+These steps are required for efficient mapping given the absence of any annotated reference paths to provide distance estimates.
+As seen in figure \ref{fig:ecoli_pangenome}, the assembly graph features a giant component representing most of input sequencing data.
+Other fragments could represent plasmids or other contaminating elements.
+The normalized graph contains 10,456,557bp of sequence, in 429,377 nodes and 455,892 edges, which suggests that although it appears very tangled it is mostly comprised of linear components.
+The assembly and indexing of the graph was completed in less than an hour, and yielded 6.3MB {\tt vg} graph, a 37MB {\tt xg} index, and a 47MB {\tt GCSA2} index.
+
+\subsection{Evaluating the core and accessory pangenome}
+
+The generation of the compressed DBG loses the read-level relationships to the graph, but these may be obtained trivially with {\tt vg} by aligning the read set back to the assembly graph.
+Doing so required around 5 minutes per sample, yielding 3.3GB of GAM files in around an hour.
+To obtain coverage counts per sample across the graph I then applied the {\tt vg pack} utility to project the alignment GAMs into coverage maps for each sample, which I collated for processing in R.
+
 
 \begin{figure}[htbp!]
   \centering
-  \includegraphics[width=0.7\textwidth]{Chapter3/Figs/ecoli_cov_strains_hist.pdf}
-  \caption{
-    ...
+  \begin{subfigure}[t]{1.0\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/ecoli_10strain_cov_col_pos_4400000_100k.png}
+    \caption{Per-strain coverage across 100kb of the \emph{E. coli} pangenome}
+    \label{subfig:ecoli_cov_100k}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/ecoli_cov_strains_hist.pdf}
+    \caption{Genomes per base of the pangenome}
+    \label{subfig:ecoli_cov_strains}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter3/Figs/ecoli_pangenome_alignment_rate_vs_depth.pdf}
+    \caption{Realignment rate versus input read count}
+    \label{subfig:ecoli_realignment_vs_input}
+  \end{subfigure}
+  \caption[Evaluating alignment to the \emph{E. coli} pangenome.]{
+    Evaluating alignment to the \emph{E. coli} pangenome.
+    Panel \ref{subfig:ecoli_cov_100k} shows per-strain coverage across a selected region of the $\approx$10MB pangenome, including several regions specific to a subset of the strains.
+    Panel \ref{subfig:ecoli_cov_strains} provides a histogram of the number of genomes covering each base of the pangenome demonstrates that much of the genome is in all strains or in single strains.
+    Although the alignment rate of the input reads to the pangenome graph is in all cases is above 99.5\%, panel \ref{subfig:ecoli_realignment_vs_input} shows a significant correlation in this rate and the number of input reads from each strain used to construct the graph.
   }
-  \label{fig:ecoli_cov_strains}
+  \label{fig:ecoli_pangenome_alignment}
 \end{figure}
+
+Figure \ref{subfig:ecoli_cov_100k} shows the coverage across a typical region of the pangenome.
+We see regions shared by all strains, as well as others which are particular to a single or small number of strains.
+This is exactly in line with our expectations based on observations from ``classical'' bacterial pangenomics.
+To quantify this over the whole pangenome, I computed the histogram of graph positions by the number of strains mapping to each position, as summarized in figure \ref{subfig:ecoli_cov_strains}.
+I find that 26.9\% of the pangenome is covered by all ten strains, while 25.6\% is covered by only one strain.
+The remaining 47.5\% of the pangenome has intermediate numbers of strains mapping to it.
+As such we can conclude that around $\frac{1}{4}$ of the pangenome is the conserved ``core,'' and $\frac{1}{4}$ is purely ``accessory,'' occuring in only a single strain.
+
+Virtually all of the graph is covered by some strain, with only 80bp receiving no mappings, which indicates that the pangenome object is complete.
+However, the read sets are not equivalently contained in the pangenome, and a significant ($p=0.00534$) correlation exists between the realignment rate of the reads to the pangenome and the number of raw reads from each strain, as seen in figure \ref{subfig:ecoli_realignment_vs_input}.
+This statistic suggests that a small number of strain-specific regions are not assembled.
+Naturally, the rate at which this failure occurs is dependent on read depth.
+It is possible that this effect is driven by the high abundance count (10) used in constructing the compressed DBG, and possibly it could be mitigated by tuning this parameter and the $k$-mer length.
 
 \section{Metagenomics}
 %*0.5p 0.5h*
