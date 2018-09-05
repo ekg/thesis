@@ -127,7 +127,7 @@ The multiple genome graphs were constructed with the Cactus progressive aligner,
 
 \begin{figure}[htbp!]
   \centering
-  \includegraphics[width=0.65\textwidth]{Chapter3/Figs/e68fc338_test_sim_yeast_cactus-roc.pdf}
+  \includegraphics[width=0.9\textwidth]{Chapter3/Figs/e68fc338_test_sim_yeast_cactus-roc.pdf}
   \caption[Cactus yeast simulation]{Mapping short reads with vg to yeast genome references.
     ROC curves obtained by mapping 100,000 simulated SK1 yeast strain 150-bp paired-end reads against a variety of references described in the text.}
   \label{fig:cactus_yeast_sim}
@@ -483,7 +483,7 @@ Both processes took around 2 hours to complete on the 256GB/32vCPU server I used
   \label{fig:seqwish_mhc}
 \end{figure}
 
-The {\tt seqwish} MHC graph contains 9764108bp of sequence, in 224873 nodes and 321990 edges, while the {\tt vg msga} assembly is larger, with 10900412bp of sequence in 480734 nodes and 536592 edges.
+The {\tt seqwish} MHC graph contains 9,764,108bp of sequence, in 224,873 nodes and 321,990 edges, while the {\tt vg msga} assembly is larger, with 10,900,412bp of sequence in 480,734 nodes and 536,592 edges.
 Unlike the {\tt vg msga} graph, whose nodes are cut to be shorter than 32bp to enable GCSA2 indexing during progressive construction, the seqwish graph is fully compressed by default, and this results in its much lower node count.
 We can compare the aggregate results for {\tt seqwish} (figure \ref{subfig:seqwish_mhc_bandage}) to those for {\tt vg msga} (figure \ref{fig:vg_msga_mhc}).
 It becomes clear from these visualizations that the {\tt seqwish} graph compresses its repeats much more than {\tt vg msga} (figure \ref{subfig:seqwish_mhc_neato}).
@@ -520,7 +520,7 @@ Setting a shorter bandwidth allows repeat collapse to occur in a manner similar 
   \end{subfigure}
   \caption[Dotplots from assemblies of the MHC in GRCh38.]{
     Comparing {\tt seqwish} and {\tt vg msga} assemblies of the MHC in GRCh38.
-    In both panels we see a dotplot between GI568335954 ($x$-axis) and GI568335994 ($y$-axis) as they are embedded in the graph, with \ref{subfig:seqwish_mhc_dotplot} showing the dotplot for {\tt seqwish} and \ref{subfig:vg_msga_mhc_dotplot} that for {\tt vg msga}.
+    In both panels we see a dotplot between GI568335954 ($x$-axis) and GI568335994 ($y$-axis) as they are embedded in each graph, with \ref{subfig:seqwish_mhc_dotplot} showing the dotplot for {\tt seqwish} and \ref{subfig:vg_msga_mhc_dotplot} that for {\tt vg msga}.
   }
   \label{fig:mhc_dotplots}
 \end{figure}
@@ -585,8 +585,8 @@ They have completed most of the analyses, while I have supported their work and 
 
 Using simulation, Eppie Jones and I completed an exploratory analysis which demonstrates that the high degree of reference bias inherent in ancient DNA analysis may be mitigated at known sites by aligning against a pangenome graph.
 We simulated all possible 50 bp reads which spanned variant sites on chromosome 11 of the Human Origins SNP panel \cite{patterson2012ancient,lazaridis2014ancient}, which is a set of SNPs designed to maximize coverage over ancient genomes and human ancestors.
-In each read the SNP position was mutated to the alternate allele.
-Reads with the base found in the reference genome and reads with the alternate base were mapped back to the 1000GP graph or GRCh37 linear genome using {\tt vg map} and {\tt bwa aln} respectively, with {\tt vg}'s surjection process used to produce a BAM file from the alignment for direct comparison.
+In half of the simulated reads the SNP position was mutated to the alternate allele.
+We then mapped these reads back to the 1000GP graph or GRCh37 linear genome using {\tt vg map} and {\tt bwa aln} respectively, with {\tt vg}'s surjection process used to produce a BAM file from the alignment for direct comparison.
 Different levels of ancient DNA damage estimated using 100 ancient genomes from \cite{allentoft2015population} were simulated in these data using {\tt gargammel} \cite{renaud2016gargammel}.
 We filtered the resulting alignments for those above mapping quality 30, which has approximately the same significance in both {\tt vg} and {\tt bwa}.
 Our results are shown in figure \ref{fig:aDNA_simulations}.
@@ -602,7 +602,7 @@ Our results are shown in figure \ref{fig:aDNA_simulations}.
 \end{figure}
 
 At high levels of error alignment against the linear reference prevents the observation of non-reference alleles in a large fraction of cases.
-This effect is notable at damage rates as low as 10\%, and with 30\% PMD error the rate of alignment to non-reference alleles is reduced by nearly 15\%.
+This effect is notable at damage rates as low as 10\%, and with 30\% PMD error the rate of alignment to non-reference alleles is reduced by nearly 15\% relative to the total.
 While {\tt bwa aln} suffers a significant reference bias with increasing simulated PMD rates (dashed dark blue versus orange fit lines representing alternate and reference alleles), we observe no such effect for {\tt vg map} (light blue and yellow) (figure \ref{fig:aDNA_simulations}).
 Presumably, most of the alleles in the Human Origins panel are also in the 1000GP, which suggests that modern sources are useful when constructing a pangenomic reference for ancient samples.
 Furthermore, it can be seen that even alleles that are not in the reference may be detected, and presumably these could be included in a stepwise fashion in the reference genome in order to then improve genotype or genotype likelihood estimation.

@@ -17,7 +17,7 @@ Over time, the genomes of organisms are copied, sometimes with error or recombin
 These mutations give rise to genetic, and ultimately phenotypic diversity.
 Through isolation and drift, genetic diversity enables and defines the generation of new species.
 
-Although easily stated, this core dogma of genomics is often forgotten at the level of the most common analysis patterns used in the field.
+Although easily surmised, this basic process is often forgotten at the level of the most common analysis patterns used in the field of genomics.
 When considering the genomes of many individuals, we frequently pluck a single related genome from the tree of life to use as a reference.
 Using alignment, we express our sequencing data from the collection of samples in terms of positions and edits to the reference sequence.
 We then use variant calling and phasing algorithms to filter and structure these edits into a reconstruction of the underlying haplotypes in the set of non-reference samples which we have sequenced.
@@ -35,10 +35,10 @@ We can then proceed to use the inferred genotypes and haplotypes to answer biolo
 In this way, we have not fully sequenced the new genomes, but \emph{resequenced} them against the reference genome.
 Pieces of the new genomes which could not be mapped to the reference will be left out of our analysis.
 Resequencing may thus distort our perspective of the genomes which we are attempting to reconstruct.
-It may yield an uncertain and incomplete perspective on the total genomic complexity of the system we are assaying.
+It may yield an uncertain and incomplete image of the total genomic complexity of the system we are assaying.
 
 Resequencing has arisen in response to the technical properties of the most commonly-used DNA sequencing technologies.
-These ``second generation'' sequencing by synthesis technologies produce abundant and inexpensive short reads of up to 250 base pairs, and in the past decade have become the largest source of data in the DNA sequencing market.
+These ``second generation'' sequencing-by-synthesis technologies produce abundant and inexpensive short reads of up to 250 base pairs, and in the past decade have become the largest source of data in the DNA sequencing market.
 
 Higher sequencing costs previously motivated the application of expensive computational approaches to analyze all the sequences of interest simultaneously.
 The decades prior to the development of cheap sequencing saw the use of multiple sequence alignment algorithms with high computational complexity.
@@ -149,13 +149,13 @@ However, to do so would require the development of computational techniques to a
 
 In the late 1990s and early 2000s, several groups began exploring an alternative sequencing modalities.
 In the ultimately dominant one, clonal DNA arrayed on a surface are directly sequenced using fluorescent imaging.
-Sequencing progresses through the sythesis of the second strand of each of the molecules, and so these techniques are typically called ``sequencing by sythesis.''
+Sequencing progresses through the sythesis of the second strand of each of the molecules, and so these techniques are typically called ``sequencing-by-sythesis.''
 This modality allowed for a massive parallelization of the sequencing reaction, and has resulted in a dramatic reduction of cost.
 
 In 2003 George Church and colleagues demonstrated that individual sequences could be read from polymerase colonies or ``polonies'' suspended in an acrylamide gel \cite{mitra2003fluorescent}.
 These polonies were generated as the acrylamide gel prevents the diffusion of the PCR reaction used to amplify single DNA fragments embedded within it.
 Subsequently the sequence of each polony could be read out by synthesizing the second strand using fluorescently labeled blocking dNTPs, imaging in four colors with the fluorophores attached to determine the current base, and then unblocking the reaction with UV light or a reducing agent.
-Contemporaneously, a related sequencing by synthesis method, which is now known as Illumina dye sequencing, was developed by Shankar Balasubramanian and Solexa (later acquired by Illumina) \cite{balasubramanian2004arrayed, bentley2008accurate}.
+Contemporaneously, a related sequencing-by-synthesis method, which is now known as Illumina dye sequencing, was developed by Shankar Balasubramanian and Solexa (later acquired by Illumina) \cite{balasubramanian2004arrayed, bentley2008accurate}.
 Rather than polymerase colonies embedded in an emulsion or gel, Solexa's technology relied on ``bridging PCR'', in which the polymerized clones of a particular fragment were locally hybdridized to an adapter-bearing surface of a flowcell.
 Through successive PCR steps, a micrometer-wide spot of clonal DNA is cloned around the original position of its base molecule.
 Controlled synthesis of the second strand, based on reversible terminator chemistry \cite{canard1994dna} and fluorescently labeled dNTPs, is then used to observe the sequence of the DNA molecule in each colony.
@@ -167,7 +167,7 @@ In this technique, random oligonucleotides where a single base (or pair of bases
 Although in principle this method may achieve lower per base error rates due to redundant observations, the technology was plagued by artifacts related to contextual bias in the hybridization and ligation reaction as well as difficulty in normalizing the random probe set \cite{challis2015distribution}.
 In ion semiconductor sequencing (as implemented in the IonTorrent platform) direct observation of pH changes at a fixed spot rather than fluorescent imaging were used to determine DNA sequences \cite{rusk2010torrents}.
 It continues to see use in some diagnostic laboratories due to its rapid operation and favorable read length.
-454 Life Sciences' ``pyrosequencing'' implementation allowed for a different kind of sequencing by synthesis in which a luciferase reporter assay could be used to track the progression of synthesis \cite{margulies2005genome}.
+454 Life Sciences' ``pyrosequencing'' implementation allowed for a different kind of sequencing-by-synthesis in which a luciferase reporter assay could be used to track the progression of synthesis \cite{margulies2005genome}.
 This technology was subsequently used to generate the first whole genome human sequence using massively parallel sequencing techniques \cite{wheeler2008complete}.
 Both pyrosequencing and ion semiconductor sequencing suffer from homopolymer errors, as both progress through the addition of a single dNTP type at a time to the reaction.
 As such it is necessary to infer the number of identical bases that have been incorporated, which can in practice be very difficult.
@@ -176,7 +176,7 @@ In contrast, Illumina's sequencing protocol has a superior error profile, with l
 In retrospect, it is unsurprising that it has achieved near total dominance in the field.
 The vast majority of sequencing data produced in the 2010s comes from Illumina sequencers.
 Illumina's sequencing technology is characterized by short reads (<250bp) with lower ($\approx 99.5\%$) per-base accuracy than Sanger sequencing.
-Although the read length has been increased by optimization of the technology, physical limits prevent obtaining longer read lengths, as the per-base reaction efficiency of the sequencing by sythesis reaction causes a de-phasing of the reaction and thus degredation of the fluorescent signal with the progression of the cycles of second strand base addition.
+Although the read length has been increased by optimization of the technology, physical limits prevent obtaining longer read lengths, as the per-base reaction efficiency of the sequencing-by-sythesis reaction causes a de-phasing of the reaction and thus degredation of the fluorescent signal with the progression of the cycles of second strand base addition.
 As each read is derived from a single input template, problems with heterozygosity seen with Sanger sequencing can be resolved, and whole genomes may be directly sequenced and assembled.
 However, the short read length places fundamental limits on the utility of the method for this purpose as even when using pair-end sequencing it is unable to resolve repeats greater than the read length \cite{alkan2010limitations}, and it is most-commonly analyzed via resequencing.
 
@@ -204,7 +204,7 @@ By avoiding these issues, a method to sequence single molecules accurately would
 The development of such a method has not been easy, and efforts have been continuously underway throughout 2000s and 2010s.
 Although they have not yet achieved lower error rates or per base costs than the dominant Illumina method, due to their dramatically longer read lengths and flexible sequencing chemistries, the commercial sequencing platforms based on this principle are rapidly defining a new technical phase of genome inference.
 
-In the mid 2000s, Helicos commercialized a single molecule sequencing system based on the same fluorophore-labeled, blocking sequencing by sythesis model developed by Illumina.
+In the mid 2000s, Helicos commercialized a single molecule sequencing system based on the same fluorophore-labeled, blocking sequencing-by-sythesis model developed by Illumina.
 However, instead of observing a colony of millions of identical reactions per read, they observed a single one.
 Although innovative, this daring technique suffered from numerous technical problems related to photdamage of the DNA, polymerase, and fluorophores.
 It required physically massive hardware in order to enable the microscopy required for reliable of single molecules.
@@ -958,7 +958,7 @@ In this context the authors demonstrate their method can significantly (although
 However, the method is not adaptable to other graph types or sequencing contexts, with reports from users indicating high increases in runtime with increased read error and variant density.
 Due to the fact that SBGA is closed source and proprietary it will not be possible to appreciate exactly why.
 
-\section{Motivation and overview of this work}
+\section{Overview and objectives}
 
 Resolving the genome of a sample \emph{de novo} requires sequencing and assembly.
 Standard approaches to assembly are built on graphical models that allow for ambiguity, and out of this system they attempt to derive a set of contigs which represent the true haplotypes of the genome.
