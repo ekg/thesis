@@ -1,0 +1,21 @@
+# todo for completion of thesis
+
+- write conclusion
+- finish gut microbiome alignment experiment and plot results
+- write algorithm for MEM finding
+- put in figures from presentation in chapter 1
+  - tree figure
+  - tubemap variation graph
+- add GBWT figure (note to Jouni)
+- complete section on alignment against a splicing graph
+  - add figure from cpang paper (splicing graph)
+  - show preliminary alignment results for yeast splicing graph
+- describe methods contributions
+  - survey paper
+  - graph genomes paper
+  - gPBWT paper
+  - GBWT paper
+- describe contributions to methods
+  - diploid phasing in the graph
+- fix up bibliography capitalization and duplication issues
+- spell check

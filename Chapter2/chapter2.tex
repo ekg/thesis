@@ -447,7 +447,7 @@ In indexing a DBG, GCSA2 limits the maximum-length query for which no false-posi
 This has the benefit of allowing GCSA2 to index complex graphs, as a shorter $k$ may be chosen to limit exponential costs.
 Provided the final alignment is completed against the full VG using DP-based alignment techinques that have non-exponential costs, the DBG input to GCSA2 may be constructed from a VG in which complex regions have been masked or reduced in local complexity using prior information such as a haplotype panel.
 
-To appreciate the costs of indexing\footnote{Precise sizes are given later in the discussion of results.}, the order-256 GCSA2 may be constucted using less than 500GB of scratch space, to and from which are written approximately 3TB during construction, all while requiring less than 50G of RAM.
+To appreciate the costs of indexing a human genome sized graph\footnote{Precise sizes are given later in the discussion of results.}, the order-256 GCSA2 index of the 1000GP variation graph may be constucted using less than 500GB of scratch space, to and from which are written approximately 3TB during construction, all while requiring less than 50G of RAM.
 This puts GCSA2 indexing's resource requirements well within the specifications of standard commodity compute servers.
 The resulting index occupies between five and ten times the input graph's serialized size, so no more than 50G for something in the order of a human genome.
 
