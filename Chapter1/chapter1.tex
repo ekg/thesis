@@ -23,6 +23,15 @@ Using alignment, we express our sequencing data from the collection of samples i
 We then use variant calling and phasing algorithms to filter and structure these edits into a reconstruction of the underlying haplotypes in the set of non-reference samples which we have sequenced.
 We can then proceed to use the inferred genotypes and haplotypes to answer biological questions of interest.
 
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=1.0\textwidth]{Chapter1/Figs/phylogeny_and_vg.pdf}
+  \caption{
+    The tree of life, reference genomes, and variation graphs.
+    } 
+\label{fig:pangenomic_processes}.
+\end{figure}
+
 In this way, we have not fully sequenced the new genomes, but \emph{resequenced} them against the reference genome.
 Pieces of the new genomes which could not be mapped to the reference will be left out of our analysis.
 Resequencing may thus distort our perspective of the genomes which we are attempting to reconstruct.
@@ -67,6 +76,20 @@ By building a conceptual framework and data structures that enable resequencing 
 This allows us to retain the benefits of out of core and distributed analysis even while we resolve the issue of reference bias.
 By recording reference sequences, or other sequences of interest as paths through this graph I provide anchors for existing annotations and positional systems within the pangenome.
 I term these bidirectional sequence graphs with paths \emph{variation graphs}.
+
+
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=1.0\textwidth]{Chapter1/Figs/vg_tubemap.pdf}
+  \caption[A variation graph]{
+    A fragment of a variation graph built from fully-assembled \emph{Saccharomyces cerevisiae} genomes.
+    Colored paths represent genomes which traverse sequences (nodes).
+    Edges are implied by the path structure of the graph.
+    The construction and properties of the graph are described in section \ref{sec:yeast_cactus}.
+    This visualization was rendered using the SequenceTubeMap \url{https://github.com/vgteam/sequenceTubeMap}.
+    } 
+\label{fig:pangenomic_processes}.
+\end{figure}
 
 In this chapter I will provide background context for my work.
 I will cover in detail the history of DNA sequencing methods, assembly algoritms, and the development of reference genomes and their use in resequencing.
@@ -700,6 +723,7 @@ GFA is used in a wide number of methods, but as of August 2018 it appears that v
 % it's an overlap graph yep
 
 \subsubsection{RNA sequencing graphs}
+\label{sec:rna_seq}
 
 While traditional appoaches to transcript analysis consider each particular gene transcript on a case-by-case basis, a more compact representation would be as a \emph{splicing graph} in which all alternative splicing junctions are represented by edges connecting bases of the underlying reference sequence \cite{heber2002splicing,lee2002POA}.
 Transcript assembly has attracted many of the same approaches as those used in genome inference, but their application must be adjusted to account for variation in read coverage of several orders of magnitude caused by large differences in expression of different genes \cite{martin2011next}, and in some cases they may not be suitable as the ideal of a transcript assembly is not a linear sequence assembly, but a splicing graph that models the combinatorial relationships in transcriptome \cite{grabherr2011trinity}.
