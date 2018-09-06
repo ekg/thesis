@@ -1,21 +1,7 @@
 # todo for completion of thesis
 
-- write conclusion
-- finish gut microbiome alignment experiment and plot results
 - write algorithm for MEM finding
-- fix y-axis scale on histograms in 3.1
-- say that 3.2, 3.3, 3.6, 3.7, table 3.2, are reproduced from the NBT paper
-- flip the labels on axes in 3.8
-- note that in 3.12 we are jittering integer counts thus the quantization
-- fix panel labels in 3.6, make them (A) rather than A), maybe add frequency thresholds to the panels and remove all but one legend
 - add GBWT figure
-- put in figures from presentation in chapter 1
-  - tree figure
-  - tubemap variation graph
-- add GBWT figure (note to Jouni)
-- complete section on alignment against a splicing graph
-  - add figure from cpang paper (splicing graph)
-  - show preliminary alignment results for yeast splicing graph
 - describe methods contributions
   - survey paper
   - graph genomes paper
