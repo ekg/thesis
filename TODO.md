@@ -4,15 +4,13 @@
 - appendix 1: publications I contributed to / related to this thesis 
   - "I have been an author on a number of publications described here, these include ... "
   - make a list, title and cite, and a brief description / relation to sections in thesis
-- human gut microbiome, take a few long nodes on each side and BLAST them
-- write algorithm for MEM finding
-- describe methods contributions
   - survey paper
   - graph genomes paper
   - gPBWT paper
   - GBWT paper
-- describe contributions to methods
   - diploid phasing in the graph
+- human gut microbiome, take a few long nodes on each side and BLAST them
+- write algorithm for MEM finding
 - fix up bibliography capitalization and duplication issues, some things missing volume / etc.
   - proofread them (sorry)
   - check DNA / RNA
@@ -25,9 +23,8 @@
   - separate to people who I thought with and people who coded their ideas into vg (vgteam!)
   - and members of the durbin group :)
 - spell check
-- printing --- set up for two sided printing
-- change "abstract" to "summary"
-- read the rules... print out two copies of summary and sign them ?
+- printing --- set up for two sided printing, either at Sanger or the Cambridge Graduate Union, https://www.gradunion.cam.ac.uk/facilities/printing-and-soft-binding, https://www.gradunion.cam.ac.uk/about/opening-hours
+- read the rules... print out two copies of summary and sign them, etc. https://www.cambridgestudents.cam.ac.uk/your-course/examinations/graduate-exam-information/submitting-and-examination/phd-msc-mlitt/submit
 
 # style and typos
 
