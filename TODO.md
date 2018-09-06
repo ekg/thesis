@@ -1,7 +1,6 @@
 # todo for completion of thesis
 
 - write algorithm for MEM finding
-- add GBWT figure
 - describe methods contributions
   - survey paper
   - graph genomes paper
@@ -9,6 +8,6 @@
   - GBWT paper
 - describe contributions to methods
   - diploid phasing in the graph
-- fix up bibliography capitalization and duplication issues
+- fix up bibliography capitalization and duplication issues, some things missing volume / etc.
 - acknowledgements
 - spell check

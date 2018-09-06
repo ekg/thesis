@@ -428,6 +428,16 @@ In broadest terms, GCSA2 employs a de Bruijn graph as a $k$-mer index of a varia
 Effectively the DBG nodes are labeled with their positions in the variation graph from which the DBG is generated.
 To reduce redundancy, GCSA2 uses a \emph{pruned} DBG by using nodes with labels shorter than $k$ where these shorter strings still uniquely identify the beginning of their coresponding paths in the unpruned DBG.
 
+\begin{figure}[htbp!]
+  \includegraphics[width=\textwidth]{Chapter2/Figs/sequence_graph_to_DBG.pdf}
+  \caption[A sequence graph and its de Bruijn transformation]{
+    A sequence graph and its de Bruijn transformation.
+    Reprinted from \cite{siren2017indexing}.
+  }
+  \label{fig:seq_graph_to_dbg}
+\end{figure}
+
+
 This pruned graph is then encoded in a generalization of the FM-index built on a BWT of the $k$-mers in the pruned DBG.
 The FM-index is extended to support search over the DBG by adding auxiliary bitvectors which record the indegree and outdegree of nodes in the pruned DBG.
 These are used in backwards search to adjust the suffix array ranges that are considered, expanding them when the indegree is greater than 1 and contracting them when the out degree is greater than 1, in effect encoding the graph structure into the index in a space efficient and traversal optimized manner.
@@ -436,6 +446,18 @@ Impressively, GCSA2 uses around 1 bit per $k$-mer in indexes of the 1000GP pange
 
 As an FM-index like structure, GCSA2 supports queries for a pattern $X$ that yield the suffix array interval matching a given pattern: $find(X) = ( sp_{X}, ep_{X} )$, and $locate( sp_{X}, ep_{X} ) = \{ b_1 \ldots b_{count(sp_{X}, ep_{X})} \}$ which yields the positions in the input VG where the given patterns occur.
 The afformentioned LCP array allows the index to support several operations that require a suffix tree, including $count(sp_i, ep_i)$, which returns the number of matches for a given suffix array range, and $parent(sp_i, ep_i) = (sp_j, ep_j)$, which conceptually allows us to traverse the suffix links embedded in the suffix tree and forms the core of maximal exact match (MEM) inference using GCSA2.
+
+\begin{figure}[htbp!]
+  \includegraphics[width=\textwidth]{Chapter2/Figs/DBG_to_GCSA.pdf}
+  \caption[Searching in the {\tt GCSA2}]{
+    Left: An order-3 pruned de Bruijn graph 3-equivalent to the de Bruijn graph in figure \ref{fig:seq_graph_to_dbg}.
+    Right: GCSA for the graph.
+    Leftward arrows illustrate backward searching, with the red arrows showing it from {\tt T} to {\tt AT}.
+    Rightward arrows mark the samples belonging to each node, with the blue ones showing them for node {\tt CAT}.
+    Reprinted from \cite{siren2017indexing}.
+  }
+  \label{fig:gcsa2_search}
+\end{figure}
 
 GCSA2 resolves a number of problems that limit the utility of other graph path indexing schemes.
 Indexing a pruned DBG allows GCSA2 to be applied to arbitrary bidirectional string graphs.
@@ -510,9 +532,14 @@ Due to relatedness among individuals in many species, it is sensible to assume t
 The graph is sorted, and its identifier space has been compacted, which allows us to store the same information for the entire range of node identifiers in bounded memory with respect to $|N|$.
 The graph tends to be locally ordered in most cases, which decreases the complexity of recording the graph topology in our records.
 
-%GBWT builds an efficient dynamic model 
-
-%To resolve the issues with construction faced by gPBWT, GBWT 
+\begin{figure}[htbp!]
+  \includegraphics[width=\textwidth]{Chapter2/Figs/gbwt-example.pdf}
+  \caption[The Graph Burrows Wheeler Transform]{
+    Left: A graph with three paths. Right: GBWT of the paths.
+    Reprinted from \cite{siren2018haplotype}.
+  }
+  \label{fig:gbwt-example}
+\end{figure}
 
 A \emph{dynamic GBWT} implementation presents the node records through an index over the range of $[min(i : n_i \in N), max(i : n_i \in N)]$, for each linking to its header, body, incoming edges, and haplotype identifiers.
 Construction employs this model in a manner similar to RopeBWT2 \cite{li2014fast}, where batches of paths are insert into the index in a single step following the BCR construction algorithm to build the BWT for large sequence sets \cite{bauer2013lightweight}.
