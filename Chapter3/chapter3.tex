@@ -822,7 +822,7 @@ In this section I use analyses of viral and bacterial metagenomes to demonstrate
 To explore this issue, I built an assembly graph from a single sequencing data set from a study of freshwater viruses in Svalbard \cite{de2015biodiversity}\footnote{Data from \url{https://www.ebi.ac.uk/ena/data/view/ERS396648}} and compared the performance of alignment against the graph with alignment against the contig set.
 As with other assembly graph based variation graphs, I used {\tt minia} to construct the graph, with $k=51$ and a minimum abundance of 3.
 To enable efficient alignment against the graph, I chopped its long nodes into nodes of a maximum of 32bp.
-The resulting graph has 39,503,775bp of sequence in 1,387,287 nodes and 1,326,573.
+The resulting graph has 39,503,775bp of sequence in 1,387,287 nodes and 1,326,573 edges.
 The low ratio of nodes to edges suggests a locally linear structure, which enables direct use of the graph by {\tt vg}.
 To successfully index the graph I found I had to remove complex regions using {\tt vg prune}, cutting edges that induced 3 furcations in any 16-mer.
 Indexing yielded a 119MB {\tt xg} index and 158MB {\tt GCSA2} index.
@@ -860,7 +860,7 @@ As a counterpoint to the unusual metagenomic sample used in the previous section
 
 As with other assembly graph based analyses, I applied {\tt minia} with $k=51$ and a minimum abundance filter of 3 to the 29GB of compressed FASTQs from this sample.
 The resulting assembly graph is shown in figure \ref{fig:human_gut_microbiome_bandage}.
-It contains 144,829,925bp of sequence in 4,788,652 and 4,665,919 edges, and as with other DBG assemblies I have discussed is locally linear.
+It contains 144,829,925bp of sequence in 4,788,652 nodes and 4,665,919 edges, and as with other DBG assemblies I have discussed is locally linear.
 Building and indexing the graph take around an hour on the 32vCPU/256GB server used in other experiments, and yield a 74MB {\tt vg} graph with a 403MB {\tt xg} index and 606MB {\tt GCSA2} index, which was built with pruning with a 3 edge crossing limit in $k=16$.
 
 \begin{figure}[htbp!]
