@@ -1,7 +1,6 @@
 # todo for completion of thesis
 
 - add to "overview and objectives" a comment about the use of "I" and "we" in the thesis
-- human gut microbiome, take a few long nodes on each side and BLAST them
 - write algorithm for MEM finding
 - fix up bibliography capitalization and duplication issues, some things missing volume / etc.
   - proofread them (sorry)
