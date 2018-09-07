@@ -1,14 +1,6 @@
 # todo for completion of thesis
 
 - add to "overview and objectives" a comment about the use of "I" and "we" in the thesis
-- appendix 1: publications I contributed to / related to this thesis 
-  - "I have been an author on a number of publications described here, these include ... "
-  - make a list, title and cite, and a brief description / relation to sections in thesis
-  - survey paper
-  - graph genomes paper
-  - gPBWT paper
-  - GBWT paper
-  - diploid phasing in the graph
 - human gut microbiome, take a few long nodes on each side and BLAST them
 - write algorithm for MEM finding
 - fix up bibliography capitalization and duplication issues, some things missing volume / etc.
