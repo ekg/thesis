@@ -1,5 +1,6 @@
 # todo for completion of thesis
 
+- cut down section on NGS, save cites but remove half descriptions
 - write algorithm for MEM finding
 - fix up bibliography capitalization and duplication issues, some things missing volume / etc.
   - proofread them (sorry)

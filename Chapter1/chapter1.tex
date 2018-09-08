@@ -101,7 +101,7 @@ In the remainder of the work I will first describe the development of data struc
 % What do we mean by genome inference
 % half page
 Not two centuries have passed since the first experiments that demonstrated the existence of genetic material \cite{mendel1866versuche}.
-In the first part of the twentieth century, these ideas about heredity grew into the core of a modern sythesis linking biological micro and macroevolutionary theory to the quantitative basis of genetics \cite{huxley1942evolution}.
+In the first part of the twentieth century, these ideas about heredity grew into the core of a modern synthesis linking biological micro and macroevolutionary theory to the quantitative basis of genetics \cite{huxley1942evolution}.
 It was understood that DNA encoded the information that gave rise to biological structures \cite{avery1944studies}.
 The discovery of the structure of DNA in the 1950s \cite{watson1953molecular} made clear the nature of that information and the physical basis for its faithful transmission from generation to generation.
 This observation, coupled with the sequencing and synthesis of proteins, which demonstrated that they had distinct polymeric chemical identities \cite{sanger1951amino} led to Crick's postulation of the ``central dogma'' of biology \cite{crick1958protein}.
@@ -149,14 +149,13 @@ However, to do so would require the development of computational techniques to a
 
 In the late 1990s and early 2000s, several groups began exploring an alternative sequencing strategies.
 In the ultimately dominant one, DNA that has been clonally arrayed on a surface is directly sequenced using fluorescent imaging.
-Sequencing progresses through the synthesis of the second strand of each of the molecules, and so these techniques are typically called ``sequencing-by-sythesis.''
+Sequencing progresses through the synthesis of the second strand of each of the molecules, and so these techniques are typically called ``sequencing-by-synthesis.''
 This modality allowed for a massive parallelization of the sequencing reaction, and has resulted in a dramatic reduction of cost.
 
 In 2003 George Church and colleagues demonstrated that individual sequences could be read from polymerase colonies or ``polonies'' suspended in an acrylamide gel \cite{mitra2003fluorescent}.
 These polonies were generated as the acrylamide gel prevents the diffusion of the PCR reaction used to amplify single DNA fragments embedded within it.
 Subsequently the sequence of each polony could be read out by synthesizing the second strand using fluorescently labeled blocking dNTPs, imaging in four colors with the fluorophores attached to determine the current base, and then unblocking the reaction with UV light or a reducing agent.
-Contemporaneously, a related sequencing-by-synthesis method, which is now known as Illumina dye sequencing, was developed by Shankar Balasubramanian and David Klenerman at Solexa (later acquired by Illumina) \cite{balasubramanian2004arrayed, bentley2008accurate}.
-% these guys developed the reversable terminator technology and linked it with laser imaging
+Contemporaneously, a related sequencing-by-synthesis method, which is now known as Illumina dye sequencing, was built using laser fluorescent imagin and reversible terminator technology developed by Shankar Balasubramanian and David Klenerman at Solexa (later acquired by Illumina) \cite{balasubramanian2004arrayed, bentley2008accurate}.
 Rather than polymerase colonies embedded in an emulsion or gel, Solexa's technology relied on ``bridging PCR'', in which the polymerized clones of a particular fragment were locally hybdridized to an adapter-bearing surface of a flowcell.
 Through successive PCR steps, a micrometer-wide spot of clonal DNA is amplified around the original position of its progenitor molecule.
 Controlled synthesis of the second strand, based on reversible terminator chemistry \cite{canard1994dna} and fluorescently labeled dNTPs, is then used to observe the sequence of the DNA molecule in each colony.
@@ -176,14 +175,14 @@ As such it is necessary to infer the number of identical bases that have been in
 In contrast, Illumina's sequencing protocol has a superior error profile, with low overall per base error rates and only a handful of context specific error types, virtually all of which may be detected when sequencing both DNA strands \cite{allhoff2013discovering}.
 In retrospect, it is unsurprising that it has achieved near total dominance in the field.
 The vast majority of sequencing data produced in the 2010s comes from Illumina sequencers.
-Illumina's sequencing technology is characterized by short reads (<250bp) with lower ($\approx 99.5\%$) per-base accuracy than Sanger sequencing.
-Although the read length has been increased by optimization of the technology, physical limits prevent obtaining longer read lengths, as the per-base reaction efficiency of the sequencing-by-sythesis reaction causes a de-phasing of the reaction and thus degredation of the fluorescent signal with the progression of the cycles of second strand base addition.
+Illumina's sequencing technology is characterized by short reads (<250bp) with per-base accuracy ($\approx 99.5\%$) comparable to that of Sanger sequencing.
+Although the read length has been increased by optimization of the technology, physical limits prevent obtaining longer read lengths, as the per-base reaction efficiency of the sequencing-by-synthesis reaction causes a de-phasing of the reaction and thus degredation of the fluorescent signal with the progression of the cycles of second strand base addition.
 As each read is derived from a single input template, problems with heterozygosity seen with Sanger sequencing can be resolved, and whole genomes may be directly sequenced and assembled.
 However, the short read length places fundamental limits on the utility of the method for this purpose as even when using pair-end sequencing it is unable to resolve repeats greater than the read length \cite{alkan2010limitations}, and it is most-commonly analyzed via resequencing.
 
 Alongside the development of second generation sequencing methods, an array of laboratory techniques and library preparation protocols have developed that augment the information that may be obtained solely from shotgun DNA sequences.
 These methods can allow for the direct observation of large haplotypes and three-dimensional structures in the DNA, both of which are relevant for inferring whole genomes.
-Shortly after Illumina released its sequencing technology, Moleculo developed an emusion-PCR based chemistry in which specific tags would be added to DNA sequences from a given haplotype.
+Shortly after Illumina released its sequencing technology, Moleculo developed an emulsion-PCR based chemistry in which specific tags would be added to DNA sequences from a given haplotype.
 By collecting short reads from a given tag together and assembling them, a set of synthetic long reads could be established.
 10X Genomics commercialized a similar library preparation step, and focused on providing raw tag information that could be used downstream by an array of haplotype-resolution and assembly tools \cite{mostovoy2016hybrid}.
 The single template aspect of Illumina paired end sequencing allows longer contiguous DNA reads to be obtained by merging partly-overlapping read pairs computationally \cite{magovc2011flash}.
@@ -191,32 +190,32 @@ Although this introduces error it can improve assembly contiguity and is often u
 Single-cell DNA template strand sequencing (strand-seq) can be used to obtain reads from only one half of the chromatids in a single cell \cite{falconer2012dna}.
 In strand-seq, a cell culture is treated with treated with bromodeoxyuridine (BrdU) and arrested after a single cell division.
 The newly-synthesized strand of each chromosome will have incorporated BrdU, which can be cleaved using UV induced photolysis.
-This treatment shatters the nascent strand into tiny fragments, allowing the selective sequencing of the other strand, which can then be used to improve the resolution of complex structural variation even though the direct observation is done with very short reads \cite{porubsky2016direct}.
+This treatment shatters the nascent strand into tiny fragments, allowing the selective sequencing of the other strand, which can then be used to improve the resolution of complex structural variation even though the direct observation is done with standard short reads \cite{porubsky2016direct}.
 The Hi-C method \cite{lieberman2009comprehensive} uses bisulfite treatment to generate read pairs that are likely to physically co-locate \emph{in vivo}, thus enabling the mapping of long range DNA and chromatin interactions.
 It may be combined with other sequencing information to obtain estimates of the syntenic ordering of contigs produced by assembly \cite{ghurye2018integrating}.
 This technique which has already been used to obtain \emph{de novo} reference quality genomes in several difficult sequencing projects including amaranth \cite{lightfoot2017single}, \emph{Aedes aegypti} \cite{dudchenko2017novo}, and the domestic goat \cite{bickhart2017single}.
 
 \subsubsection{Single molecules}
 
-All previously described sequencing techniques have dependent on the observation of pools of molecules.
-As a result such methods benefit from amplification of DNA, which adds complexity and a potential source of error to DNA sequencing.
+All previously described sequencing techniques are dependent on the observation of pools of molecules.
+As a result such methods benefit from amplification of DNA, which increases signal, but also adds and a potential source of error to DNA sequencing.
 They also suffer from phasing and stepwise reaction efficiency effects, which fundamentally limit the maximum length of an accurate read.
 By avoiding these issues, a method to sequence single molecules accurately would theoretically allow longer read lengths and more rapid sequencing.
 The development of such a method has not been easy, and efforts have been continuously underway throughout 2000s and 2010s.
 Although they have not yet achieved lower error rates or per base costs than the dominant Illumina method, due to their dramatically longer read lengths and flexible sequencing chemistries, the commercial sequencing platforms based on this principle are rapidly defining a new technical phase of genome inference.
 
-In the mid 2000s, Helicos commercialized a single molecule sequencing system based on the same fluorophore-labeled, blocking sequencing-by-sythesis model developed by Illumina.
+In the mid 2000s, Helicos commercialized a single molecule sequencing system based on the same fluorophore-labeled, reversible-block sequencing-by-synthesis model developed by Illumina.
 However, instead of observing a colony of millions of identical reactions per read, they observed a single one.
-Although innovative, this daring technique suffered from numerous technical problems related to photdamage of the DNA, polymerase, and fluorophores.
-It required physically massive hardware in order to enable the microscopy required for reliable of single molecules.
-Ultimately, the short read length, high cost, error rate, and low throughput of the method relative to Illumina's prevented its use, and few genomes were sequenced with the method outside of its development \cite{harris2008single}.
+Although innovative, this daring technique suffered from numerous technical problems related to photodamage of the DNA, polymerase, and fluorophores.
+It required physically massive hardware in order to enable the microscopy required for reliable imaging of single molecules.
+Ultimately, the short read length, high cost, high error rate, and low throughput of the method relative to Illumina's prevented its use, and few genomes were sequenced with the method outside of its development \cite{harris2008single}.
 
 By utilizing zero-mode waveguides (ZMWs) to observe DNA polymerase in realtime, Pacific Biosciences (PacBio) generated the first realtime single-molecule sequencing system \cite{eid2008real}.
 In this platform, DNA polymerase is immobilized in sub-diffraction size, picoliter detection volumes at the bottom of wells formed in aluminum on a glass slide \cite{korlach2008selective}.
 Single stranded DNA and fluorescently-labeled dNTPs are added to the buffer above the ZMWs.
 As synthesis progresses, the fluorophore attached to the DNA base that is being incorporated will tend to remain inside the ZMW longer than would be expected due to random diffusion of the dNTPs.
 Thus, the series of incorporated bases in each ZMW well may be read out as a sequence of fluorescent pulses, allowing the synthesis of the second strand to be observed in real time.
-The main sources of error stem from difficulty in perfectly observing the series of fluorophores pulled into the well, and also not discriminating random ZMW occupancy from polymerization-mediated occupancy, which tend to result in insertion errors.
+The main sources of error stem from difficulty in perfectly observing the series of fluorophores pulled into the well, and also not discriminating random ZMW occupancy from polymerization-mediated occupancy, which tends to result in insertion errors.
 The base-level error rate of sequencing is high, up to 15\%, and subtle context dependent biases do exist \cite{ono2012pbsim}.
 However, due to their genesis in Brownian motion, the errors themselves may be considered as almost perfectly random in analysis \cite{ross2013characterizing,myers2014efficient}.
 The configuration of the sequencing system allows for unique chemistries, such as via the sequencing of circular DNA molecules, which can provide dramatic reductions in error at a cost of read length.
@@ -231,34 +230,34 @@ Due to context and history-dependent effects that distort the signal, the measur
 In practice nanopore sequencing has the highest error rate of any commercially available sequencing method.
 The error process is complex, being related both to the intricacies of pore/DNA interaction and by patterns of error in the base calling algorithm.
 As with PacBio, it approaches 15\%, and similarly this has improved continuously throughout the development of ONTs sequencers.
-Nanopore sequencing also obtains the longest reads of any sequencing technology, with maximum read length apparently limited solely by the molecular weight of the DNA library.
+Nanopore sequencing also obtains the longest reads of any sequencing technology, with maximum read length apparently limited solely by the molecule length in the DNA library.
 
 %, single molecule ONT/PacBio (3rd gen)
 
 \subsection{Genome assembly}
 \label{sec:genome_assembly}
 
-Due to technical limits that are unlikely to ever be fully eliminated, DNA sequence reads are rarely able to cover the entire genome of an organism.
-This means that in many cases, the best sequencing data possible is a set of random reads sampled across the genome. 
+Due to technical limits that are unlikely to ever be fully eliminated, individual DNA sequence reads are rarely able to cover the entire genome of an organism.
+This means that in many cases, the best sequencing data possible is a set of random reads sampled from fragments of the genome. 
 The standard response to this limitation is whole genome ``shotgun'' sequencing, wherein the genome is fragmented, perhaps by sonication or enzymatic digestion, and the resulting fragments are sequenced and then reassembled using computer programs \cite{gardner1981complete, sanger1982nucleotide}.
 This process necessitates a reconstructive step in which the information obtained from the sequenced fragments is reassembled into the whole genome from which they arose.
 This process is known as \emph{assembly}, and computer algorithms implementing it have been used when inferring genome sequences since the generation of the first whole genome sequence for bacteriophage $\varphi$X174 in 1977 \cite{sanger1977nucleotide, staden1979strategy}.
 
 The earliest assembly algorithms have come to be known as ``overlap-layout-consensus'' (OLC) algorithms, due to their three-phase strategy.
-They first establish a set of head to tail overlaps between reads (overlap), an $O(N^{2})$ order problem, where $N$ is the length of the sequence reads.
-This might be done by exact string matching or by sensitive pairwise alignment of reads likely to map together to each other \cite{huang1992contig}. 
-Then, these overlaps are used to establish an estimate of the ordering of the reads (layout).
+They first establish a set of head to tail overlaps between reads (overlap), an $\approx O(N^{2})$ order problem when all pairwise relationships are considered between $N$ sequence reads.
+However, given an efficient method to find read pairs that are very likely to match together, the overlap step remains tractable as the overall complexity of matching can be reduced to be approximately quadratic in read depth and linear in genome size \cite{huang1992contig}.
+These overlaps are then used to establish an estimate of the ordering of the reads (layout).
 The layout is then used to generate a consensus sequence through heuristics or dynamic programming over the layout \cite{kececioglu1995combinatorial}.
-This final phase is equivalent to the multiple sequence alignment (MSA) problem, although instead of generating an MSA as output methods would typcially take the consensus sequence, as the objective was to reconstruct a singluar representation of the input genome.
+This final phase is equivalent to the multiple sequence alignment (MSA) problem, although instead of generating an MSA as output methods would typcially take the consensus sequence, as the objective was to reconstruct a linear representation of the input genome.
 Assembly errors were frequent, which necessitated a time-consuming manual ``finishing'' step in order to resolve ambiguity, resulting in the development of software to aid this process \cite{gordon1998consed}.
 The OLC assembly approach was utilized by genome projects for the following twenty five years, and was employed even in the completion of the public Human Genome Project (HGP), where BAC clones of 150kb fragments of the genome were sequenced, initially assembled by algorithm and finally manually finished into the ``golden path'' that would become the reference genome \cite{international2001initial}.
 
-In principle, the assembly process could be fully automated, but as late as the early 1990s this frequently not seen as feasible due to the lack of reliable algorithms \cite{mahy1991sequencing}.
+In principle, the assembly process could be fully automated, but as late as the early 1990s this frequently was not seen as feasible due to the lack of reliable algorithms \cite{mahy1991sequencing}.
 The improvement of OLC algorithms eventually met the challenge, yielding methods such as PHRAP \cite{green1999phrap} (a quality aware assembler that saw extensive use downstream of Sanger sequencers), TIGR \cite{sutton1995tigr} (which was used in the generation of the first assembly of a free living organism, the 1.8Mpb genome of \emph{Haemophilus influenzae} \cite{fleischmann1995whole}), GigAssembler \cite{kent2001assembly} (which was used by the HGP), and the Celera assembler \cite{myers2000whole,miller2008aggressive} (which saw extensive use in the generation of early large whole genome assemblies in the late 1990s and early 2000s, including the privately funded genome project \cite{venter2001sequence}).\footnote{This project apparently still relied on data produced by the HGP \cite{waterston2002sequencing}, but the significance of this reliance was disputed by researchers involved in the private project \cite{myers2002sequencing}, who argued that the manner in which they used the public sequences avoided contamination by manual finishing done by the HGP.}
 The process implemented in the Celera assembler (including repeat masking) has remained essential to the genome assembly problem until the present.
 
 In 2005, Myers formalized an idealized version of the assembly problem in the \emph{string graph} data structure \cite{myers2005}, which is a sequence graph induced from the overlaps in a set of shotgun sequencing reads.
-This model demonstrates that repeats greater than the length of a sequence read will collapse into singular regions of the graph, while unique sequences will form loops between different repeat classes that flank them.
+This model demonstrates that repeats greater than the length of a sequence read will collapse into single copies in the graph, while unique sequences will form loops between different repeat classes that flank them.
 The string graph can be shown to represent the full information available in the input sequence data, and some of the most-popular algorithms for assembling short read sequencing are built around an induction of the string graph via the construction of the FM-index \cite{ferragina2001experimental} from Illumina read sets \cite{simpson2010,simpson2012efficient,li2015fermikit}.
 If not using compressed data structures and low-error reads, the repeats are often irresolvable and may be masked from the assembly process to improve performance on the tractable non-repetitive regions of the genome, which is a strategy still promoted and employed by Myers \cite{myers2014efficient}.
 Canu and FALCON, which to some extent stand as contemporary implementations of the Celera assembly process, are among the best-performing assemblers for noisy single-molecule sequencing data that is the mainstay of current genome assembly projects \cite{chin2016phased,koren2017canu}.
@@ -266,8 +265,8 @@ These and other similar methods have shown that recent long reads can be used to
 
 The repeat problem has been tackled in various ways, but one of the most enduring solutions resolves the issue through the reduction of the assembly overlap graph to a de Bruijn graph (DBG) \cite{pevzner2001eulerian}.
 In this approach, the read set is fragmented into all subsequences of reads of a given length $k$, and a graph is constructed where $k$-mers label nodes and overlaps of $k-1$ between successive $k$-mers induce edges representing linkages between them.
-By reducing the complexity of the representation of the read set, this model greatly improves the runtime and memory requirements of assembly and has been essential to modern assembly methods \cite{zerbino2008velvet,simpson2009abyss,iqbal2012novo}.
-Still, significant effort has been required to improve the memory usage of these methods, which ultimately has generated the most memory-efficient assembly methods for short read sequencing data, with the best-performing using techniques like bloom filters \cite{chikhi2013space}, succinct DBGs \cite{bowe2012succinct,li2015megahit}, and minimizer partitioning \cite{chikhi2016compacting} to generate a compressed representation of the DBG.
+The de Bruijn graph model simplifies the representation of the read set, providing a clean model for assembly algorithms.
+It enabled the first \cite{zerbino2008velvet,simpson2009abyss,iqbal2012novo}, and most memory-efficient assembly methods for short read sequencing data, with techniques like bloom filters \cite{chikhi2013space}, succinct DBGs \cite{bowe2012succinct,li2015megahit}, and minimizer partitioning \cite{chikhi2016compacting} applied to generate a compressed representation of the graph.
 DBG based assemblies suffer from the loss of information induced through the $k$-merization of their input, causing a reduction in assembly contiguity \cite{earl2011assemblathon}, although in practice this can be mitigated by reconsideration of the input reads and read pairs \cite{butler2008allpaths}.
 They also are applicable only where the sequence error rate is low enough for overlapping reads to be expected to have exact matching $k$-mers of the appropriate size (typically, $k \in [20 \ldots 50]$ base pairs), and as such cannot be applied to third generation single molecule sequencing due to its inherently high error rate.
 
@@ -276,14 +275,14 @@ Each popular method, as it fades from use, remains relevant in a niche area wher
 As a result, we are not presented today with a single ideal sequencing method, but a menagerie of approaches, each with its own limitations and benefits, and current assembly pipelines require thoughtful design to incorporate these myriad sources of information.
 It would appear that in order to use these many technologies to generate the best-possible assemblies we must bring them together in a single model \cite{chaisson2018multi}.
 A current development in assembly focuses on the design of a common interchange format for which to organize such assembly processes, which has been implemented as the GFA v1 and v2 formats.\footnote{\url{https://github.com/GFA-spec/GFA-spec}}
-This file format and the data model it implies is an essential link between the work that I present in this thesis and the problem of genome inference.
+This file format and the data model it implies is an essential link between the work that I present later in this thesis and the problem of genome inference.
 
 \section{Reference genomes}
 
 As we have seen in the previous section, obtaining a single genome sequence \emph{de novo} is an arduous task, and remains a complex problem.
 The result is a valuable object which can be used to lower the cost of subsequent analyses and enable direct whole genome comparisons which provide a full perspective on the genetic relationship between multiple individuals or species.
 The need for reference genomes is clear, and they are collected in open public databases to allow their dissemination and use by researchers.
-NCBI's RefSeq release 89 of July 13, 2018 contains some 81,345 organisms\footnote{\url{https://www.ncbi.nlm.nih.gov/refseq/}}, although it should be noted that only a handful of these genomes are eukaryotic.
+NCBI's RefSeq release 89 of July 13, 2018 contains some 81,345 organisms\footnote{\url{https://www.ncbi.nlm.nih.gov/refseq/}}, although it should be noted that only a small fraction of these genomes are eukaryotic.
 Recent developments in long read, single molecule sequencing have enabled great decreases in the cost and complexity of generating high-quality genome assemblies, supporting a recent project to generate reference quality genomes of ten thousand vertebrates \cite{genome2009genome,koepfli2015genome}.
 
 The reference genome serves as an anchor for annotations that describe sequences and regions of interest within the genome, such as genes, exons, chromatin structures, DNA interacting proteins, and genetic variation \cite{sherry2001dbsnp,quinlan2010bedtools,encode2012integrated}.
@@ -293,8 +292,8 @@ Traditionally, references are seen as singular haploid models of the genome, and
 This conceptual simplicity is a core feature of their public use.
 Although the issue of genetic diversity has always been appreciated by those who work with genomes, expediency has encouraged the use of linear models for reference genomes.
 For instance, within the HGP members of the consortium could observe diversity within the BAC clones that they had sequenced from different human donors, and initated a debate about the inclusion of heterozygosity in the reference itself.
-Ultimately, the twin needs of ``completing'' the reference sequence and maintaining a simple conceptual system (the haploid sequence became known as the ``golden path'') encouraged the publication of a simple linear reference\footnote{Personal communication with David Haussler.}, and it was only with the most-recent release of GRCh38 that a concept of alternative locus and variation was added to the human reference genome \cite{schneider2017evaluation}.
-%and to my knowledge this is the only reference genome project in which such a step has been taken 
+Ultimately, the twin needs of ``completing'' the reference sequence and maintaining a simple conceptual system (the haploid sequence became known as the ``golden path'') encouraged the publication of a simple linear reference\footnote{Personal communication with David Haussler.}.
+Recent releases of the reference do incorporate a concept of alternative locus \cite{schneider2017evaluation}, but these are represented in an unfolded manner without a unifying alignment between them, which complicates their use in resequencing \cite{jager2016alternate}.
 
 % history of reference sequences
 % use of the reference sequence in analysis
@@ -641,7 +640,8 @@ In the case of DBGs and the FM-index based string graph assemblers, an iterative
 It is thus standard to think of the edges in an assembly graph as representing the overlaps between the nodes they connect and their length.
 This feature represents an incomplete compression of the information in the graph, which typically is not important to the use of these methods as they are judged by the quality of the set of contiguous sequences (contigs) they output rather than their raw assembly graph.
 These methods will traverse linear portions of the graph to generate contigs, after pruning or ignoring edges, which the uncompressed overlap representation does not inhibit.
-If we wish to use similar graphs as reference systems, where singular positions and sequence representations are desireable features, the overlap graph model is more complex to use than a ``bluntified'' representation in which the overlaps are non-ambiguously reduced into the nodes in the graph and its linkage topology.
+Due to its duplicated representation of sequences within overlaps, the overlap graph model is more complex to use than a ``bluntified'' representation in which the overlaps are non-ambiguously reduced into the nodes in the graph and its linkage topology.
+We must bluntify overlap graphs before using them as reference systems.
 
 In their most correct form, overlaps are themselves alignments, and as we have seen in section \ref{sec:MSA} have a natural encoding in graph form.
 This means that assembly data models often encode multiple kinds of graph structures in a layered way, a fact which is reflected in the complexity and redundancy of the GFA version 2 specification\footnote{\url{https://github.com/GFA-spec/GFA-spec/blob/master/GFA2.md}}.
