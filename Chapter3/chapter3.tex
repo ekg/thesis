@@ -16,12 +16,13 @@ Here, I will demonstrate how the methods I develop can aid biological insight in
 To do so, I will use methods described in chapter 2 as implemented in {\tt vg}.
 
 The small genome of \emph{Saccharomyces cerevisiae} and ready availability of sources for pangenomic data models made it very useful to my development of {\tt vg}.
-I do so for a variety of pangenome constructions and also a variety of read lengths.
+I begin by illustrating this for a variety of pangenome constructions and also a variety of read lengths.
 
 However, much interest in bioinformatics is with larger genomes, specifically human.
 I use evaluations based on the human genome to validate the ability of {\tt vg} to scale to large genomes.
-Through simulation and the analysis of real genomes, I show that {\tt vg} yields exactly the same quality of alignment as {\tt bwa mem} with runtime within five to ten-fold slower.
-I develop a variation graph for the reference-guided genome assemblies from the HGSVC project and demonstrate the strong effect of reference bias in ChIP-seq.
+Through simulation and the analysis of real genomes, I show that the aligner I implement, {\tt vg map}, yields the same quality of alignment as {\tt bwa mem} against linear genomes.
+Although {\tt vg map}'s runtime is between five to ten-fold slower than {\tt bwa mem}, it provides improved, less biased alignment against variation graphs.
+I develop a variation graph for the reference-guided genome assemblies from the HGSVC project and demonstrate the strong effect of reference bias in ChIP-seq data.
 
 One context where reference bias has very significant effects is in the analysis of ancient DNA (aDNA).
 Here short reads and high intrinsic error rates encourage a high rate of reference bias.
@@ -30,8 +31,7 @@ I show that alignment against a pangenome graph ameliorates this issue.
 {\tt vg} can be applied to any kind of variation graph.
 To demonstrate the utility of this, I use de Bruijn assemblers to generate reference variation graphs.
 I recreate a classical pangenomic analysis of core and accessory pangenome by analyzing the coverage of alignments mapped to an assembly graph built from 10 \emph{Escheria coli} strains.
-{\tt vg} enables the full length alignment of reads to a complex assembly graph built from an arctic viral metagenome.
-
+To illustate the application of vg to metagenomic data containing unknown source genomes, I show that {\tt vg} enables the full length alignment of reads to a complex assembly graph built from an arctic viral metagenome, and similarly impoves alignment to an assembly graph built from a human gut microbiome.
 Finally, I demonstrate that the data models and indexes in {\tt vg} are capable of encoding splicing graphs, and that aligning to these splicing graphs allows the direct observation of the transcriptome.
 
 \section{Yeast}
@@ -807,7 +807,7 @@ But, where pangenomics considers a single clade, metagenomics considers the tota
 This adds significant complexity to the analysis of metagenomic data.
 To obtain high coverage across all the extant genomes in a sample may be impossible, as many exist at extremely low copy.
 Furthermore, doing so could be extremely expensive.
-In response, reductive approaches focused on sequencing 16S ribosomal DNA or common orthologs have been popular \cite{tringe2005comparative}.
+In response, reductive approaches focused on sequencing 16S ribosomal DNA or other conserved gene sequences have been popular \cite{tringe2005comparative}.
 These methods are only applicable to contexts where such homologous sequences are available, and so cannot be applied to viral contexts \cite{edwards2005viral}.
 As sequencing costs have decreased, assembly techniques have become more important to metagenomics \cite{nurk2017metaspades}.
 A typical workflow involves assembling contigs out of a DBG, mapping these contigs into annotated databases using sensitive alignment with BLAT or BLAST, and computing abundance by aligning the read set back to the contig set.
@@ -815,7 +815,7 @@ Contigs, in being unary, suppress variation that could be useful in analysis.
 Furthermore, in graphs that are dense, contigs will be very short, and singular read alignment will fail to completely capture the set of contigs that a given read maps to.
 This will result in distortion in coverage estimatess, and at very least loss of information due to the breakage of sequences that cross contigs boundaries.
 The information loss suggests that a techinque based on alignment to the assembly graph itself could benefit downstream analysis.
-In this section I use analyses of viral and bacterial metagenomes to demonstrate that {\tt vg} enables contiguous alignments against topogolically complex metagenomic assembly graphs.
+In this section I use analyses of viral and bacterial metagenomes to demonstrate that {\tt vg} enables contiguous alignments against topologically complex metagenomic assembly graphs.
 
 \subsection{Arctic viral metagenome}
 
@@ -824,7 +824,7 @@ As with other assembly graph based variation graphs, I used {\tt minia} to const
 To enable efficient alignment against the graph, I chopped its long nodes into nodes of a maximum of 32bp.
 The resulting graph has 39,503,775bp of sequence in 1,387,287 nodes and 1,326,573 edges.
 The low ratio of nodes to edges suggests a locally linear structure, which enables direct use of the graph by {\tt vg}.
-To successfully index the graph I found I had to remove complex regions using {\tt vg prune}, cutting edges that induced 3 furcations in any 16-mer.
+To successfully index the graph I found I had to remove complex regions using {\tt vg prune}, cutting edges that induced 3 bifurcations in any 16-mer.
 Indexing yielded a 119MB {\tt xg} index and 158MB {\tt GCSA2} index.
 
 \begin{figure}[htbp!]
@@ -837,13 +837,13 @@ Indexing yielded a 119MB {\tt xg} index and 158MB {\tt GCSA2} index.
 \end{figure}
 
 As expected given the small genome size of most viruses, the graph contains many small components (figure \ref{fig:viral_metagenome_bandage}).
-The graph contains few large components, and many of the small components are circular, which is expected given the nature of many DNA viruses.
+The graph also contains a few large components, and many of the small components are circular, which is expected given the nature of many DNA viruses.
 Some components are topologically complex, which can be seen in figure \ref{fig:viral_metagenome_bandage} as ``hairball'' like structures.
 When using $k=31$, indexing and alignment against the graph were impossible without a high-degree filter which removed nodes in such regions, however in the case of $k=51$ it is possible to index with only standard pruning of the DBG.
 
 I held out 100,000 reads from the input to the assembly graph.
-To evaluate the utility of using this graph as a reference for alignment, I aligned 100,000 reads which had been held out of the assembly using {\tt vg map} and {\tt bwa mem} to the assembly graph and linear contig set respectively.
-Although both methods mapped ~96\% of the reads, {\tt vg} had an average identity score of 95\% compared to 87\% for {\tt bwa}, reflecting that the {\tt bwa} alignments in many cases are not full length while those of {\tt vg} are (figure \ref{fig:viral_metagenome_scatter}).
+To evaluate the utility of using this graph as a reference for alignment, I aligned these 100,000 reads using {\tt vg map} and {\tt bwa mem} to the assembly graph and linear contig set respectively.
+Although both methods mapped ~96\% of the reads, {\tt vg} had an average identity score of 95\% compared to 87\% for {\tt bwa}, reflecting that the {\tt bwa} alignments in many cases are not full length while those of {\tt vg} are. Furthermore, many reads with higher scores (longer matches) to the graph than the contig set (figure \ref{fig:viral_metagenome_scatter}).
 
 \begin{figure}[htbp!]
   \centering
@@ -878,8 +878,7 @@ Building and indexing the graph take around an hour on the 32vCPU/256GB server u
 Human gut flora are primarily comprised of two main phyla, the Firmicutes and the Bacteroidetes \cite{mahowald2009characterizing}.
 We can observe their presence in this sample in the structure of this assembly graph.
 By aligning the node sequences in the graph against a subset of Refseq Genomes which are commonly found in the human git microbiome, I verify that the two ends of dumbell-like main component of the graph (figure \ref{fig:human_gut_microbiome_bandage}) represent these phyla.
-The connection between them may be generated by horizontal transfer of genes or spurious correlation due to recurrent $k$-mers in the assembly graph.
-It is notable that many of the nodes in the bridge between the two components show a high depth in the assembly graph, which is shown in the node width in the figure.
+The connection between them may be generated by horizontal transfer of genes or spurious correlation due to recurrent $k$-mers in the assembly graph, and it is notable that many of the nodes in the bridge between the two components show a high depth in the assembly graph, as shown by the node width in the figure.
 \emph{E. coli} can be found on a small component connected to this bridge, shown at the top middle of the rendering.
 
 \begin{figure}[htbp!]
