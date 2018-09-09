@@ -812,8 +812,8 @@ These methods are only applicable to contexts where such homologous sequences ar
 As sequencing costs have decreased, assembly techniques have become more important to metagenomics \cite{nurk2017metaspades}.
 A typical workflow involves assembling contigs out of a DBG, mapping these contigs into annotated databases using sensitive alignment with BLAT or BLAST, and computing abundance by aligning the read set back to the contig set.
 Contigs, in being unary, suppress variation that could be useful in analysis.
-Furthermore, in graphs that are dense, contigs will be very short, and singular read alignment will fail to completely capture the set of contigs that a given read maps to.
-This will result in distortion in coverage estimatess, and at very least loss of information due to the breakage of sequences that cross contigs boundaries.
+Furthermore, in graphs that are dense, contigs will be very short, and linear read alignment will fail to completely capture the set of contigs that a given read maps to.
+This will result in distortion in coverage estimates, and at very least loss of information due to the breakage of sequences that cross contigs boundaries.
 The information loss suggests that a techinque based on alignment to the assembly graph itself could benefit downstream analysis.
 In this section I use analyses of viral and bacterial metagenomes to demonstrate that {\tt vg} enables contiguous alignments against topologically complex metagenomic assembly graphs.
 

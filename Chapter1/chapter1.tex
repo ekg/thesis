@@ -152,19 +152,14 @@ In the ultimately dominant one, DNA that has been clonally arrayed on a surface 
 Sequencing progresses through the synthesis of the second strand of each of the molecules, and so these techniques are typically called ``sequencing-by-synthesis.''
 This modality allowed for a massive parallelization of the sequencing reaction, and has resulted in a dramatic reduction of cost.
 
-In 2003 George Church and colleagues demonstrated that individual sequences could be read from polymerase colonies or ``polonies'' suspended in an acrylamide gel \cite{mitra2003fluorescent}.
-These polonies were generated as the acrylamide gel prevents the diffusion of the PCR reaction used to amplify single DNA fragments embedded within it.
-Subsequently the sequence of each polony could be read out by synthesizing the second strand using fluorescently labeled blocking dNTPs, imaging in four colors with the fluorophores attached to determine the current base, and then unblocking the reaction with UV light or a reducing agent.
-Contemporaneously, a related sequencing-by-synthesis method, which is now known as Illumina dye sequencing, was built using laser fluorescent imagin and reversible terminator technology developed by Shankar Balasubramanian and David Klenerman at Solexa (later acquired by Illumina) \cite{balasubramanian2004arrayed, bentley2008accurate}.
+In 2003 George Church and colleagues demonstrated that individual sequences could be read from polymerase colonies or ``polonies'' suspended in an acrylamide gel using fluorescence microscopy \cite{mitra2003fluorescent}.
+This fluorescent imaging model became the basis for ``next generation'' sequencing \cite{shendure2008next}.
+Contemporaneously, a sequencing-by-synthesis method which is now known as Illumina dye sequencing, was implemented using laser fluorescent imaging and reversible terminator technology developed by Shankar Balasubramanian and David Klenerman at Solexa (later acquired by Illumina) \cite{balasubramanian2004arrayed, bentley2008accurate}.
 Rather than polymerase colonies embedded in an emulsion or gel, Solexa's technology relied on ``bridging PCR'', in which the polymerized clones of a particular fragment were locally hybdridized to an adapter-bearing surface of a flowcell.
-Through successive PCR steps, a micrometer-wide spot of clonal DNA is amplified around the original position of its progenitor molecule.
 Controlled synthesis of the second strand, based on reversible terminator chemistry \cite{canard1994dna} and fluorescently labeled dNTPs, is then used to observe the sequence of the DNA molecule in each colony.
-Similar efforts to reduce sequencing costs yielded a series of novel technologies, most of which have seen little use after their development, including
 
-Church's group focused on a hybridization based sequencing protocol proceeded by an emulsion based polony PCR step \cite{shendure2005accurate}.
-Initally the group attempted to commercialize an open source sequencing device (the Polonator)\footnote{My interest in open source projects, developed while an undergraduate studying the social sciences, led me to work on this device. The project introduced me to biology, bioinformatics, and DNA sequencing, which have attracted my interest and effort ever since.}, but the technology was ultimately brought to market by Applied Biosystems in their SOLiD (Sequencing by Oligo Ligation Detection) sequencing device.
-In this technique, random oligonucleotides where a single base (or pair of bases) is known and correlated with an attached fluorophore are arrayed over clonal DNA fragments in order to read out the bases of the sequence.
-Although in principle this method may achieve lower per base error rates due to redundant observations, the technology was plagued by artifacts related to contextual bias in the hybridization and ligation reaction as well as difficulty in normalizing the random probe set \cite{challis2015distribution}.
+A diverse set of similar approaches were explored during this period.
+Church's group focused on a hybridization based sequencing protocol proceeded by an emulsion based polony PCR step \cite{shendure2005accurate}, and th group attempted to commercialize an open source sequencing device (the Polonator)\footnote{My interest in open source projects, developed while an undergraduate studying the social sciences, led me to work on this device. The project introduced me to biology, bioinformatics, and DNA sequencing, which have attracted my interest and effort ever since.}.
 In ion semiconductor sequencing (as implemented in the IonTorrent platform) direct observation of pH changes at a fixed spot rather than fluorescent imaging were used to determine DNA sequences \cite{rusk2010torrents}.
 It continues to see use in some diagnostic laboratories due to its rapid operation and favorable read length.
 454 Life Sciences' ``pyrosequencing'' implementation allowed for a different kind of sequencing-by-synthesis in which a luciferase reporter assay could be used to track the progression of synthesis \cite{margulies2005genome}.
@@ -182,15 +177,10 @@ However, the short read length places fundamental limits on the utility of the m
 
 Alongside the development of second generation sequencing methods, an array of laboratory techniques and library preparation protocols have developed that augment the information that may be obtained solely from shotgun DNA sequences.
 These methods can allow for the direct observation of large haplotypes and three-dimensional structures in the DNA, both of which are relevant for inferring whole genomes.
-Shortly after Illumina released its sequencing technology, Moleculo developed an emulsion-PCR based chemistry in which specific tags would be added to DNA sequences from a given haplotype.
-By collecting short reads from a given tag together and assembling them, a set of synthetic long reads could be established.
-10X Genomics commercialized a similar library preparation step, and focused on providing raw tag information that could be used downstream by an array of haplotype-resolution and assembly tools \cite{mostovoy2016hybrid}.
+Moleculo, and later 10X Genomics commercialized barcode-guided haplotype sequencing and assembly.
+the later has focused on providing raw tag information that could be used downstream by an array of haplotype-resolution and assembly tools \cite{mostovoy2016hybrid}.
 The single template aspect of Illumina paired end sequencing allows longer contiguous DNA reads to be obtained by merging partly-overlapping read pairs computationally \cite{magovc2011flash}.
-Although this introduces error it can improve assembly contiguity and is often used when the library design permits it.
-Single-cell DNA template strand sequencing (strand-seq) can be used to obtain reads from only one half of the chromatids in a single cell \cite{falconer2012dna}.
-In strand-seq, a cell culture is treated with treated with bromodeoxyuridine (BrdU) and arrested after a single cell division.
-The newly-synthesized strand of each chromosome will have incorporated BrdU, which can be cleaved using UV induced photolysis.
-This treatment shatters the nascent strand into tiny fragments, allowing the selective sequencing of the other strand, which can then be used to improve the resolution of complex structural variation even though the direct observation is done with standard short reads \cite{porubsky2016direct}.
+Single-cell DNA template strand sequencing (strand-seq) can be used to obtain reads from only one half of the chromatids in a single cell \cite{falconer2012dna} via bromodeoxyuridine (BrdU) treatment and cleavage of the nascent strand, which can aid in haplotype reconstruction \cite{porubsky2016direct}.
 The Hi-C method \cite{lieberman2009comprehensive} uses bisulfite treatment to generate read pairs that are likely to physically co-locate \emph{in vivo}, thus enabling the mapping of long range DNA and chromatin interactions.
 It may be combined with other sequencing information to obtain estimates of the syntenic ordering of contigs produced by assembly \cite{ghurye2018integrating}.
 This technique which has already been used to obtain \emph{de novo} reference quality genomes in several difficult sequencing projects including amaranth \cite{lightfoot2017single}, \emph{Aedes aegypti} \cite{dudchenko2017novo}, and the domestic goat \cite{bickhart2017single}.
@@ -288,7 +278,7 @@ Recent developments in long read, single molecule sequencing have enabled great 
 The reference genome serves as an anchor for annotations that describe sequences and regions of interest within the genome, such as genes, exons, chromatin structures, DNA interacting proteins, and genetic variation \cite{sherry2001dbsnp,quinlan2010bedtools,encode2012integrated}.
 An established reference genome can serve as a conceptual foundation for the communication and interpretation of scientific results \cite{kent2002human}, and is seen as essential for collaboration and the development of a genome research community in a particular organism \cite{smith1998functional,cherry1998sgd}.
 
-Traditionally, references are seen as singular haploid models of the genome, and represent only a single version of each genomic locus.
+Traditionally, references are seen as haploid models of the genome, and represent only a single version of each genomic locus.
 This conceptual simplicity is a core feature of their public use.
 Although the issue of genetic diversity has always been appreciated by those who work with genomes, expediency has encouraged the use of linear models for reference genomes.
 For instance, within the HGP members of the consortium could observe diversity within the BAC clones that they had sequenced from different human donors, and initated a debate about the inclusion of heterozygosity in the reference itself.
