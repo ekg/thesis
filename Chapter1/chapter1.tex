@@ -125,25 +125,20 @@ Supporting the second and third wave are methods that allow for haplotype-specif
 % Sanger sequencing, BACs, etc.
 
 In the 1970s a group led by Walter Fiers published the first complete gene \cite{jou1972nucleotide}, and then genome sequence \cite{fiers1976complete} from the MS2 bacteriophage using extremely laborious digestion and 2-dimensional gel electrophoresis techniques to sequence RNA based on work by Fredrick Sanger and colleagues \cite{sanger1965two, adams1969nucleotide}.
-To avoid the limitations of digestion based assays, Ray Wu and colleagues developed a sequencing technique based on the blockage of DNA polymerization with radiolabeled nucleotides, which allowed them to sequence short fragments of lambda phage DNA using a similar 2D gel electrophoresis step to obtain a sequence readout \cite{wu1972nucleotide, padmanabhan1974chemical}.
-Subsequently, Sanger, who at this point had developed techniques for sequencing RNA, protein, and DNA, developed a reliable DNA sequencing method based on the same DNA polymerization chain-termination concept \cite{sanger1977dna}.
-By dividing the sequencing into four reactions, one for each DNA base, and sorting the resulting DNA fragments in parallel on a acrylamide gel, this sequencing method allows for a linear readout of DNA sequence.
-Optimized and implemented using fluorescent chemistry \cite{strauss1986specific}, this approach, now known as Sanger sequencing, became the foundation of the first commercial sequencing machines in the late 1980s, which automated DNA sequencing and allowed for dramatically higher throughput, enabling the establishment of the first large genome assemblies in the 1990s.
+To avoid the limitations of digestion based assays, Ray Wu and colleagues developed a sequencing technique based on the partial blockage of DNA polymerization with radiolabeled nucleotides \cite{wu1972nucleotide, padmanabhan1974chemical}.
+Subsequently, Sanger developed a reliable DNA sequencing method based on the same DNA polymerization chain-termination concept by dividing the sequencing reaction into four, one for each base, and sorting the resulting DNA fragments in parallel on a acrylamide gel \cite{sanger1977dna}.
+Optimized and implemented using fluorescent chemistry \cite{strauss1986specific}, this approach, now known as Sanger sequencing, became the foundation of the first commercial sequencing machines in the late 1980s.
 
 Sanger sequencing was the workhorse standard of biology for nearly 30 years, from the late 1970s until the mid 2000s.
 Its read length is limited by the reaction efficiency required to obtain a fraction of terminations at every base in the sequence.
 In practice, reads of 500 to 1000 base pairs can be reliably obtained, which are sufficient to cover a large portion of a gene.
-With clonal DNA as input the per base accuracy of the method is expected to be extremely high, as each base readout reflects the termination of large numbers of molecules \cite{castiblanco2013primer}.
-This high accuracy ensures that it remains important for validation despite the development of many new, and often cheaper sequencing methods \cite{sikkema2013targeted}.
-
-Sanger sequencing requires clonal input DNA to perform accurately, as heterogeneity in the input DNA library can produce muddled signals that rapidly become uninterpretable.
-With single nucleotide polymorphisms (SNPs) the problem is minimal, and SNPs may be readily called from the sequencing traces produced by automated dye-terminator sequencers.
-However, insertions and deletions (indels) will cause a loss of phase in the sequencing and ultimately a failure to readout the DNA sequence from the trace \cite{tenney2007tale}, a problem which was still encouraging algorithm development nearly 40 years after the initial publication of the sequencing method \cite{hill2014poly}.
-Consequently, in order to sequence whole genomes, which are often heterozygous, certain laboratory techniques were developed to allow the segregation of clonal DNA as a substrate for sequencing.
-The most common methods used as the technique was applied to sequencing large genomes are bacterial artificial chromosomes (BACs) and their equivalent in yeast (YACs) \cite{monaco1994yacs}.
-By isolating and clonally propagating DNA fragments of tens to hundreds of kilobases, these techniques allowed Sanger sequencing to be used to sequence genomes much larger than its maximum read lengths.
-Similarly, the effective read length could be increased by using ``mate pair'' techniques, in which the ends of a longer molecule would be sequenced \cite{schmitt1996framework}.
-However, to do so would require the development of computational techniques to automatically assemble the resulting sequence fragments into the BACs and ultimately chromosomes from which they were derived \cite{myers2000whole}.
+With clonal DNA as input the per base accuracy of the method is extremely high, as each base readout reflects the termination of large numbers of molecules \cite{castiblanco2013primer}, a feature which has ensured it remains important for validation of sequencing results \cite{sikkema2013targeted}.
+However, heterogeneity in the input DNA library can produce muddled signals that rapidly become uninterpretable.
+Insertions and deletions (indels) will cause a loss of phase in the sequencing trace \cite{tenney2007tale}, a problem which is still encouraging algorithm development \cite{hill2014poly}.
+In order to sequence whole genomes, which are often heterozygous, laboratory techniques were developed to allow the segregation of clonal DNA as a substrate for sequencing.
+These include bacterial artificial chromosomes (BACs) and their equivalent in yeast (YACs) \cite{monaco1994yacs}.
+The effective read length could be increased by using ``mate pair'' techniques, in which the ends of a longer molecule would be sequenced \cite{schmitt1996framework}.
+To yield fully assembled genomes, these data requried the development of suitable computational techniques \cite{myers2000whole}.
 
 \subsubsection{``Next generation'' sequencing}
 
@@ -158,69 +153,52 @@ Contemporaneously, a sequencing-by-synthesis method which is now known as Illumi
 Rather than polymerase colonies embedded in an emulsion or gel, Solexa's technology relied on ``bridging PCR'', in which the polymerized clones of a particular fragment were locally hybdridized to an adapter-bearing surface of a flowcell.
 Controlled synthesis of the second strand, based on reversible terminator chemistry \cite{canard1994dna} and fluorescently labeled dNTPs, is then used to observe the sequence of the DNA molecule in each colony.
 
-A diverse set of similar approaches were explored during this period.
-Church's group focused on a hybridization based sequencing protocol proceeded by an emulsion based polony PCR step \cite{shendure2005accurate}, and th group attempted to commercialize an open source sequencing device (the Polonator)\footnote{My interest in open source projects, developed while an undergraduate studying the social sciences, led me to work on this device. The project introduced me to biology, bioinformatics, and DNA sequencing, which have attracted my interest and effort ever since.}.
-In ion semiconductor sequencing (as implemented in the IonTorrent platform) direct observation of pH changes at a fixed spot rather than fluorescent imaging were used to determine DNA sequences \cite{rusk2010torrents}.
-It continues to see use in some diagnostic laboratories due to its rapid operation and favorable read length.
-454 Life Sciences' ``pyrosequencing'' implementation allowed for a different kind of sequencing-by-synthesis in which a luciferase reporter assay could be used to track the progression of synthesis \cite{margulies2005genome}.
-This technology was subsequently used to generate the first whole genome human sequence using massively parallel sequencing techniques \cite{wheeler2008complete}.
-Both pyrosequencing and ion semiconductor sequencing suffer from homopolymer errors, as both progress through the addition of a single dNTP type at a time to the reaction.
-As such it is necessary to infer the number of identical bases that have been incorporated, which can in practice be very difficult.
+A diverse set of similar approaches were explored during this period, although few saw more than limited success in the sequencing market.
+Church's group focused on a hybridization based sequencing protocol proceeded by an emulsion based polony PCR step \cite{shendure2005accurate}, and later attempted to commercialize an open source sequencing device (the Polonator)\footnote{My interest in open source projects, developed while an undergraduate studying the social sciences, led me to work on this device. The project introduced me to biology, bioinformatics, and DNA sequencing, which have attracted my interest and effort ever since.}.
+In ion semiconductor sequencing  direct observation of pH changes were used to determine DNA sequences \cite{rusk2010torrents}.
+454 Life Sciences' ``pyrosequencing'' implementation used a luciferase reporter assay to track the progression of DNA synthesis \cite{margulies2005genome}, and it was used to generate the first whole genome human sequence using ``next generation'' techniques \cite{wheeler2008complete}.
+Helicos commercialized the first single-molecule sequencing system, using a similar chemistry to Illumina's but observing single molecules rather than pools, which proved technically challenging and only saw use in its own development \cite{harris2008single}.
 
-In contrast, Illumina's sequencing protocol has a superior error profile, with low overall per base error rates and only a handful of context specific error types, virtually all of which may be detected when sequencing both DNA strands \cite{allhoff2013discovering}.
-In retrospect, it is unsurprising that it has achieved near total dominance in the field.
-The vast majority of sequencing data produced in the 2010s comes from Illumina sequencers.
+Illumina's sequencing protocol provides greater throughput and a superior error profile relative to these methods.
+Its low per base error rates and handful of context specific error types simplify analysis \cite{allhoff2013discovering}.
+It is unsurprising that the vast majority of sequencing data produced in the 2010s comes from Illumina sequencers.
 Illumina's sequencing technology is characterized by short reads (<250bp) with per-base accuracy ($\approx 99.5\%$) comparable to that of Sanger sequencing.
-Although the read length has been increased by optimization of the technology, physical limits prevent obtaining longer read lengths, as the per-base reaction efficiency of the sequencing-by-synthesis reaction causes a de-phasing of the reaction and thus degredation of the fluorescent signal with the progression of the cycles of second strand base addition.
-As each read is derived from a single input template, problems with heterozygosity seen with Sanger sequencing can be resolved, and whole genomes may be directly sequenced and assembled.
-However, the short read length places fundamental limits on the utility of the method for this purpose as even when using pair-end sequencing it is unable to resolve repeats greater than the read length \cite{alkan2010limitations}, and it is most-commonly analyzed via resequencing.
+Although the read length has been increased by optimization of the technology, the difficulty of achieving perfect per-base reaction efficiency apparently prevents greater extension of the read length.
 
-Alongside the development of second generation sequencing methods, an array of laboratory techniques and library preparation protocols have developed that augment the information that may be obtained solely from shotgun DNA sequences.
-These methods can allow for the direct observation of large haplotypes and three-dimensional structures in the DNA, both of which are relevant for inferring whole genomes.
+A number of methods extend the genome inference capacity of Illumina sequencing, allowing it to be used to infer long haplotypes and genome organization.
 Moleculo, and later 10X Genomics commercialized barcode-guided haplotype sequencing and assembly.
 the later has focused on providing raw tag information that could be used downstream by an array of haplotype-resolution and assembly tools \cite{mostovoy2016hybrid}.
 The single template aspect of Illumina paired end sequencing allows longer contiguous DNA reads to be obtained by merging partly-overlapping read pairs computationally \cite{magovc2011flash}.
 Single-cell DNA template strand sequencing (strand-seq) can be used to obtain reads from only one half of the chromatids in a single cell \cite{falconer2012dna} via bromodeoxyuridine (BrdU) treatment and cleavage of the nascent strand, which can aid in haplotype reconstruction \cite{porubsky2016direct}.
 The Hi-C method \cite{lieberman2009comprehensive} uses bisulfite treatment to generate read pairs that are likely to physically co-locate \emph{in vivo}, thus enabling the mapping of long range DNA and chromatin interactions.
-It may be combined with other sequencing information to obtain estimates of the syntenic ordering of contigs produced by assembly \cite{ghurye2018integrating}.
-This technique which has already been used to obtain \emph{de novo} reference quality genomes in several difficult sequencing projects including amaranth \cite{lightfoot2017single}, \emph{Aedes aegypti} \cite{dudchenko2017novo}, and the domestic goat \cite{bickhart2017single}.
+It may be combined with other sequencing information to obtain estimates of the syntenic ordering of contigs produced by assembly \cite{ghurye2018integrating}, which has already been used to obtain \emph{de novo} reference quality genomes in several difficult sequencing projects including amaranth \cite{lightfoot2017single}, \emph{Aedes aegypti} \cite{dudchenko2017novo}, and the domestic goat \cite{bickhart2017single}.
 
 \subsubsection{Single molecules}
 
 All previously described sequencing techniques are dependent on the observation of pools of molecules.
-As a result such methods benefit from amplification of DNA, which increases signal, but also adds and a potential source of error to DNA sequencing.
+These methods benefit from amplification of DNA, which increases signal, but also adds and a potential source of error to DNA sequencing.
 They also suffer from phasing and stepwise reaction efficiency effects, which fundamentally limit the maximum length of an accurate read.
-By avoiding these issues, a method to sequence single molecules accurately would theoretically allow longer read lengths and more rapid sequencing.
-The development of such a method has not been easy, and efforts have been continuously underway throughout 2000s and 2010s.
-Although they have not yet achieved lower error rates or per base costs than the dominant Illumina method, due to their dramatically longer read lengths and flexible sequencing chemistries, the commercial sequencing platforms based on this principle are rapidly defining a new technical phase of genome inference.
-
-In the mid 2000s, Helicos commercialized a single molecule sequencing system based on the same fluorophore-labeled, reversible-block sequencing-by-synthesis model developed by Illumina.
-However, instead of observing a colony of millions of identical reactions per read, they observed a single one.
-Although innovative, this daring technique suffered from numerous technical problems related to photodamage of the DNA, polymerase, and fluorophores.
-It required physically massive hardware in order to enable the microscopy required for reliable imaging of single molecules.
-Ultimately, the short read length, high cost, high error rate, and low throughput of the method relative to Illumina's prevented its use, and few genomes were sequenced with the method outside of its development \cite{harris2008single}.
+A method to sequence single molecules accurately would theoretically allow longer read lengths, but this requires the difficult, direct observation of DNA.
+Efforts to develop such a method have been continuously underway throughout 2000s and 2010s.
+Two successful commercial sequencing platforms based on this principle are rapidly defining a new technical phase of genome inference.
 
 By utilizing zero-mode waveguides (ZMWs) to observe DNA polymerase in realtime, Pacific Biosciences (PacBio) generated the first realtime single-molecule sequencing system \cite{eid2008real}.
 In this platform, DNA polymerase is immobilized in sub-diffraction size, picoliter detection volumes at the bottom of wells formed in aluminum on a glass slide \cite{korlach2008selective}.
 Single stranded DNA and fluorescently-labeled dNTPs are added to the buffer above the ZMWs.
-As synthesis progresses, the fluorophore attached to the DNA base that is being incorporated will tend to remain inside the ZMW longer than would be expected due to random diffusion of the dNTPs.
-Thus, the series of incorporated bases in each ZMW well may be read out as a sequence of fluorescent pulses, allowing the synthesis of the second strand to be observed in real time.
-The main sources of error stem from difficulty in perfectly observing the series of fluorophores pulled into the well, and also not discriminating random ZMW occupancy from polymerization-mediated occupancy, which tends to result in insertion errors.
-The base-level error rate of sequencing is high, up to 15\%, and subtle context dependent biases do exist \cite{ono2012pbsim}.
-However, due to their genesis in Brownian motion, the errors themselves may be considered as almost perfectly random in analysis \cite{ross2013characterizing,myers2014efficient}.
-The configuration of the sequencing system allows for unique chemistries, such as via the sequencing of circular DNA molecules, which can provide dramatic reductions in error at a cost of read length.
-PacBio's system has taken much of a decade to develop into a reliable sequencing platform, but in recent years has become a foundational technology in genome sequencing, with many recent genome assemblies completed using it \cite{rhoads2015pacbio}.
+As synthesis progresses, the fluorophore attached to the DNA base that is being incorporated will tend to remain inside the ZMW longer than would be expected due to random diffusion of the dNTPs, allowing a readout of the sequence of incorporated bases as a series of fluorescent pulses.
+The base-level error rate of sequencing is high, up to 15\%.
+It is difficult to perfectly observe the series of fluorophores pulled into the well, and random occupancy is often indistinguishable from polymerization-mediated occupancy, which results in insertion errors.
+Although subtle context dependent biases do exist \cite{ono2012pbsim}, due to their genesis in Brownian motion, the errors themselves may be considered as almost perfectly random in analysis \cite{ross2013characterizing,myers2014efficient}.
+In recent years PacBio's system has become a foundational technology in genome sequencing, with many recent genome assemblies completed using it \cite{rhoads2015pacbio}.
 
 The idea that electrophoresis of DNA through nanometer scale pores might allow the direct sequencing of DNA was first postulated in the late 1980s by David Deamer and others \cite{deamer2016three}.
 While the sequencing model itself is among the simplest ever proposed, it would take twenty-five years of work \cite{kasianowicz1996characterization,purnell2008nucleotide} before the technique was brought to market by Oxford Nanopore (ONT) \cite{mikheyev2014first} and used to fully sequence genomes \cite{loman2015complete, jain2018nanopore}.
-In nanopore sequencing, a DNA strand is transported through a nanometer pore by electrophoresis.
-As the DNA molecule traverses the pore, the specific DNA bases within the pore effect characteristic changes in the electric currenty density within the pore.
-By measuring the changes in current over time, it is possible to infer the sequence of the DNA molecule.
+In this approach, a DNA strand is pulled through a nanometer pore by electrophoresis.
+The specific DNA bases in the pore effect characteristic changes in the electric currenty density, and the DNA molecule can be read by measuring the changes in current over time.
 Due to context and history-dependent effects that distort the signal, the measured patterns in the current flux must be interpreted by sophisticated models that have been trained to convert the traces to DNA sequences \cite{david2016nanocall}.
-In practice nanopore sequencing has the highest error rate of any commercially available sequencing method.
-The error process is complex, being related both to the intricacies of pore/DNA interaction and by patterns of error in the base calling algorithm.
-As with PacBio, it approaches 15\%, and similarly this has improved continuously throughout the development of ONTs sequencers.
-Nanopore sequencing also obtains the longest reads of any sequencing technology, with maximum read length apparently limited solely by the molecule length in the DNA library.
+As with PacBio, its per-base error rate approaches 15\%.
+In practice nanopore sequencing has the highest error rate of any commercially available method, which reflcts the difficulty of mapping between the observed signal and the underlying DNA sequence.
+Nanopore sequencing can also obtain the longest reads of any sequencing technology, with megabase-scale reads reported by some users.
 
 %, single molecule ONT/PacBio (3rd gen)
 
