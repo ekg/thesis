@@ -1,5 +1,7 @@
 # todo for completion of thesis
 
+- add in unfold/dagify figures
+- fix proportion label problem on aDNA sim figure
 - Richard's suggestions
 - automated grammar check
 - spell check
