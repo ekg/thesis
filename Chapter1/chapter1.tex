@@ -366,12 +366,12 @@ This means we cannot infer a genome directly from a single read, and must aggreg
 In the context of resequencing, techniques to do this have come to be known as \emph{variant calling}.
 The simplest methods for this process resemble the consensus step in OLC assembly, and could be implemented as heuristic filters on the mutually gapped alignment matrix of a set of homologous sequence reads \cite{koboldt2009varscan}.
 A natural framework in which to do so is a Bayesian one, in which prior expectations about the genomic state are combined with the available data to generate a posterior probability that allows the propagation of information about uncertainty to downstream analyses.
-Such a model allows the integration of various sources of information in addition to the sequence of the reads themselves, including the base quality (BQ), or machine-estimated probability of an erroneous base call, and mapping quality (MQ), which represents the aligner's estimate that the given alignment is a mismapping or ambiguous \cite{li2011stats}.
+Such a model allows the integration of various sources of information in addition to the sequence of the reads themselves, including the base quality (BQ), or machine-estimated probability of an erroneous base call, and mapping quality (MQ), which represents the aligner's estimate that the given alignment is a mismapping or ambiguous \cite{li2011statistical}.
 Furthermore, collections of genomes could be modeled at the same time using expectations of population genetic and combinatoric patterns, for instance in a panmictic population under neutral selection the pattern of observed genotypes should match Hardy-Wineberg Equilibrium (HWE), and to have confidence in a given genotyping call, the evidence for variation should be stronger than our expectation of the rate of haplotype diversity in a given sample.
 
 The earliest implementations of this technique focused on genotyping samples using expressed sequence transcripts (ESTs) \cite{marth1999general}, which were promoted by Celera and others as a techinque to focus genome analysis on coding sequences.
 The efforts in the 1000GP generated strong competition to develop the best methods to work on short read data, yielding variant calling algorithms based on a variety of principles.
-The simplest method would detect variation given pointwise SNP and indel descriptions directly from the alignments \cite{li2009sequence,gatk2011}.
+The simplest method would detect variation given pointwise SNP and indel descriptions directly from the alignments \cite{li2009sequence,depristo2011framework}.
 However, this technique was shown to be susceptible to inconsistencies in the alignment process, and several groups developed methods that would reevaluate the alignments in a reference-independent manner in order to homogenize the representation of small variation.
 These techniques became known as ``local assembly'' variant detection algorithms, and include the windowed haplotype detection implemented in freebayes \cite{garrison2012haplotype} as well as full local \emph{de novo} assembly based on de Bruijn graphs as implemented in Dindel \cite{albers2010dindel}, Platypus \cite{rimmer2014integrating} and the GATK's HaplotypeCaller.
 In parallel, several whole genome \emph{de novo} assembly methods, including SGA and Cortex, were applied to the full data set, yielding variant calls that were expected to be unbiased due to the reference genome.
@@ -722,7 +722,7 @@ To obtain a graph like $G_s$ from the Enredo graph, the MSA resolver Pecan is ap
 Paten further refined multiple genome alignment by the development of the Cactus graph $G_c = (V,E)$ \cite{paten2011cactus}.
 To construct the Cactus graph, we build a precursor graph $G_c'$ by adding a node for each adjacency-connected component in the Enredo graph $G_e$ and adding edges between nodes for each segment $E_s$ whose head and tail lie in both adjacency components.
 To obtain the Cactus graph, we collapse three-edge connected components in $G_c'$ into single nodes, yielding a Eulerian graph with a tree like structure.
-The nodes in the Cactus graph can be shown to correspond to a tree of \emph{ultrabubbles} (graph components connected to the rest of the graph by one or two head and tail nodes) in the sequence graph from which it was constructed \cite{paten2016superbubbles}.
+The nodes in the Cactus graph can be shown to correspond to a tree of \emph{ultrabubbles} (graph components connected to the rest of the graph by one or two head and tail nodes) in the sequence graph from which it was constructed \cite{paten2018superbubbles}.
 This forms the basis for the development of genotype models on top of arbitrary graphs.
 
 Without additional labeling, these graph models are insufficient to fully reproduce their input, and although it may be implemented in corresponding software, existing models to do not clarify how this labeling is accomplished \cite{kehr2014genome}.
@@ -731,7 +731,7 @@ Variation graphs respond to this issue by making the path embedding of the seque
 \subsection{Pangenomic alignment}
 
 As the review presented in this chapter shows, the idea of using pangenomic models as a reference basis is not new, and interest in the topic extends back to the earliest explorations of the multiple sequence alignment problem.
-But it was only in the last decade, as surveys of populations of genomes routinely produced pangenomic models in the form of phased variant calls \cite{litisgrp,weigel20091001,cao2011whole,1000Gphase1,1000g2015} that the idea of scaling up alignment to enable the alignment of short reads to populations of genomes gained traction.
+But it was only in the last decade, as surveys of populations of genomes routinely produced pangenomic models in the form of phased variant calls \cite{liti2009population,weigel20091001,cao2011whole,1000Gphase1,1000g2015} that the idea of scaling up alignment to enable the alignment of short reads to populations of genomes gained traction.
 Numerous methods use some form of pangenome aware alignment.
 These have helped me to understand the problem and guided my work to a significant degree.
 Each has important limitations relative to more generic problems.

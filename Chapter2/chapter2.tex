@@ -122,7 +122,7 @@ As path to path relationships can provide descriptions of allelic diversity, the
 To represent the exact genotype of a particular sample with ploidy $\nu$ at a given locus $\iota$ we can simply collect the multiset of alleles $\pi_\iota = ( p_1 \ldots p_\nu)$.
 We could alternatively build a probabilistic model $\varpi$ of an unphased genotype by using a set of $\mu$ alleles $\{ p_1 \ldots p_\mu\}$.
 To do so we associate likelihoods $\gamma_\xi$ for each possible genotype $\pi_{\iota_\xi}$ that could be sampled from the alleles such that $\varpi = \gamma_1 \ldots \gamma_{\mu! \over{\nu!(\mu-\nu)!} }$.
-In practice we develop our $\gamma_\xi$ out of quality information from the reads and a sampling model related to $\nu$ \cite{garrison2012haplotype,li2011stats}.
+In practice we develop our $\gamma_\xi$ out of quality information from the reads and a sampling model related to $\nu$ \cite{garrison2012haplotype,li2011statistical}.
 Given this definition of a genomic locus it is clear that existing genotyping models can be applied to drive genotyping using read sets aligned to the graph, and the output of the genotyper is defined fully in the space of the graph.
 
 \subsection{Extending the graph}
