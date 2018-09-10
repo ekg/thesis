@@ -282,17 +282,17 @@ An \emph{alignment} expresses one sequence in terms of a set of positions, edits
 Algorithms to determine the most plausible alignment between a pair of sequences have as long a history as sequencing itself, with the first significant attempts to algorithmically assess sequence homology and divergence between protein sequences arising in the 1960s with Fitch's method for homology detection \cite{fitch1966improved}.
 This method involved the comparison of many subsequences of two sequences to be compared, so as to account for insertions and deletions, a fact which Needleman and Wunsch appreciated in their development of an O(NM) time algorithm for the global alignment of sequences in 1970 \cite{needleman1970general}.
 Given strings to compare of length $N$ and $M$, the algorithm builds a $M \times N$ matrix in which any possible full length alignment between both sequences can be expressed as a path through a series of cells.
-To determine the most-likely path, Needleman and Wunsch apply a recurrence relation dependent on the characters at each pair of positions in the strings and the values of the neighboring cells.
-The relation is designed such that a match corresponds to the shortest (diagonal) path through the matrix, and insertions and deletions correspond to horizontal or vertical movements.
-This implementation of dynamic programming (DP) \cite{bellman1952theory} breaks the alignment problem into the successive application of all the sub-alignment problems.
+The matrix is designed such that a match corresponds to the shortest (diagonal) path through the matrix, and insertions and deletions correspond to horizontal or vertical movements.
+To determine the most-likely path, Needleman and Wunsch apply a recurrence relation dependent on the characters at each pair of positions in the strings and the values of the cells above and/or to the left.
+This implements a dynamic programming (DP) method \cite{bellman1952theory}.
 For each cell, the score is given as the maximum of: the score of cell to the diagonal plus a bonus if the corresponding sequence characters are the same and minus a penalty if they are different; and the scores of the cells above and below minus a penalty corresponding to the weight given to an insertion or deletion.
 Finally, we determine the optimal path beginning from the opposite extreme cell of the matrix from where the scoring began, in which we walk back through the successive maximum scores until reaching the opposite extreme corner of the matrix.
 This traceback encodes the alignment, which is most-simply represented as a vector of pairs of matched bases in each sequence.
 It can be shown that provided full evaluation of the dynamic programming problem, the optimal alignment is obtained given a set of scores parameterizing the recurrence relation.
 
 This alignment algorithm is known as a ``global'' alignment algorithm, in that the alignment covers all bases of both sequences.
-In practice, this level of comparison is not always needed, and it can be advantageous to obtain only the optimal sub alignments between sequences.
-Smith and Waterman provided a clean formalization of the algorithm of Needleman and Wunsch, modifying it to prevent negative scores, a step which allowed them to produce the optimal ``local'' alignments \cite{smith1981comparison}, ignoring regions unlikely to contain significant homology.
+In practice, this type of comparison is not always needed, and it can be advantageous to obtain only the optimal sub alignments between sequences.
+Smith and Waterman provided a clean modification of the algorithm of Needleman and Wunsch, modifying it to prevent negative scores, a step which allowed them to produce the optimal ``local'' alignments \cite{smith1981comparison}, ignoring regions unlikely to contain significant homology.
 The algorithm, further refined by Gotoh \cite{gotoh1982improved} to enable affine gaps\footnote{In affine gap schemes the cost of a gap per base decreases as its length increases. Such a scheme approximates the $\zeta$-distributed excursions of a particle under brownian motion, which structure the length of insertions and deletion mutations observed in nature.} and computation in $O(MN)$ time, is today one of the most important in genome analysis.
 The amount of work on this topic is considerable, and the subsequent decade yielded numerous modifications of the basic alignment concept, for instance reducing the memory bounds to $O(N)$ through a divide and conquer approach \cite{myers1988optimal}, and further explorations of affine gap scoring schemes \cite{altschul1986optimal,gotoh1990optimal}.
 Numerous following works have offered improved implementations, using vectorized instructions to improve the runtime of the algorithm \cite{farrar2007striped} and heuristics to selectively evaluate only part of the DP matrix \cite{suzuki2017acceleration}.
@@ -301,24 +301,24 @@ However, such changes were not sufficient to enable alignment against large sequ
 $O(MN)$ algorithms for sequence alignment are impractical when either $M$ or $N$ becomes large.
 Naturally, as sequence databases grew and the size of sequenced genomes increased, heuristic strategies to efficiently reduce the alignment problem size were introduced.
 When aligning a short sequence against a large database we expect to obtain a sensitive alignment, but provided sufficient homology between the sequence and the database it is unlikely that we need to evaluate the full problem using an algorithm like Smith-Waterman-Gotoh (SWG).
-By indexing either the query or target set of sequences to efficiently obtain patterns of exact matches, candidate sub-regions of both can be isolated and submitted to more sensitive alignment.
+By indexing either the query or target set of sequences to efficiently obtain patterns of exact matches, candidate sub-regions of both can be isolated and submitted for more sensitive alignment.
 
 This strategy was implemented in the mid to late 1980s in the FASTA \cite{pearson1988improved} and BLAST \cite{altschul1990basic} alignment algorithms.
 FASTA greatly accelerates pairwise alignment by a pattern which remains common in the current generation of sequence aligners.
-It first uses a seeding step that simulates the full DP matrix between the query and target, using short $k$-mer seeds to establish the longest matching subsequences.
-A small number of candidates are enumerated and evaluated using a banded SWG algorithm.
+It first uses a seeding step that finds exact matches between the query and target, using chains of short $k$-mer seeds to establish the longest matching subsequences.
+A small number of the best scoring candidates are enumerated and evaluated using a banded SWG algorithm.
 In contrast, by default BLAST implements a fully heuristic alignment process based solely on the $k$-mer seeds and ungapped alignment.
 This is much faster than FASTA but can perform slightly worse in the context of highly divergent sequences.
 BLAST's heuristic alignment comprises a speedup of many orders of magnitude over full DP based algoritms at a minor cost to accuracy.
-The popularity of BLAST in biology\footnote{The BLAST1 paper has been cited more than 70 thousand times as of August 2018.} is clear evidence of the importance of the alignment problem to all kinds of genomic analysis.
+The popularity of BLAST in biology\footnote{The BLAST1 paper has been cited more than 70,000 times as of August 2018.} is clear evidence of the importance of the alignment problem to all kinds of genomic analysis.
 It is also evidence that minor losses in accuracy are acceptable given the cost of sequence analysis in large data sets.
-Jim Kent's Blast-like alignment tool (BLAT) indexes the target set with non-overlapping $k$-mers and queries all $k$-mers in the reads, yielding a method that is less sensitive but several orders of magnitude faster than BLAST \cite{kent2002blat}.
+Jim Kent's Blast-like alignment tool (BLAT) indexes the target set with non-overlapping $k$-mers and queries all $k$-mers in the reads, yielding a method that is less sensitive but several orders of magnitude faster again than BLAST \cite{kent2002blat}.
 The increased performance was a necessity when working with the scale of data generated in the HGP.
 
 As reliable commercial second-generation sequencing systems became available the rate of sequence data acquisition growth rapidly outstripped the rate of improvement in computing performance \cite{leinonen2010sequence,kodama2011sequence}.
 This necessitated further improvements in the computational cost of sequence alignment.
 The most-widely used of these methods focused on the increasingly prevalent problem of aligning short reads to reference genome type sequence databases.
-Due to the high quality of the reference sequence, low error rate of the short ($\leq$100bp) reads, and low nucleotide diversity of humans (where $\theta \approx 1^{-3}$), algorithms that focused on exact string matching had great success in tackling the resequencing problem in this context.
+Due to the high quality of the reference sequence, low error rate of the short ($\leq$100bp) reads, and low nucleotide diversity of humans (where $\theta \approx 10^{-3}$), algorithms that focused on exact string matching had great success.
 Much like BLAST and BLAT, the first wave of aligners capable of indexing the human reference genome and aligning short reads to it efficiently utilized exact $k$-mer matching via hash tables followed by local alignment via heuristic or DP methods \cite{li2008soap,lee2014mosaik,li2008mapping}.
 Substantial improvements would be yielded by the development of aligners based on contemporary developments in compressed data structures.
 
@@ -327,15 +327,15 @@ This structure can be used to determine if a given sequence $q = c_{1}c_{2}\ldot
 Search begins at the root, progressing across the topology (edge or node) of the tree which is labeled with the next character until no further matches may be found.
 By augmenting the tree with the sequence positions corresponding to each node, the search may also yield the positions of the exact matches detected within the target sequence from which the tree was built.
 Suffix trees may be built in linear time and space relative to their input \cite{ukkonen1995line}, and support diverse algorithms for string comparison \cite{apostolico1985myriad}, such as whole genome alignment \cite{delcher1999alignment}, but they require relatively large amounts of memory per input base.
-In practice they were superceded by equivalent data structures with better memory bounds such as the suffix array (which represents the tree in a linear array of suffix sort ranks) \cite{manber1993suffix}, and its compressible and dual sibling the BWT \cite{burrows1994block}.
+In practice they were superceded by equivalent data structures with better memory bounds such as the suffix array (which represents the tree in a linear array of suffix sort ranks) \cite{manber1993suffix}, and its compressible and dual sibling the Burrows-Wheeler Transform (BWT) \cite{burrows1994block}.
 
 By augmenting the BWT to enable the exact matching via emulation of the suffix tree, Paolo Ferragina and Giovanni Manzini developed the FM-index \cite{ferragina2000opportunistic,ferragina2004alphabet}.
 Given a string $S$, the FM-index may be built using a series of transformations and auxiliary data structures that induce the suffix tree in the context of the highly-compressible BWT.
 First, we add marker characters for the start and end with lexicographic order less and greater than the rest of the characters in the alphabet, e.g. $\#,S,\$$.
-Then, we take all rotations of the sequence and sort them, yielding matrix $M$, which is sometimes called the Burrows Wheeler Matrix (BWM).
+Conceptually, we  take all rotations of the sequence and sort them, yielding matrix $M$, which is sometimes called the Burrows-Wheeler Matrix (BWM), but in fact this is done in a space-efficient manner without the enumeration of the rotations.
 This sort has many similarities to the suffix tree, and for instance it can be seen that a lexicographically-ordered DFS through the suffix tree would enumerate the prefixes of the rotations of the sequence preceeding the terminal character $\#$ in the same order as they are sorted.
-The suffix array $SA$ is given by the vector by the suffix ranks in the sorted order they occur in $M$, and is related to the ordering of characters in the first column $F$, while the BWT is given as the last column, $L$.
-If the input text has repetitive patterns, then these will tend to result in runs in the BWT of the string that may be compressed using various schemes.
+The suffix array $SA$ is given by the vector of the suffix ranks in the sorted order they occur in $M$, and is related to the ordering of characters in the first column $F$, while the BWT is given as the last column, $L$.
+If the input text has repetitive patterns, then these will tend to result in runs in the BWT that may be compressed using various schemes.
 To emulate traversal of the suffix tree, it is sufficient to construct a function $LF(i)$ which maps between indexes $L[i] = F[j]$ which represent the same character.
 This is done by the augmentation of the data structure with array $C$ such that $C[c]$ returns the number of characters in the text that are lexicographically smaller than $c$, and a function $rank(c,k)$ that yields the number of instances of $c$ in the prefix $L[1 \ldots k]$.
 Now, $LF(i)$ may be defined as $C[L[i]] + rank(L[i], i)$.
@@ -348,13 +348,13 @@ The various matches of $q$ in $S$ may now be obtained by the positions in $SA[s 
 The addition of the longest common prefix (LCP) array on the sorted suffixes can be used to emulate all algorithms on suffix trees in this context \cite{abouelhoda2004replacing}, and in turn this enables $O(|q|)$ search of queries against $S$.
 Of particular relevance to this work, when completing a phase of backward search we could use the LCP to traverse the suffix links in the suffix tree and continue with the next (partially overlapping) maximal exact match.
 
-The FM-index became one of the core data structures used in modern short-read aligners such as BWA \cite{li2009fast} and BOWTIE \cite{langmead2009ultrafast}, which used backtracing alignment to directly align sequences to the suffix array encoded in the FM-index.
-This backtracking search was impressively fast, and perfectly matched the needs of aligning short human sequencing reads to the reference genome, but had problems detecting indels (as these require exponentially more backtracks to infer) and did not perform well with increasing read length.
+The FM-index became one of the core data structures used in modern short-read aligners such as BWA \cite{li2009fast} and BOWTIE \cite{langmead2009ultrafast}, which used backtracking LF alignment to directly align sequences to the suffix array encoded in the FM-index.
+This backtracking search is impressively fast, and perfectly matches the needs of aligning short human sequencing reads to the reference genome, but has problems detecting indels (as these require exponentially more backtracks to infer) and performs less well with increasing read length.
 In response, the authors merged initial exact matching with a final DP step to yield ``long read'' capable aligners like BWA-SW \cite{li2010fast} and BOWTIE2 \cite{langmead2012fast}.
 Further refinements of this concept yielded BWA MEM \cite{li2013aligning}, which uses a heuristic algorithm to determine ``supermaximal exact matches'' (SMEMs) and reseed ``sub matches'' within them using a bidirectional FM-index (the FMD index).
-Due to its relative robustness to error and variation, the MEM concept has ultimately prevailed and as of the time of this writing BWA MEM could be seen as the industry standard method for aligning short reads to the genome.
+Due to its relative robustness to error and variation, the MEM concept has ultimately prevailed and as of the time of this writing BWA MEM can be seen as the industry standard method for aligning short reads to the genome.
 
-Much of the new sequencing data was being generated for humans in medically-motivated genome wide assocation studies \cite{uk10k2015uk10k} or population survey projects like the 1000 Genomes Project (1000GP) \cite{1000Gphase1,1000g2015}.
+Much of the new sequencing data has been generated for humans in medically-motivated genome wide assocation studies \cite{uk10k2015uk10k} or population survey projects like the 1000 Genomes Project (1000GP) \cite{1000Gphase1,1000g2015}. % TODO not sure about this phrasing
 The development of these methods was accelerated by an open, competitive spirit fostered during the 1000GP, whose primary sequencing data remains the largest completely publicly available data set, with more than 100TB of sequence data available for download from public URLs without any authentication.
 There, project participants formalized the resequencing process by generating a series of data formats linking the various stages of analysis, including the sequence alignment/map format (SAM) and its binary equivalent (BAM) \cite{li2009sequence} that is the standard output format for contemporary aligners.
 
@@ -362,12 +362,12 @@ There, project participants formalized the resequencing process by generating a 
 \subsection{Variant calling}
 
 As we have seen, DNA sequencing reads of all types contain errors, and genomes contain diversity.
-This means we cannot infer a genome directly from a single read, and must aggregate sequencing information to infer the genomic state at a given locus.
+This means that we must aggregate sequencing information to infer the genomic state at a given locus.
 In the context of resequencing, techniques to do this have come to be known as \emph{variant calling}.
-The simplest methods for this process resemble the consensus step in OLC assembly, and could be implemented as heuristic filters on the mutually gapped alignment matrix of a set of homologous sequence reads \cite{koboldt2009varscan}.
+The simplest methods for this process resemble the consensus step in OLC assembly, and can be implemented as heuristic filters on the mutually gapped alignment matrix of a set of homologous sequence reads \cite{koboldt2009varscan}.
 A natural framework in which to do so is a Bayesian one, in which prior expectations about the genomic state are combined with the available data to generate a posterior probability that allows the propagation of information about uncertainty to downstream analyses.
 Such a model allows the integration of various sources of information in addition to the sequence of the reads themselves, including the base quality (BQ), or machine-estimated probability of an erroneous base call, and mapping quality (MQ), which represents the aligner's estimate that the given alignment is a mismapping or ambiguous \cite{li2011statistical}.
-Furthermore, collections of genomes could be modeled at the same time using expectations of population genetic and combinatoric patterns, for instance in a panmictic population under neutral selection the pattern of observed genotypes should match Hardy-Wineberg Equilibrium (HWE), and to have confidence in a given genotyping call, the evidence for variation should be stronger than our expectation of the rate of haplotype diversity in a given sample.
+Furthermore, collections of genomes can be modeled at the same time using population genetic theoretical expectations. For instance, in a panmictic population under neutral selection the pattern of observed genotypes should be consistent with Hardy-Weinberg Equilibrium (HWE), and to have confidence in a given genotyping call, the evidence for variation should be stronger than the prior odds of there being no genetic variation at the site.
 
 The earliest implementations of this technique focused on genotyping samples using expressed sequence transcripts (ESTs) \cite{marth1999general}, which were promoted by Celera and others as a techinque to focus genome analysis on coding sequences.
 The efforts in the 1000GP generated strong competition to develop the best methods to work on short read data, yielding variant calling algorithms based on a variety of principles.
@@ -383,7 +383,7 @@ Due to the absence of a reliable truth set, traditional algorithmic design rathe
 The complexity of the problem and its relatively low computational cost relative to alignment encouraged the development of many competing solutions.
 Subsequently, projects at Illumina (Platinum genomes) and NIST (Genome in a Bottle) have generated ``truth sets'' for variant calls matched to cell lines for which large amounts of sequencing data is publicly-available \cite{eberle2013platinum,zook2014integrating}.
 These truth sets have then enabled the devolpment of ``universal'' variant callers using machine learning techniques \cite{poplin2017creating}.
-It may be expected that this trend will continue as the number of fully sequenced genomes increases.
+It may be expected that this trend will continue as the number of highly accurate independently sequenced genomes increases.
 
 \subsection{The reference bias problem}
 
@@ -391,14 +391,14 @@ When inferring genomes using resequencing, the reference can be thought of as a 
 Short reads are insufficient to generate \emph{de novo} assemblies of reference quality, and this issue is exacerbated when they are used in resequencing, as the prior information provided by the reference is relatively strong and can distort our perspective on the genome we wish to infer \cite{sudmant2015integrated}.
 Contemprary aligners operate on the principle of matching each sequence read to the linear reference, and differences between the read and the reference induced by both error and variation will tend to reduce the success of mapping.
 As I will demonstrate later in this work, reference bias is most severe for larger variants.
-However the bias towards the reference is relevant even for SNPs, a fact which adds great complexity to experimental contexts sensitive to slight changes in allele observation count, such as allele specific expression (ASE) quantification from RNA sequencing \cite{stevenson2013sources}, or in the context of short and high error reads as are common in the sequencing of ancient DNA \cite{zhou2017antcaller}.
+However the bias towards the reference is relevant even for SNPs, a fact which adds great complexity to experimental contexts that are sensitive to slight changes in allele observation count, such as allele specific expression (ASE) quantification from RNA sequencing \cite{stevenson2013sources}, or in the context of short and high error reads as are common in the sequencing of ancient DNA \cite{zhou2017antcaller}.
 
 Advances in sequencing technology can reduce reference bias in some contexts where long reads can be obtained.
-For instance, a long read aligned against the reference will much more easily represent a structural variation than a short read.
-As costs have continued to reduce in both second and third generation sequencing, it seems likely that such reads will continue to cost more per base than shorter reads from second generation technologies, and there will be a cost advantage to resequencing with short reads for the near future.
-Nonetheless, reference bias remains even in a future in which all sequencing was completed with long, low-error reads.
+For instance, a long read aligned against the reference will much more easily represent a structural variant than a short read.
+However, costs have continued to reduce in second generation sequencing even as long read sequencing has become established, so it seems likely that there will continue to be a cost advantage to resequencing with short reads for the near future.
+Nonetheless, reference bias remains even in a future in which all sequencing is completed with long, low-error reads.
 As long as the reference is used as a basis space for analysis, it will be impossible to develop coherent representations of all sequences in a given cohort.
-In effect, we cannot observe variation in sequences which are not in the reference unless we bring these sequences into communication with each other, and even the problem of establishing if large variants represent the same entity becomes complicated \cite{chaisson2018multi}.
+In effect, we cannot observe variation in sequences which are not in the reference unless we bring these sequences into communication with each other, and even the problem of establishing whether large variants represent the same entity becomes complicated \cite{chaisson2018multi}.
 We can use improvements in assembly methods, such as the linked DBG \cite{turner2018integrating}, to build space-efficient joint assemblies of populations of genomes.
 But these approaches will not allow out of core analysis processes like those implemented in resequencing pipelines, and are unlikely to improve in efficiency by the many orders of magnitude required to consider applying them directly to sequencing from hundreds of thousands or millions of genomes.
 
@@ -414,7 +414,7 @@ But these approaches will not allow out of core analysis processes like those im
 
 The reference is a prior guide to resequencging.
 If it could represent variation within itself, then we could build a resequencing model that avoided the traditional problem of reference bias.
-Following the completion of the 1000GP, participants have sought to use the population reference established by that project as an input to genome inference processes.
+Following the completion of the 1000GP, researchers have sought to use the population reference established by that project as an input to genome inference processes.
 Rather than establishing a single linear reference genome, these methods base their analysis on a representation that contains some or all of the known variation in the species of interest.
 In these approaches, the reference system becomes a \emph{pangenome}\footnote{``pan-'' from Greek $\pi\alpha\nu-$, meaning ``all'' or ``every''}, or data space representing all the genomes and their interrelationships.
 The term was first used to describe the sequence information obtained from DNA and RNA for a cancer sample \cite{sigaux2000cancer}, but later became an important concept in microbiology as results from bacterial genome sequencing indicated extensive diversity between bacterial genomes \cite{tettelin2005genome,medini2005microbial}.
@@ -424,15 +424,15 @@ The term ``pangenome'' is by no means microbiology-specific, and has also seen u
 With reducing sequencing costs, the levels of diversity in eukaryotic genomes could be more easily appreciated, and in the 2010s evidence has rapidly accumulated that significant levels of large-scale variation occur in the genomes of many species, humans \cite{li2010building,sudmant2010,sudmant2015integrated,chaisson2018multi}, arabidopsis \cite{alonso2016arabidopsis}, brewer's yeast \cite{yue2017contrasting}, and the fruit fly \cite{chakraborty2018hidden}.
 %  Computational Pan-Genomics Consortium formed at a workshop held from 8 to 12 June 2015, at the Lorentz Center in Leiden
 
-The increasing evidence that the non-reference genomic variation mattered even in a human or medical context motivated extensive discussion within a sub-project of the Global Alliance for Genomics and Health (GA4GH)\footnote{The GA4GH is an international consortium of researchers and genomics professionals chartered with the development of new genomics data formats and interchange systems \url{https://www.ga4gh.org/}.}.
+The increasing evidence that the non-reference genomic variation matters even in a human or medical context motivated extensive discussion within a sub-project of the Global Alliance for Genomics and Health (GA4GH)\footnote{The GA4GH is an international consortium of researchers and genomics professionals chartered with the development of new genomics data formats and interchange systems \url{https://www.ga4gh.org/}.}.
 At the beginning of my studies I participated in the GA4GH's reference variation task team (RefVar), which was led by Benedict Paten, David Haussler, and Richard Durbin.
 The group had regular meetings where its members entertained proposals for new variation-aware genomic data models and discussed results obtained with software implementations of them.
 By chance, a meeting of the GA4GH in June, 2015 in Leiden overlapped a conference held at the Lorentz Centre on ``Future Perspectives in Computational Pan-Genomics''\footnote{\url{https://www.lorentzcenter.nl/lc/web/2015/698/info.php3?wsid=698\&venue=Oort}}, whose participants were discussing ways to apply the concept of pangenomics to many problems in genomics.
 Can Alkan, who had been invited to both meetings, brought members of the GA4GH's RefVar group to the concurrent workshop, where both groups presented on their work and ultimately joined efforts.
 This exchange motivated members of the RefVar group to consider many alternative resequencing and genome modeling problems.
 For the consortium, our software {\tt vg} became a template for the pangenomic resequencing concept that it would present in the paper resulting from the meeting \cite{computational2016computational} (figure \ref{fig:pangenomic_processes}).
-And in turn, the consortium imagined the missing pieces that would be required to fully enable a pangenomic reference system and allow common genome inference patterns using it.
-Much of the work I will present in the latter chapters of this thesis follows the design developed by this group.
+And in turn, the consortium imagined the missing pieces that would be required to fully enable a pangenomic reference system and support common genome inference patterns using it.
+Much of the work I will present in chapters 2 and 3 of this thesis follows the design developed by this group.
 
 \begin{figure}[htbp!]
   \centering
@@ -454,14 +454,14 @@ Much of the work I will present in the latter chapters of this thesis follows th
 
 \label{sec:on_pangenomic_models}
 
-Much of this work relates to a particular model for encoding a pangenome.
-Here, I will briefly describe alternative models and justify the use of a graphical one which I present, while the remainder of the chapter will provide background on more-closely related graphical approaches related to my work.
+My own work builds on a particular model for encoding a pangenome.
+Here, I will briefly describe alternative models and justify the use of the graphical one that I present, while the remainder of the chapter will provide background on more-closely related graphical approaches more closely related to my work.
 
 Traditional techniques from microbial pangenomics have focused on cataloging the distribution of ORFs across bacterial species \cite{page2015roary}.
 In this sense the pangenome is not so much a sequence-based object, but a matrix encoding the presence or absence of genes across the species of a given clade.
 
 If we want to use pangenomic principles to resolve issues with resequencing, then we must take the concept of pangenome more literally, and build a representation that losslessly encodes genomes together with a focus on their sequence content.
-In this perspective, the classical pangenome becomes a derivative product that we can produce using analyses on our sequence-oriented pangenomic reference.
+In this perspective, the classical bacterial pangenome becomes a derivative product that we can produce using analyses on our sequence-oriented pangenomic reference.
 I will mostly focus on sequence-based pangenomic models.
 The main classes are described visually in figure \ref{fig:pangenomic_models}.
 
@@ -480,29 +480,27 @@ The main classes are described visually in figure \ref{fig:pangenomic_models}.
   \label{fig:pangenomic_models}.
 \end{figure}
 
-We could describe a sequence-aware pangenome with the whole genome assemblies of many species or individuals.
+The simplest possible sequence-aware pangenome is just a list of whole genome sequences of many species or individuals.
 In this unfolded pangenome all sequence homologies and evolutionary relationships are implicit (figure \ref{fig:pangenomic_models}A).
-This naturalistic design is the simplest possible for a sequence-aware pangenome.
-In principle the unfolded pangenome could resolve reference bias and allow simple augmentation of the pangenome with new data by adding new genome sequences, although this operation already exposes a weakness, which is that adding a new genome always adds all the sequence in that genome to our system.
-Because it does not model homologies between sequences, an unfolded pangenome cannot represent novel recombination between known sequences.
+In principle the unfolded pangenome could resolve reference bias, and allow simple augmentation with new data by adding new genome sequences, although this operation already exposes a weakness, which is that adding a new genome always adds all the sequence in that genome to our system.
+Because it does not model homologies between sequences, an unfolded pangenome cannot represent new sequences in terms of recombinants between known sequences.
 
 A MSA (figure \ref{fig:pangenomic_models}B) provides a matrix describing the relationships between the sequences as well as the sequences themselves.
 This is not without some additional complexity.
 We must introduce a concept of a gap character to pad the matrix.
 The MSA is a linear object, and cannot represent structural variation in a compact manner.
-It does provide us with a link between sequence and relationship for all the genomes we are considering.
 An MSA has an equivalent representation as a sequence DAG, as in figure \ref{fig:pangenomic_models}D.
 
 Assembly graphs, in particular DBGs (figure \ref{fig:pangenomic_models}C), provide a simple decomposition of collections of genomes.
 However, a strict DBG without any labeling loses the mapping back to the original genomes, and thus is a poor foundation for a reference system.
-Sequence graphs, as in figure \ref{fig:pangenomic_models}E, when annotated with the full set of input patsh, are a lossless representation of the input genomes.
-If they are also bidirectional like DBGs (not shown in figure \ref{fig:pangenomic_models}E) then they can represent copy number variations and inversions directly in their structure in their most compact form.
+Sequence graphs, as in figure \ref{fig:pangenomic_models}E, when annotated with the full set of input paths, provide a lossless representation of the input genomes.
+If they are also bidirectional like DBGs (not shown in figure \ref{fig:pangenomic_models}E) then they can represent copy number variations and inversions directly in their structure in a compact fashion.
 
 \subsection{The variation graph}
 \label{sec:the_variation_graph}
 
 The implication of these examples is that we need a data model for the reference that losslessly encodes sequence-level relationships between genomes, in effect representing a kind of all-versus-all alignment between the sequences in the pangenome.
-If the data model is to allow recombination between known sequences (a key contributor to genomic diversity) and linear copy number variation (which occurs readily in genomes), then it could naturally be represented as a regular language, and thus could be represented using a graphical model like a nondeterministic finite automaton.
+If the data model is to allow recombination between known sequences (a key contributor to genomic diversity) and tandem repeat copy number variation (which occurs readily in genomes), then it could naturally be represented as a regular language, and thus could be represented using a graphical model like a nondeterministic finite automaton (NFA).
 
 We can adjust the regular language model slightly so that it has properties similar to those of DNA.
 Traditionally, NFAs are represented graphically with states (in our case, pangenomic coordinates) as nodes connected by edges labeled by characters (e.g. DNA bases) in the alphabet of strings that the language recognizes.
@@ -520,20 +518,20 @@ Assembly and multiple sequence alignment methods have employed sequence graphs o
 
 The conceptual basis of the work I present here is the extension of the bidirectional DNA sequence graph with \emph{paths} that may be used to describe sequences as walks through the graph.
 In this way, the panel of reference genomes or sequences used to construct the graph may be formally related to the graph itself, and the relationships between them made evident in the structure of the graph.
-Existing knowledge expressed in terms of known sequences may thus be projected into the graphical pangenome model.
-Similarly, entities within the graph may be surjected out into the space of a given reference.
-These properties ensure the pangenome fully encompases existing reference technologies.
-In addition, maintaining the sequences in the space of the graph makes the graph lossless, and it fully represents the input sequences without additional information.
+Existing knowledge expressed with respect to known sequences may thus be projected into the graphical pangenome model.
+Similarly, entities within the graph may be ``surjected'' out into the space of a given reference.
+These properties ensure that the pangenome fully encompases existing reference technologies.
+In addition, maintaining the sequences in the space of the graph makes the graph lossless, in that it fully represents the input sequences without additional information.
 Perhaps most importantly, this feature resolves the exponential decay in mutual information which limits the applicability of Markovian models like the sequence graph to modeling natural sequences, which tend to exhibit power-law decay in mutual information \cite{lin2017critical}.
 I term this combination of a bidirectional sequence graph and paths a \emph{variation graph}, as it represents sequences and the variation between them.
-In the subsequent chapter I will formalize the variation graph model and important auxiliary data structures that enable its modification and use in resequencing.
+In chapter 2 I will formalize the variation graph model and important auxiliary data structures that enable its modification and use in resequencing.
 
 \section{Graphical techniques in sequence analysis}
 
 The coherent representation of collections of sequences supported by sequence graphs has formed the core data model of many genome analysis patterns.
-The alignment algorithms described in \ref{sec:sequence_alignment} can be modeled as a matrix, but similarly may be described as graphs, although the nodes in these graphs correspond to matrix cells and thus alignment states rather than characters or sequences.
-Similarly, hidden markov models (HMMs) have a long history of use in bioinformatics \cite{durbin1998biological}, and the Markovian properties of these models bear similarities to the bidirectional sequence graph model.
-Here, I will focus on those methods that are most-closely related to variation graphs, and upon which my work draws most heavily.
+I introduced the alignment algorithms described in \ref{sec:sequence_alignment} in terms of a matrix, but they may also be described as algorithms on graphs, although the nodes in these graphs correspond to matrix cells and thus alignment states rather than characters or sequences.
+Similarly, hidden Markov models (HMMs) have a long history of use in bioinformatics \cite{durbin1998biological}, and the Markovian properties of these models bear similarities to the bidirectional sequence graph model.
+Here, I will focus on those methods that are most closely related to variation graphs, and upon which my work draws most heavily.
 These include techniques for generating and encoding multiple sequence alignments, genome assembly graphs, and the related gene model graphs used in RNA sequence analysis.
 The variant representation developed during the 1000GP, reified in VCF, encodes a directed acyclic sequence graph.
 My work draws on the idea that a population of genomes can be represented in such a structure, which is enabled by the semantics of VCF.
@@ -543,11 +541,11 @@ The {\tt vg} data model can be understood as an extension of this sequence DAG s
 \label{sec:MSA}
 
 Optimal multiple sequence alignment generalizes the problem of pairwise sequence alignment from a 2D matrix to an $N$-dimensional lattice, where the optimal mutual alignment of $N$ sequences of average length $L$ can be determined in $O(L^{N})$ time \cite{carrillo1988multiple}.
-In the early days of sequencing, when only a handful of sequences might be considered in one analysis, such costs could nearly be accepted, even if they limited the number of sequences in the MSA to only 3.
+In the early days of sequencing, when only a handful of sequences might be considered in one analysis, such costs were almost acceptable, even if they limited the number of sequences in the MSA to only 3.
 By pruning regions of the lattice in which no optimal alignments could occur, the authors of the tool ``MSA'' increased the number of sequences which could be optimally aligned into an MSA to 6 \cite{lipman1989tool}.
-As the number of sequences to be compared increased, algorithms allowing MSAs to be generated from less than 10 sequences
-In contrast to the optimal alignment approach, CLUSTAL builds a guide tree based on alignment of all sequences to all others in $O(NL^{2})$ time, and then generates the MSA progressively using the guide tree in $O(L^{2}\log N)$ time, resulting in a polynomial time algorithm capable of generating MSAs for hundreds of sequences contemporary computers \cite{higgins1988clustal}.
-In this form of progressive alignment, the MSA is extended with alignments between closest pairs of sequences within the guide tree, then extended to produce the mutually gapped MSA matrix linking the two branches that have been aligned together with the pair of most-closely related sequences.
+As the number of sequences to be compared increased, algorithms allowing MSAs to be generated from up to 10 sequences
+In contrast to the optimal alignment approach, progressive multiple sequence aligners such as CLUSTAL build a guide tree based on alignment of all sequences to all others in $O(NL^{2})$ time, and then generate the MSA progressively using the guide tree in $O(L^{2}\log N)$ time, resulting in polynomial time algorithms capable of generating MSAs for hundreds of sequences using contemporary computers \cite{higgins1988clustal}.
+In this form of progressive alignment, the MSA is built recursively from the leaves to the root of the guide tree, with each step combining pair of MSAs representing different branches of the tree using the best pairwise alignment between the sequences they contain.
 The progressive approach is fundamentally greedy, and susceptible to errors that propagate along the guide tree, although such errors can be mitigated by structuring the alignment using biological priors \cite{thompson1994clustal}.
 Further improvements to the quality of the MSA can be gained by guiding the progressive alignment with a limited kind of global information about the relationships of all the sequences, as in T-COFFEE \cite{notredame2000t}, but this popular method exhibits a worst-case computational complexity of $O(N^{3}L^{2})$.
 
@@ -555,34 +553,34 @@ The progressive alignment in MSA algorithms like CLUSTAL may be represented grap
 In the late 1980s Eugene Myers and Webb Miller developed algorithms to optimally align sequences to sequence graphs, and sequence graphs (in the form of regular expressions) to each other in $O(MN)$ time (where $M$ and $N$ are the sequence length of the graphs) \cite{myers1989approximate,wu1995subquadratic}.
 These algorithms provide a solution to the generic problem of aligning bidirectional sequence graphs to each other using DP, but to my knowledge were never implemented in publicly available software for sequence analysis\footnote{Myers was unable to provide related source code on request.}.
 A recent implementation of sequence to graph alignment \cite{rautiainen2018bit} transforms a sequence graph into an alignable graph which is acyclic and partially ordered, on which a bit-parallel alignment algorithm is applied to achieve high performance when aligning long noisy reads to arbitrary sequence graphs.
-This work is related to that of Wu, Manber and Myers \cite{wu1995subquadratic}, wherein the authors provide an algorithm for the alignment of pairs of regular expressions using a transformation of the regexes to NFAs and bit-parallel resolution the final alignment.
-Later in this I will present and evaluate an equivalent approach to aligning reads to arbitrary bidirectional sequence graphs through transformation of the graph into an ordered graph against which parallelized sequence to graph alignment may be run.
+This work is related to that of Wu, Manber and Myers \cite{wu1995subquadratic}, wherein the authors provide an algorithm for the alignment of pairs of regular expressions using a transformation of the regexes to NFAs and bit-parallel resolution of the final alignment.
+Later in chapter 2 I will present and evaluate an equivalent approach to align reads to arbitrary bidirectional sequence graphs through transformation of the graph into an ordered graph against which parallelized sequence to graph alignment may be run.
 
 Christopher Lee later provided the first implementation of an MSA algorithm based on sequence to graph alignment \cite{lee2002POA}.
 Apparently unaware of the work of Myers and Miller, he instead built on the concept of ``consistent equivalence relations'' that DIALIGN used to represent the MSA \cite{morgenstern1996multiple}.
 Where DIALIGN's authors appear to consider the MSA in the space of the $N$-dimensional lattice, Lee encoded the equivalence relations in a partial order graph, which is often referred to as a directed acyclic graph (DAG).
 In this DAG, characters label nodes and edges label observed linkages between them in sequences embedded in the MSA.
 Lee demonstrated that a straightforward generalization of the recurrence relations used in Smith-Waterman-Gotoh would allow the alignment of sequences of length $N$ to the DAG of sequence length $M$ in approximately $O(MN)$ time.
-To determine the score at a given position, POA considers matches and deletions relative to all the characters that immediately preceed the current one in the partial order.
+To determine the score at a given position, partial order alignment (POA) considers matches and deletions relative to all the characters that immediately preceed the current one in the partial order.
 Later, POA was extended to allow the direct alignment of pairs of MSAs using partial order to partial order alignment (PO-POA) \cite{grasso2004combining}.
 Like CLUSTAL-W and other progressive methods, POA would build its MSA using pairwise alignments across a guide tree.
 But, rather than aligning the last pair of sequences, PO-POA alignment would be used to align the MSAs from each branch together.
 The improved information made available to the alignment inference resolved problems with order dependence, yielding a method with nearly the same performance\footnote{Here goodness is quantified using a sum of pairs score (SPS) metric representing the goodness of the alignment.} as T-COFFEE across a range of problems.
-Similar sets of sequences will tend to compress when aligned with POA, and PO-POA complexity is in the order of the length of the pairs of aligned sequences.
-It follows that as the MSA algorithm proceeds over a neighbor joining guide tree, the overall complexity of the resulting MSA algorithm has a lower bound of approximately $O(N\log{N})$.
-Grasso and Lee confirm this bound is followed in practice by demonstrating that their implementation scales subquadratically in the size of its input.
+Similar sets of sequences will tend to compress when aligned with POA, and PO-POA complexity is in the order of the product of the lengths of the aligned DAGs and product of their edge counts.
+It follows that as the MSA algorithm proceeds over a neighbor joining guide tree, the overall complexity of the resulting MSA algorithm has a lower bound of approximately $O(L^{2}N\log{N})$.
+Grasso and Lee confirm this bound is followed in practice by demonstrating that their implementation scales subquadratically in the number of input sequences.
 
-Given that it could be three orders of magnitude faster that other popular when computing the MSA of only a few hundred sequences, it may be surprising that POA did not become the dominant MSA method.
+Given that it could be three orders of magnitude faster than other popular approaches when computing the MSA of only a few hundred sequences, it may be surprising that POA did not become the dominant MSA method.
 A cubic algorithm, T-COFFEE, which Grasso and Lee showed to slightly but consistently outperform POA, has been cited ten times more.
 As I discussed earlier in the opening of this chapter, the importance of obtaining the optimal alignment of a limited number of expensive sequences meant that even three orders of magnitude faster performance offered by POA did not matter for most users.
 The low rate of use meant that the same alignment concept was ``rediscovered'' by participants in the 1000GP who became interested in the problem of aligning sequences to the sequence DAGs represented in VCF\footnote{Sequence to graph DAG alignment was one of Deniz Kural's main PhD projects. I worked with him in Gabor Marth's laboratory, and we applied his implementation of POA to generate accurate genotype likelihoods for indels and complex variation in the final phase of the 1000GP. We learned of the prior work later, when a reviewer pointed out that the algorithm was roughly equivalent to POA.}.
 
 Lee's POA model provides a simple pattern for thinking about pangenomes, and its simplicity (it contains only node/characters and edges) in some ways differentiates it from others that have seen popularity in assembly, which I will describe in detail in the following section.
 Its structure maps into finite automata, regular expressions, HMMs, and other models while erasing the conceptual barrier between sequences and sequence graphs.
-However, this mapping is incomplete as POA MSAs are linear objects which cannot capture many natural kinds of genetic variation such as repeats rearrangements without duplication of the rearranged sequences.
+However, this mapping is incomplete as POA MSAs are linear objects which cannot capture many natural kinds of genetic variation such as repeats or rearrangements without duplication of the rearranged sequences.
 
 Several methods have extended the MSA concept to unordered graphs, including the Threaded Blockset Aligner (TBA) \cite{blanchette2004aligning}, which models the MSA graph as a set of partially ordered MSAs connected in an unordered manner at a larger scale, and the A-Bruijn Aligner (ABA), which models the MSA using a de Bruijn graph and represents a solution to problems in MSA using techniques that later become important to short read assembly \cite{raphael2004novel}.
-Variation graphs generalize these models without the limitations of order (as in POA and TBA) or $k$-mer based graph structures (as in ABA), but in generality they lose the very features that help the performance of these methods, a fact that has likely inhibited their development until the present.
+Variation graphs generalize these models without the limitations of order (as in POA and TBA) or $k$-mer based graph structures (as in ABA), but in generality they lose features that help the performance of these methods, a fact that has likely inhibited their development until the present.
 
 \subsection{Assembly graphs}
 
@@ -590,11 +588,11 @@ The problem of assembling large genomes is not dissimilar from that of multiple 
 MSA algorithms tend to be applied to the alignment of a single coherent genomic locus.
 Their input sequences might be expected to have approximately the same length, and maintain synteny between them.
 Whole genome shotgun assembly methods cannot rely on such assumptions, as reads of a large genome rarely overlap, and both strands of DNA will be sampled, yielding ambiguity about relative orientation.
-Thus the graphical models used in assembly must maintain bidirectional structure, and are most-generally bidirectional sequence graphs as previously defined.
+Thus the graphical models used in assembly must maintain bidirectional structure.
 OLC assembly methods in some sense began their evolution with the set of compromises that MSA algorithms ended theirs, with thrifty heuristic methods being used to establish the overlaps between all pairs of sequence reads from a given genome, and the resulting overlap set subsequently represented in a graphical fashion.
 As we saw, early assemblers would enforce a linear ordering, in a way forcing a form of overlap DAG.
 This approach makes sense only for very short genomes with minimal repeats and reads long enough to be uniquely localized in the reference genome.
-As overlap alignments can occur between any pair of sequence strands, assembly methods must implement a full biridectional graph model if they hope to represent ambiguity in the overlap set, and so by default must be more generic than linear MSA models.
+As overlap alignments can occur between any pair of sequence strands, assembly methods must implement a full bidirectional graph model if they hope to represent ambiguity in the overlap set, and so by default must be more generic than linear MSA models.
 Equivalently, whole genome alignment graphs must encode all kinds of structural variation in order to fully express evolutionary relationships.
 Earlier in section \ref{sec:genome_assembly} I gave a historical outline of the development of these methods in response to changes in available sequencing technology.
 In this section I provide deeper technical detail to describe these methods and illustrate their relationship to the variation graph model.
@@ -602,8 +600,8 @@ In this section I provide deeper technical detail to describe these methods and 
 \subsubsection{Overlap graphs}
 \label{sec:overlap_graphs}
 
-One interesting feature of overlap graphs graphs is that their efficient construction tends to yield a representation in which sequences attached to nodes partially overlap with the nodes in their neighborhood in the graph.
-This follows from the fact that most of the graph induction algorithms require a kind of pairwise alignmen, and so retain relationships between different sequences in a pairwise rather than compacted N-wise form.
+One interesting feature of overlap graphs is that their efficient construction tends to yield a representation in which sequences attached to nodes partially overlap with the nodes in their neighborhood in the graph\footnote{In many formulations, sequences in the overlap graph are attached to edges rather than nodes. This model is equivalent to one in which sequences are attached to nodes, which I will use here for consistency. This same convention is used in {\tt vg}'s data model and in the GFA interchange format that it reads and writes.}.
+This follows from the fact that most of the graph induction algorithms require a kind of pairwise alignment, and so retain relationships between different sequences in a pairwise rather than compacted N-wise form.
 In the case of DBGs and the FM-index based string graph assemblers, an iterative overlap-wise sequence comparison where unitigs (unbranching sequences in the graph) are inferred from the compressed sequence graph yields a similar overlap graph output.
 It is thus standard to think of the edges in an assembly graph as representing the overlaps between the nodes they connect and their length.
 This feature represents an incomplete compression of the information in the graph, which typically is not important to the use of these methods as they are judged by the quality of the set of contiguous sequences (contigs) they output rather than their raw assembly graph.
@@ -619,7 +617,7 @@ In general this overlap representation makes it difficult to work directly with 
 
 Overlap assembly graphs, like MSA graphs, may be converted into variation graphs and used as a basis for resequencing.
 It is also possible to directly induce a bidirectional string graph from a set of pairwise alignments, sidestepping this issue.
-Later, I will present my design and implementation of an external memory algorithm that transforms the alignments into a graph through a transitive closure of the equivalencies implied by the alignments.
+In section \ref{sec:from_pairwise_alignments} I will present my design and implementation of an external memory algorithm that transforms sets of pairwise alignments into a graph through a transitive closure of the equivalencies implied by the alignments.
 This directly transforms the alignments which might be used by an assembler into a blunt-ended assembly graph.
 
 \subsubsection{De Bruijn graphs}
@@ -631,18 +629,22 @@ For instance, $k$-mer lengths may be chosen so that they fit inside a machine wo
 
 In second generation sequencing, where per base error rates are low and read lengths are short, little is lost by breaking the read set into $k$-mers of 1/3 or 1/5th the length of the original reads, and so this model has been readily applied to cheap short read sequence data since its introduction to genomics in the mid 1990s and early 2000s \cite{idury1995new,pevzner2001eulerian}.
 The method was first implemented for short reads in Velvet \cite{zerbino2008velvet}, which used a straightforward but memory-costly hash table strategy to encode the DBG.
-Zam Iqbal then extended this model to support various kinds of pangenomic analysis based on DBGs by labeling each $k$-mer with ``colors'' representing read counts from different samples \cite{iqbal2012novo}.
-The same colored DBG model has seen application in RNA-seq transcript quantification, where colors are used to identify known transcripts from a reference set mapped into the DBG and psuedoalignments to the DBG are crossed with colors to provide sets of transcripts supported by each read \cite{bray2016near}.
-Later versions of the Cortex assembler have extended it to fully encode long reads or contigs relative to the DBG \cite{turner2018integrating}.
+Zamin Iqbal then extended this model to support various kinds of pangenomic analysis based on DBGs by labeling each $k$-mer with ``colors'' representing read counts from different samples \cite{iqbal2012novo}.
+The same colored DBG model has seen application in RNA-seq transcript quantification, where colors are used to identify known transcripts from a reference set mapped into the DBG and pseudoalignments to the DBG are crossed with colors to provide sets of transcripts supported by each read \cite{bray2016near}.
+Later versions of the Cortex assembler have extended this to fully encode long reads or contigs relative to the DBG \cite{turner2018integrating}.
 Similarly, improvements in performance have been yielded by linking read pairs in the DBG model \cite{bankevich2012spades}.
 
-It was be shown that the DBG is encoded in a FM-index of a read set \cite{bowe2012succinct}, and this \emph{succinct} DBG model underpins some of the most-scalable assembly methods currently available \cite{li2015megahit}, while efficient encodings using other models such as bloom filter schemes has enabled the most memory-efficient DBG methods \cite{chikhi2012space}.
-In the compacted DBG generalization non-furcating regions of the graph might be merged into a single node with label length $>k$.
+The simplicity of the DBG has made it possible to develop very memory-efficient data models to support its use in assembly.
+The DBG can be effectively encoded in the FM-index of a read set \cite{bowe2012succinct}, and this \emph{succinct} DBG model underpins some of the most-scalable assembly methods currently available \cite{li2015megahit}.
+Other techniques, such as bloom filter encodings and minimizer partitioning schemes are also used to provide time and space efficiency to DBG methods \cite{chikhi2012space, chikhi2016compacting}.
+
+In the compacted DBG generalization non-furcating regions of the graph are merged into a single node with label length $>k$.
 The compacted DBG is now often a typical output for DBG assemblers \cite{chikhi2016compacting,minkin2016twopaco}.
-The compressed nodes and their overlaps with their neighbors form a set of unitigs that are often taken as the most-raw kind of assembly output, to which popular assemblers like SPAdes and Minia3 apply a kind of graph simplification finishing step to infer longer contigs from them \cite{bankevich2012spades}.
+The compressed nodes and their overlaps with their neighbors comprise a set of unitigs that, together with their neighbor relations, are often taken as the most-raw kind of assembly output, to which popular assemblers like SPAdes and Minia3 apply a kind of graph simplification finishing step to infer longer contigs \cite{bankevich2012spades}.
+
 As with any overlap graph, DBGs must be made into blunt-ended sequence graphs before they can be utilized by variation graph based algorithms.
-The basic method for doing so is simpler than for generic overlap graphs, as overlaps in DBGs must be exact string matches.
-In my work I have found this an important feature, as in addition to being generated by efficient methods, it ensures that DBGs are universally reusable as variation graphs.
+The basic method for doing so is simpler than for generic overlap graphs, as overlaps in DBGs are exact string matches.
+In my work I have found this an important feature, as in addition to being generated by efficient methods, it ensures that DBGs are universally convertible into variation graphs.
 
 \subsubsection{String graphs}
 \label{sec:string_graphs}
@@ -652,18 +654,19 @@ Myers argued that the then-current paradigm of assembly, which attempted to gene
 He then posited what he called the ``chunk graph'' (later, string graph) as a graphical model of the overlap set, showing that the correct consensus sequence would by definition exist as a walk through the graph.
 In this graph nodes represent sequence reads and directed edges represented observed approximate overlaps between them.
 Repeat units in the genome that are longer than $\overline{L}$ will collapse in this graph, provided errors in the reads can be corrected so such repeats become fully identical.
-The string graph compresses its input.
+The string graph thus compresses its input.
 The edge complexity of the graph may be reduced from the number of read overlaps by a factor proportional to the average coverage by removing transitive edges.
-Nodes may similarly be compressed where runs of nodes then have in and out degree one.
+In the same way as with de Bruijn graphs, runs of nodes with in and out degree equal to one in the transitive reduction graph may then be compressed into unitigs.
+The result of this process is the string graph.
 
 This idea was introduced at the same time as de Bruijn graphs, with Myers' work on string graphs and the first description of a genome assembly algorithm using de Bruijn graphs both presented at the same workshop in 1995 \cite{myers1995toward,idury1995new}.
 Myers' 2005 formalization of the string graph \cite{myers2005} responds particularly to de Bruijn models, and he points out that generating $k$-mers from the reads as the basis for the graph means that the resulting graph is not ``read coherent'', or in other words does not accurately represent the information in the read set.
 Subsequent work has shown that the boundaries between the two models are not so well-defined.
-As a specialization of the overlap string graph, the de Bruijn model may be applied to certain complex subsets of a string graph, creating a kind of hybrid assembler where the high-performance $k$-mer model is used to resolve the most-difficult components, while the generic overlap model is used elsewhere \cite{huang2016integration}.
-Similarly, the high cost of error and graphical complexity suffered by the string graph encourage the use of $k$-mer based read correction models, which could be seen as filtering the reads using a DBG model.
+As a specialization of the overlap string graph, the de Bruijn model may be applied to certain complex subsets of a string graph, creating a kind of hybrid assembler where the $k$-mer model is used to resolve the most-difficult components, while the generic overlap model is used elsewhere \cite{huang2016integration}.
+Similarly, the high cost of error and graphical complexity suffered by the string graph encourage the use of $k$-mer based read correction methods, which could be seen as filtering the reads using a DBG model.
 
 String graphs are often described as ``lossless'' representations of the input read set and the alignments between them \cite{li2012exploring}.
-Neither in practice nor in Myers' formalizations nor its implementations like the Celera assembler (CABOG) \cite{miller2008aggressive} is this strictly true.
+Neither in practice, in Myers' formalizations, nor its implementations like the Celera assembler (CABOG) \cite{miller2008aggressive} is this strictly true.
 In the model, overlaps are assumed to be $\epsilon-$correctable at approximately the raw sequencing error rate.
 In practice, this filtering can result in a loss of input sequence from the string graph.
 String graphs can consume very large amounts of memory when fully constructed without filtering from a read set \cite{li2016minimap,koren2017canu}.
@@ -677,15 +680,15 @@ Recently, alternative probabilistic seed filtering based on the \emph{tf-idf} (t
 String graph methods related to the Celera assembler (FALCON, Canu) implement error correction steps before overlap inference, as this reduces memory requirements during assembly.
 Similarly, popular methods that generate assemblies via a string graph induction step from Illumina sequencing data (SGA, fermi, and fermikit) also apply an error correction processes before the generation of the string graph \cite{simpson2012efficient,simpson2014exploring,li2015fermikit}, which helps to reduce the graph complexity and improve contiguity of the resulting assembly.
 
-Allelic diversity in a string graph should result in a bubble, or graph component connected to the rest of the graph via single sources and sinks.
-Like de Bruijn graphs, string graphs have been used to support variant calling, for instance finding heterozygotes in the assembly graph of a single individual \cite{li2012exploring}.
+Allelic diversity in either a string graph or de Bruijn graph will, if sufficiently separated from repeats and other allelic variants, result in a bubble, or graph component connected to the rest of the graph via single sources and sinks.
+Like de Bruijn graphs, string graphs have been used to support variant calling, for instance finding heterozygotes represented as bubbles in the assembly graph \cite{li2012exploring}.
 While the purest form of variant calling in the graph would produce a data format relative to the graph, all methods that I am aware of will establish variants relative to a reference sequence threaded through the graph.
 The general problem of filtering paths from bubbles is equivalent to the consensus generation step, but thus far no method has specifically merged the two concepts of variant calling and graph based assembly finishing together, although assembly projects may use a variant caller to establish variants in their contigs \cite{jain2018nanopore,schmid2018pushing}.
 
-With minimap and miniasm Heng Li demonstrated that it is also possible to build an approximate overlap graph using an efficient all versus all alignment \cite{li2016minimap}.
-The application of an efficient, if greedy contig generation step results in an assembly in which the error rate in the contigs approaches that of the input reads.
-Instead of correcting before generating overlaps, the consensus step can be used to improve the base level accuracy of the assembly after it has been generated, but tools like racon that implement this approach do not do so on the assembly graph \cite{vaser2017fast}, and rather work on the level of individual contigs.
-Li \cite{li2016minimap} also proposed to mix and match different assembly components (for instance using DALIGNER \cite{myers2014efficient} miniasm for the overlap step, or swapping quiver for nanopolish for consensus generation) by establishing a set of standard data types including the pairwise alignment format (PAF) and the graphical fragment assembly (GFA).
+With minimap and miniasm Heng Li took the approach of efficient all versus all alignment and overlap graph generation without prior read correction \cite{li2016minimap}.
+With no multiple alignment step, this results in an assembly in which the error rate in the contigs approaches that of the input reads.
+Tools like racon \cite{vaser2017fast} have been developed to subsequently generate a consensus, but these work on the level of individual contigs rather than an assembly graph.
+Li \cite{li2016minimap} also proposed to mix and match different assembly components (for instance using DALIGNER \cite{myers2014efficient} rather than minimap for the overlap step, or swapping quiver for nanopolish for consensus generation) by establishing a set of standard data types including the pairwise alignment format (PAF) and the graphical fragment assembly (GFA).
 These encode the results of the overlap step and a graphical model for the assembly at any state of its progression.
 GFA is used in a wide number of methods, but as of August 2018 it appears that very few tools both read and write GFA, and much of the assembly improvement steps are implemented on contigs (encoded in FASTQ or FASTA format) rather than the string graph itself.
 
@@ -694,9 +697,9 @@ GFA is used in a wide number of methods, but as of August 2018 it appears that v
 \subsubsection{RNA sequencing graphs}
 \label{sec:rna_seq}
 
-While traditional appoaches to transcript analysis consider each particular gene transcript on a case-by-case basis, a more compact representation would be as a \emph{splicing graph} in which all alternative splicing junctions are represented by edges connecting bases of the underlying reference sequence \cite{heber2002splicing,lee2002POA}.
-Transcript assembly has attracted many of the same approaches as those used in genome inference, but their application must be adjusted to account for variation in read coverage of several orders of magnitude caused by large differences in expression of different genes \cite{martin2011next}, and in some cases they may not be suitable as the ideal of a transcript assembly is not a linear sequence assembly, but a splicing graph that models the combinatorial relationships in transcriptome \cite{grabherr2011trinity}.
-Standard assemblers, parameterized or modified to better-support RNA transcript assembly have been applied to the problem since their development for genome assembly \cite{birol2009novo,robertson2010novo,grabherr2011full,schulz2012oases}.
+While traditional appoaches to transcript analysis consider each particular gene transcript separately, a more compact representation would be as a \emph{splicing graph} in which all alternative splicing junctions are represented by edges connecting bases of the underlying reference sequence \cite{heber2002splicing,lee2002POA}.
+Transcript assembly has attracted many of the same approaches as those used in genome inference, but their application must be adjusted to account for variation in read coverage of several orders of magnitude caused by large differences in expression of different genes \cite{martin2011next}, and in some cases they may not be suitable as the ideal of a transcript assembly is not a linear sequence assembly, but a splicing graph that models the combinatorial relationships in the transcriptome \cite{grabherr2011trinity}.
+Standard assemblers, parameterized or modified to better support RNA transcript assembly have been applied to the problem since their development for genome assembly \cite{birol2009novo,robertson2010novo,grabherr2011full,schulz2012oases}.
 But methods which are specifically design to meet the needs of the problem have arguably been more popular \cite{grabherr2011trinity,chang2015bridger}.
 
 The advantages of aligning directly against a splicing graph have been relatively unexplored until recently.
@@ -708,9 +711,9 @@ Still in active development, Daewan Kim's HISAT2 implements a method for aligmen
 \label{sec:genome_alignment_graphs}
 The graphs used in genome alignment algorithms are the nearest in content and structure to variation graphs, and it can be shown than a number them of nearly identical representational capacities \cite{kehr2014genome}.
 The \emph{alignment graph}, first introduced in the context of multiple sequence alignment \cite{kececioglu1993maximum,rausch2008segment}, represents a collection of alignments in graphical form, allowing an induction of a sequence graph (or MSA when such a graph is partially ordered).
-Vertices in the alignment graph $G_a = (V, E)$ represent characters in the input sequences $S$, and edges represent cases where characters in the input sequences have been aligned, with a relation $\prec$ on $V$ such that $v \prec w$ holds if and only if $v$ precedes $w$ in $S$.
-As it contains both the sequences an their alignment, this graph may then be contracted to produce a compressed graph that represents both.
-We can then contract $G_a$ into the base graph $G_s$, adding a node for each connected component in $G_a$ and labeling it with the corresponding character, while adding an edge for each pair of nodes $X$ and $Y$ which represent pair of input characters in $G_a$ that satisfy $\prec$.
+Vertices in the alignment graph $G_a = (V, E)$ represent characters in the input sequences $S$, and edges represent cases where characters in the input sequences have been aligned, with an additional relation $\prec$ on $V$ such that $v \prec w$ holds if and only if $v$ precedes $w$ in $S$.
+As it contains both the sequences and their alignments, this graph may then be contracted to produce a compressed graph that represents both.
+We can then contract $G_a$ into the base graph $G_s$, adding a node for each connected component in $G_a$ and labeling it with the corresponding character, while adding an edge for each pair of nodes $X$ and $Y$ which represent a pair of input characters in $G_a$ that satisfy $\prec$.
 Each column of an MSA matrix would correspond to a particular connected component in $G_a$.
 Similarly, if we rendered the resulting graph as a bidirectional sequence graph then each connected component in $G_a$ would yield a single base in the sequence space of the graph.
 It is worth noting that the equivalence is not exact unless we generalize the alignment graph to represent alignments in both the forward or reverse complement orientations, which has been explored in the A-Bruijn model \cite{raphael2004novel}.
@@ -731,22 +734,21 @@ Variation graphs respond to this issue by making the path embedding of the seque
 \subsection{Pangenomic alignment}
 
 As the review presented in this chapter shows, the idea of using pangenomic models as a reference basis is not new, and interest in the topic extends back to the earliest explorations of the multiple sequence alignment problem.
-But it was only in the last decade, as surveys of populations of genomes routinely produced pangenomic models in the form of phased variant calls \cite{liti2009population,weigel20091001,cao2011whole,1000Gphase1,1000g2015} that the idea of scaling up alignment to enable the alignment of short reads to populations of genomes gained traction.
+But it was only in the last decade, as surveys of populations of genomes routinely produced sets of phased variant calls \cite{liti2009population,weigel20091001,cao2011whole,1000Gphase1,1000g2015} that the idea of scaling up alignment to enable the alignment of short reads to populations of genomes gained traction.
 Numerous methods use some form of pangenome aware alignment.
 These have helped me to understand the problem and guided my work to a significant degree.
 Each has important limitations relative to more generic problems.
 For instance, some operate on sequence DAGs, and cannot easily be generalized to work on arbitrary bidirectional sequence graphs.
 Others implement a limited form of alignment that prevents their use for every kind of sequencing technology.
-Most problematically, virtually all use the pangenome only as an additional source of information during alignment, and do not allow resequencing to be based on the pangenomic reference that they implicitly use during alignment.
+Virtually all use the pangenome only as an additional source of information during alignment, and do not use the pangenome as the reference system itself.
 
 \subsubsection{Alignment to unfolded pangenomic references}
 
-As discussed in section \ref{sec:on_pangenomic_models}, the simplest pangenomic model matches physical reality (in which genomes are physical copies of each other) and stores each genome sequence individually, without recording the implied homologies or relationships between the sequences.
+As discussed in section \ref{sec:on_pangenomic_models}, the simplest pangenomic model stores each genome sequence individually, without recording the implied homologies or relationships between the sequences.
 Such a model grows linearly with the number of genomes included, and in this way it does not benefit from compression provided by sequence relationships and shared evolutionary histories.
 In principle, annotations can be provided linearly for each genome and interlinked at a higher level of semantic relationships, as is done in major genome annotation catalogs like Ensembl genomes \cite{kersey2015ensembl}.
 This expedient approach provides almost all of the benefits of the kind of pangenomic models I present in this thesis, excepting that it cannot represent base-level sequence relationships within the semantic model without significant effort.
-
-Whenever a researcher uses BLAST or BLAT to search a large database of sequence they are engaging in a kind of ``unfolded'' pangenomic alignment.
+Whenever a researcher uses BLAST or BLAT to search a large database of sequence they are interrogating this ``unfolded'' pangenome.
 This pattern could be thought of as the default in bioinformatics.
 Historically, a huge amount of analysis is based on it.
 
@@ -754,7 +756,7 @@ In terms of methods specifically designed to align large sequence read sets agai
 Of note, the CHIC aligner provides an initial implementation of such an idea \cite{valenzuela2017chic}
 This method is based on an indexing strategy which uses Lempel-Ziv (LZ77) \cite{ziv1977universal} parsing of the pangenome to generate a ``kernel'' sequence encoding the pangenome that may be indexed and used by a standard short read aligner (the authors use BOWTIE2).
 In effect, the seeding step is aware of alternative sequences embedded in the pangenome, but the local alignment step is ultimately run against the linear reference.
-As this approach aligns directly to the unfolded pangenome it is not be able to correctly estimate MQ, as the reference does not encode any model about the relationships between the genomes that comprise the pangenome and consequently we cannot determine when multiple alignments match to homologs in different genomes or paralagous copies dispersed across one or many genomes.
+As this approach aligns directly to the unfolded pangenome it is not be able to correctly estimate mapping quality, as the reference does not encode any model about the relationships between the genomes that comprise the pangenome and consequently we cannot determine when multiple alignments match to homologs in different genomes or paralagous copies dispersed across one or many genomes.
 The linear growth in data scale can add algorithmic complexity when sequencing many genomes, and so it is understandable that experiments using the CHIC aligner only used up to 100 genomes at a time.
 By relying on the linear reference to report alignments, CHIC gains the ability to hook into standard resequencing workflows, but it loses the ability to describe variation in sequence that is not contained in the reference.
 
@@ -772,7 +774,7 @@ Each tile represents a known haplotype in a given window of the pangenome.
 As new genomes are added to the structure, new tiles only need to be added when new variants occur to generate a new sequence in the given window.
 In this way the model achieves both compression and short range phasing information that allows for the faithful representation of complex small variation.
 
-A tiled pangenome graph was employed by the first practical pangenomic aligner, GenomeMapper \cite{schneeberger2009simultaneous}, was produced in support of the \emph{Arabidopsis thaliana} 1001 Genomes Project (AT1001GP).
+A tiled pangenome graph was employed by the first practical pangenomic aligner, GenomeMapper \cite{schneeberger2009simultaneous}, which was produced in support of the \emph{Arabidopsis thaliana} 1001 Genomes Project (AT1001GP).
 As arabidopsis frequently selfs, individuals may have extremely low levels of genomic diversity, which in turn simplifies the process of genome inference \cite{cao2011whole}.
 At the same time, several percent of the reference genome is missing or highly divergent in various accessions (strains) \cite{clark2007common,zeller2008detecting}.
 These conditions break standard short-read aligners developed for mapping Illumina sequencing data against low-diversity reference genomes.
@@ -790,7 +792,7 @@ Aligning external sequence to an assembly graph is equivalent to extending the a
 
 The deBruijn Graph Aligner (deBGA) inverts this approach by enabling the alignment of short reads to a reference DBG (RdBG) \cite{liu2016debga}.
 The RdBG is a compacted DBG in which one or more reference genomes have been embedded, and the authors of deBGA enable alignment against it through a $k$-mer index that is used to drive a kind of MEM-based seed and extend alignment.
-The alignment process itself attempts to link patterns of $k$-mer hits in unitigs in the graph into larger alignments, finally producing a local alignment by applying SWG to the read and the particular reference genome region to which it aligns.
+The alignment process itself attempts to link patterns of $k$-mer hits in unitigs in the graph into larger alignments, finally producing a local alignment by applying Smith-Waterman-Gotoh to the read and the particular reference genome region to which it aligns.
 While deBGA uses a DBG to structure alignment, it can output a BAM file against the linear reference genome for use in variant calling or other analyses.
 The authors claim that deBGA is fast and, thanks to its use of a DBG-based index, robust to alignment problems introduced by repeats.
 However it is not clear how the method develops mapping qualities, and due to its inability to represent evolutionary homology or equivalence between regions of genomes, this would appear to be is a significant limitation of the reference data structure they have chosen.
@@ -801,7 +803,7 @@ They do not specifically demonstrate its operation on generic DBGs, instead comp
 
 \subsubsection{Genotyping using a sequence DAG}
 \label{sec:seq_dag_vcf}
-Variant calls in the VCF format, when combined with the reference genome to which they refer, form a sequence DAG that encodes all the genomes from which the calls were derived as well as novel recombinations between them.
+Variant calls in the VCF format, when combined with the reference genome to which they refer, can be viewed as forming a sequence DAG that encodes all the genomes from which the calls were derived as well as novel recombinations between them.
 As this feature of variant calls was appreciated, it has led to the development of several methods based on mapping reads globally using standard methods and realigning them locally to a variation-aware reference.
 This can be shown to reduce reference bias, but it can only do so in a localized sense as this form of graph resequencing cannot change the global placement of reads.
 
@@ -810,7 +812,7 @@ However, their significance was appreciated by 1000GP subprojects which examined
 The best-performing methods for generating SNP genotype likelihoods (GLs), which would be used to generate phased haplotypes from the low-coverage genomes in the study, were only able to model biallelic SNPs \cite{snptools}.
 It was decided to use specialized methods for all allele classes, and while the method used in the previous phase of the project was used for biallelic SNPs, a small study group formed to examine how to include indels and other complex variation such as multinucleotide polymorphisms (MNPs) in the project's final release.
 
-While participating in that effort, Deniz Kural and I extended (as glia\footnote{\url{https://github.com/ekg/glia}}) a POA algorithm he had developed so that it would realign poorly-aligned reads (such as those with softclips, many mismatches, gaps, or unaligned fragments anchored by their pair mates) to a sequence DAG created from the candidate alleles in the region.
+While participating in that effort, Deniz Kural and I extended (as glia\footnote{\url{https://github.com/ekg/glia}}) a POA algorithm he had developed so that it would realign poorly-mapped reads (such as those with softclips, many mismatches, gaps, or unaligned fragments anchored by their pair mates) to a sequence DAG created from the candidate alleles in the region.
 By projecting the alignment back into the reference space, we were able to generate a BAM output from glia.
 I implemented improvements to freebayes that allowed it to genotype alleles represented by observations in these alignments, as well as contamination estimates that were essential to high-quality GLs in low-coverage data.
 This pipeline outperformed alternatives, and was ultimately used to generate GLs for all non-SNP variation in the project.
@@ -822,12 +824,12 @@ The final set of alleles were fed back through the glia, freebayes, and MVNcall 
 
 Hannes Eggertson's GraphTyper \cite{eggertsson2017graphtyper} implements a remarkably similar workflow to that used to generate genotype likelihoods for the 1000GP indels.
 In the GraphTyper pipeline, Illumina reads are aligned against the reference genome using a standard short read aligner.
-Those alignments with soft clips and apparent differences from the reference are matched to a sequence DAG (``pangenome reference graph'') built from the reference and VCF in a window nearby the read's candidate mapping location.
+Those alignments with soft clips and apparent differences from the reference are matched to a sequence DAG (``pangenome reference graph'') built from the reference and VCF in a window around the read's candidate mapping location.
 Rather than a sensitive DP-based POA-like alignment against the graph, GraphTyper matches short $k$-mers between the read and the sequence DAG using a $k$-mer index of the reference structure and 1bp-overlapping $k$-mers from the read.
 The results are not transformed into an alignment \emph{per se} but into a list of variant traversals supported by each read.
 This transformation provides sufficient information to genotype the variants in the graph, the results of which are then produced in VCF format for standard downstream consumption.
 The pipeline may update its reference system so that it includes both known variation from other studies and new variation discovered during analysis, but in practice this graph extension appears to be as simple as a union of alleles from known and novel VCFs.
-Here as in other contemporary graph-related resequencing, the graph reference system is used internally to improve algorithm performance, but results are projected into the linear reference and the graph has no other representation than VCF.
+Here, as in other contemporary graph-related resequencing, the graph reference system is used internally to improve algorithm performance, but results are projected into the linear reference and the graph has no other representation than VCF.
 This prevents the representation of ``nested'' variation or non-SNP or indel SVs.
 GraphTyper's efficient and accurate performance on exceptionally large resequencging problems supports the authors' design decisions and firmly asserts the utility of the graph realignment approach.
 
@@ -844,7 +846,7 @@ This approach makes sense if alignment aganist the pangenome is extremely costly
 
 Population reference graphs (PRGs) \cite{dilthey2015improved} are POA-like graphs in which sequences aligned by MSA are collapsed in the case of identity above a given $k$-mer size, which embeds some information about local phasing into the POA.
 First assembled from long sequences, the PRG is then augmented with local variation information, with SNPs and indels added to all paths at appropriate positions.
-The resulting structure is similar to POA in that it forms a generative model of genomes, including recombination.
+The resulting structure is similar to POA in that it is based on a DAG that forms a generative model of genomes, including recombination.
 Dilthey and colleauges develop a genome inference model based on the comparison of the PRG to a DBG built from reads from a given individual.
 By comparison between these two structures, weighted by $k$-mer frequency in the genome and PRG, they provide sufficient annotations to the PRG to run an HMM on the graph to infer the most-likely underlying pair of haplotypes.
 Short read alignment can be used to map the full reads back to these haplotypes in an \emph{ad hoc} manner in order to find new small variation against them and fully resolve their sequences.
@@ -860,36 +862,35 @@ Generalizations of the FM-index to support indexing of sequence DAGs, or equival
 As allowed by their indexing strategy, such methods enable pattern matching against pangenome graphs in much the same way as done by FM-index based short read aligners.
 
 The Generalized Compressed Suffix Array (GCSA) \cite{siren2011indexing,siren2014indexing} enables pattern matching against arbitrary finite regular languages.
-It indexes a reverse deterministic automaton that encodes the sequence DAG implied by a VCF and reference genome.
+It can be used to index a reverse deterministic automaton that encodes the sequence DAG implied by a VCF and reference genome.
 To enable path queries, it builds the BWT based on the sorted prefixes of the language encoded in the automaton, adding support structures that allow pattern search as in an FM-index.
 Additional support bitvectors akin to those used to encode and index labeled trees \cite{ferragina2005structuring} allow the traversal of the sequence DAG during query matching.
 Sir\'{e}n constructs the index using the prefix-doubling method used to construct sorted suffixes, wherein prefixes and their starts and ends may be extended from length $L$ to $2L$ through a sort and join operation.
-Because it indexes a memoryless automaton and the construction requires the enumeration of all the prefixes of the automaton, GCSA suffers from exponential costs in index generation in the order of the number possible recombinations represented in the sequence DAG.
+Because it indexes a memoryless automaton and the construction requires the enumeration of all the prefixes of the automaton, GCSA suffers from exponential costs in index generation in the order of the number of possible recombinations represented in the sequence DAG.
 Careful curation of the pangenome allows the construction of the GCSA for the entire human genome in the memory of an available computer (1TB), provided the construction is broken into chromosomes and local complexity in the VCF sequence DAG is reduced.
 Experiments with the GCSA used backtracking search as in BWA \cite{li2009fast} to directly align reads with differences from the indexed graph, but the method was not developed into a full-featured short read alignment method.
 
 Alternative schemes make no fundamental change to the CSA/FM-index model, but rather embed information about particular kinds of pangenome graphs into the sequence that is indexed.
 BWBBLE \cite{huang2013short} encodes SNPs by extending the reference alphabet to include ambiguity codes which match more than one DNA base.
-All indel alleles with $l$ bases of the reference sequence on each side into an extended reference sequence set, where $l$ is the length of the longest sequence that may be queried.
-A map projecting the positions in the extended reference into the original reference sequence space allows queries aligned against the extended reference set to be projected back into the original.
-This approach is simple and allows for a linear-time indexing of the pangenome reference.
-At query time BWBBLE is no more performant than GCSA, and takes around 100 fold as long to align reads than the backtracking BWA method \cite{huang2013short}.
-The authors attribute this lower performance to a number of factors related to the additional complexity caused by the larger sequence alphabet, which multiplies the time required for backwards search, and reference space, which increases the chance of multiple mapping during alignment.
+To encode indels, it extends the reference by adding a sequence for each indel which includes the non-reference allele and the surrounding $2l$ bases of the reference.
+The resulting index can support queries of up to length $l$.
+A mapping between the positions in the extended reference and the original reference sequence space is used to project alignments from the extended reference to the base reference.
+This approach is simple and allows for a linear-time indexing of the pangenome, but the added complexity of the extended reference and larger alphabet required to represent SNPs yield a query time that is 100-fold slower than the backtracking BWA method \cite{huang2013short}.
 
-In gramtools \cite{maciuca2016natural}, a full encoding of a particular kind of sequence DAG is enabled by use of large-alphabet CSA based on wavelet trees \cite{grossi2003high}.\footnote{Wavelet trees reduce the representation of a large alphabet of size $\Sigma$ into a tree of $O(\log{\Sigma})$ bitvectors that recursively partition the sequence space into each character.
+In gramtools \cite{maciuca2016natural}, a full encoding of a particular kind of sequence DAG is enabled by use of a large-alphabet CSA based on wavelet trees \cite{grossi2003high}.\footnote{Wavelet trees reduce the representation of a large alphabet of size $\Sigma$ into a tree of $O(\log{\Sigma})$ bitvectors that recursively partition the sequence space into each character.
 These bitvectors may be compressed efficiently while maintaining accessibility, and by augmenting them with rank and select supports the entire structure can be used to determine the number of each class of character before a given position, or select the $i$th of a given character.
 This allows for the implementation of $LF$ mapping on a CSA represented in a large alphabet.}
 Maciuca and colleauges develop an encoding for a sequence DAG in which bubbles may not have any deeper internal structure, and any traversal across a bubble is required to contain sequence.
 Effectively, bubbles contain a number of alternate alleles that may be represented as linear sequences.
 Conveniently, this kind of graph is exactly that which is used in VCF.
-To build its vBWT index of the graph, gramtools linearizes the alt-bubble sequence DAG into an integer vector (the ``linear PRG'') in which DNA bases are represented normally while the structure of each bubble is encoded as a series of alternate alleles delimted by $i$, flanked by delimiters $i-1$.
+To build its vBWT index of the graph, gramtools linearizes the alt-bubble sequence DAG into an integer vector (the ``linear PRG'') in which DNA bases are represented normally while the structure of each bubble is encoded as a series of alternate alleles delimited by $i$, flanked by delimiters $i-1$.
 Each bubble gets a unique even integer $i$, requiring the use of alphabets in the millions to encode the integer vector.
 A CSA-based FM-index is then built from the linear PRG.
 To search through alternate alleles, the backwards search algorithm is augmented to consider the alternate alleles when it encounters an odd integer greater than 4 (the alphabet space allocated to DNA sequence encoding).
 The use of a unique pair of integers for each bubble ensures that the alleles in the bubble will be sorted together in the CSA of the linear PRG.
 The encoded bubble structure allows backward search to furcate across the alternative alleles, and a new suffix array interval is added to a heap which are simultaneously searched.
 As this scheme results in an exponential increase in the number of suffix array intervals, the input set of alleles must be structured in a way to reduce the number of bubbles, so in experiments the authors set an allele frequency threshold and merge alleles within a certain window size into larger haplotype alleles\footnote{The algorithm used to convert the input VCF into the haplotype bubble form appears to be the same as in vcfgeno2haplo in vcflib: \url{https://github.com/vcflib/vcflib/blob/master/src/vcfgeno2haplo.cpp}.}.
-It is perhaps due to this exponential factor that gramtools' query performance is hundreds of times slower than BWBBLE and around 1000 times slower than bwa mem on a linear version of the same reference \cite{maciuca2016natural}.
+It is perhaps due to this exponential factor that gramtools' query performance is many times slower than BWBBLE and around 1000 times slower than bwa mem on a linear version of the same reference \cite{maciuca2016natural}.
 In effect, the method trades exponentially expensive construction for exponentially expensive queries.
 Gramtools does not implement any local alignment model, and to demonstrate the method's conceptual utility, it is used (as in PRG) to infer the most-likely linear genome for a given query set, to which the read set is realigned using a standard aligner.
 
@@ -902,7 +903,7 @@ HISAT2 is an important point of reference as a scalable and mature implementatio
 Like other methods, HISAT2 writes BAM alignments resulting from the expression of alignments to the sequence graph against the linear reference genome.
 Unlike the other pangenomic aligners, HISAT2 can achieve very high throughput, and is competitive with standard short read aligners even when considering splicing and small variants.
 
-Sir\"{e}n's later work on this topic produced GCSA2 \cite{siren2017indexing}.
+Sir\'{e}n's more recent work on this topic has produced GCSA2 \cite{siren2017indexing}.
 This model removes the determinization step, allowing the index to be built on top of any kind of graph.
 Instead of indexing the automaton, GCSA2 indexes a DBG generated from a bidirectional sequence graph in which nodes retain both $k$-mer identity and their starting and ending postional context in the graph.
 This positional information is used to drive the prefix doubling step required to build the BWT of the DBG.
@@ -911,10 +912,10 @@ By including the longest common prefix array (LCP), GCSA2 can encode the implied
 
 \subsubsection{Mapping to $k$-mer based pangenome indexes}
 
-A $k$-mer index is trivial to build from a graph, one just needs to be able to enumerate or sample $k$-long walks through the graph and link the graph position to the $k$-mer in an efficient hash table or other kind of index.
+A $k$-mer index is trivial to build from a graph: one just needs to be able to enumerate or sample $k$-long walks through the graph and link the graph position to the $k$-mer in an efficient hash table or other kind of index.
 The size of the index can be reduced by sampling $k$-mers in some pattern.
 This indexing strategy was used in an early version of {\tt vg}, which supported experiments by the GA4GH-DWG \cite{novak2017genome} oriented at understanding the utility of various graphs constructed for a set of loci where GRCh38 encoded alternative sequences.
-This same indexing technique is used by a proprietary method developed by members of the GA4GH-DWG from Seven Bridges Genomics (SBG) \cite{rakocevic2018fast}.
+This same indexing technique is used by a proprietary method developed by members of the GA4GH-DWG from Seven Bridges Genomics Inc. (SBG) \cite{rakocevic2018fast}.
 The SBG graph aligner's (SBGA) input is constructed from higher-frequency variants found in various public variation resources.
 It masks out regions of high allelic complexity and builds a reference-rooted sequence DAG to serve as an alignment target.
 To enable graph mapping it builds an index of spaced $k$-mers by walking short segments of the graph.
@@ -925,7 +926,7 @@ Curiously, to align the reads to the graph locally SBG's aligner does not use a 
 If the variant density and read error rates are kept low, this scheme allows SBGA to achieve extremely high read throughput, equivalent to that of bwa mem without any apparent loss in accuracy on the linear reference.
 In this context the authors demonstrate their method can significantly (although slightly) improve sensitivity to known indels.
 However, the method is not adaptable to other graph types or sequencing contexts, with reports from users indicating high increases in runtime with increased read error and variant density.
-Due to the fact that SBGA is closed source and proprietary it will not be possible to appreciate exactly why.
+Due to the fact that SBGA is closed source and proprietary it is not possible to appreciate exactly why.
 
 \section{Overview and objectives}
 
