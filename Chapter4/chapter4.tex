@@ -17,7 +17,7 @@ It is rare that we have reason to consider a single genome in isolation.
 We apply alignment algorithms to infer the sequence-level relationship between genomes.
 As data scales have increased, we have required incomplete methods to determine these relationships among many individuals.
 Contemporary resequencing techniques focus on the placement of new sequencing information into a reference system which is typically linear and representative of only a single copy of each genomic locus.
-A pangenomic reference system could allow us to represent multiple versions of each locus, but until recently such techinques have been difficult to apply at scales commonly reached in current analyses.
+A pangenomic reference system could allow us to represent multiple versions of each locus, but until recently such techniques have been difficult to apply at scales commonly reached in current analyses.
 
 I propose the use of variation graphs as reference systems in resequencing.
 These path-labeled, bidirectional DNA sequence graphs allow us to represent collections of genomes in a single, coherent structure which fully capture the sequences and variation between them.
@@ -33,18 +33,18 @@ I developed new techniques for visualizing variation graphs that will help to bu
 I have linked the variation graph data model to RDF, which in principle will allow for high-level inference based on the genomes and their annotations embedded in a variation graph. 
 I provide a method to losslessly induce variation graphs from a set of sequences and pairwise alignments between them using external memory.
 I built systems that allow for the efficient summarization of alignment data sets against variation graph, and worked on methods to support genotyping known and novel variation in graphs.
-Throughout my work I have supported and worked with a growing group of researchers focused on these techniques, collaborating in the development of grap sequence and haplotype indexing techinques, the evaluation of diverse variation graph models, and the study of ancient DNA using variation graphs.
+Throughout my work I have supported and worked with a growing group of researchers focused on these techniques, collaborating in the development of graph sequence and haplotype indexing techniques, the evaluation of diverse variation graph models, and the study of ancient DNA using variation graphs.
 
 Graphical models are often regarded with apprehension by members of the bioinformatics community who are accustomed to working with linear reference genomes.
 I show that arbitrary variation graphs may be consistently linearized for visualization and analysis.
 Variation graphs built from related sequences tend to have a manifold linear property despite the frequent presence of large scale variation.
-I show that this holds for graphs constructed from a variety of sources using alignment or assembly techinques.
+I show that this holds for graphs constructed from a variety of sources using alignment or assembly techniques.
 They retain relatively linear structures locally, and as such can be used for efficient alignment.
 The linearization of the graph suggests a projection of sequencing information in the graph into a basis vector space defined by the graph itself.
 Such an approach may greatly simplify genomic analyses by removing the complicated variant calling step.
 If the variation we want to consider is already embedded in the graph, we do not need to genotype novel variation or engage in filtering our results.
 As variation is now embedded in the graph, we can perhaps avoid variant calling altogether where downstream it is possible to work with a normalized coverage model across this graph basis vector.
-Doing so practically will require the development of techinques that can scale genetic analyses to the large matrix representations implied by such maps.
+Doing so practically will require the development of techniques that can scale genetic analyses to the large matrix representations implied by such maps.
 
 It is not clear how to build the best graph for a given analysis context.
 The results I present show that the addition of variation to a graph does not necessarily improve alignment performance in all contexts.
