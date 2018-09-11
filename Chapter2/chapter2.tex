@@ -34,7 +34,7 @@ In this chapter, I will articulate the variation graph model and lay out the alg
 First I will provide formulations for the graph, its paths, edits, alignments, and genotypes define within it.
 Then I will present algorithms that induce the variation graph from different data models introduced in the previous chapter.
 To clarify the system's practical basis, I explain the serialization techniques used to exchange variation data via computer files or network connections.
-A main focus of my work has been the efficient alignment of sequences to variation graphs.
+A focus of my work has been the efficient alignment of sequences to variation graphs.
 This requires index structures to enable queries of the graph's topology, sequence, and path spaces, and algorithms to derive optimal alignments to the graph.
 Understanding variation graphs requires techniques to visualize them, and I will present various approaches, each with particular advantages and drawbacks.
 Working with variation graph references necessitates a number of mutating operations to the graph, including augmentation, sorting, pruning, and bubble simplification.
@@ -121,7 +121,7 @@ As path to path relationships can provide descriptions of allelic diversity, the
 To represent the exact genotype of a particular sample with ploidy $\nu$ at a given locus $\iota$ we can simply collect the multiset of alleles $\pi_\iota = ( p_1 \ldots p_\nu)$.
 We could alternatively build a probabilistic model $\varpi$ of an unphased genotype by using a set of $\mu$ alleles $\{ p_1 \ldots p_\mu\}$.
 To do so we associate likelihoods $\gamma_\xi$ for each possible genotype $\pi_{\iota_\xi}$ that could be sampled from the alleles such that $\varpi = \gamma_1 \ldots \gamma_{\mu! \over{\nu!(\mu-\nu)!} }$.
-In practice we develop our $\gamma_\xi$ out of quality information from the reads and a sampling model related to $\nu$ \cite{garrison2012haplotype,li2011statistical}.
+In practice, we develop our $\gamma_\xi$ out of quality information from the reads and a sampling model related to $\nu$ \cite{garrison2012haplotype,li2011statistical}.
 Given this definition of a genomic locus it is clear that existing genotyping models can be applied to drive genotyping using read sets aligned to the graph, and the output of the genotyper is defined fully in the space of the graph.
 
 \subsection{Extending the graph}
@@ -159,7 +159,7 @@ First, take the empty graph $G_\emptyset$, to which any alignment will yield a p
 We then edit the graph to add the sequence using $edit(G_\emptyset, p_1) \to G_1$.
 For each subsequent $q_j$ we obtain the next graph by finding the alignment $align(q_j, G_j) \to p_j$ and editing the graph with it to yield the next graph $edit(G_j, p_j) \to G_{j+1}$ until $j = k$ and we obtain our final graph.
 This simple approach is attractive as it allows the variation graphs to be built from whole sequences using only techniques that are native to the variation graph model itself.
-However it is obviously order dependent, with potentially different results if the set of input sequences are presented in different orders.
+However, it is obviously order dependent, with potentially different results if the set of input sequences are presented in different orders.
 I later describe an implementation of this multiple sequence to graph alignment process, {\tt vg msga}.
 
 \subsection{Using variants in VCF format}
@@ -192,7 +192,7 @@ To prevent $O(H|G_\textbf{vcf}|)$ growth of the required memory to store these, 
 The VCF format does not impose a semantic requirement that the encoded haplotypes are valid, which introduces some complexity in the implementation of this method.
 We must break haplotypes where they are found to be invalid in order to record them in VG format.
 For instance, a phased VCF may report more than $\nu$ (expected ploidy) alleles for a given individual, such as when deletion and SNP variants overlap.
-We expect these haplotype paths to be fully embedded in the graph an they can be represented as a walk through nodes.
+We expect these haplotype paths to be fully embedded in the graph, so they can be represented as a walk through nodes.
 Although haplotype sets are equivalent to large collections of paths, we term them \emph{threads} to indicate that they have a simpler representation than arbitrary paths.
 
 \subsection{From gene models} % (GFF)
@@ -212,8 +212,8 @@ The alphabet used to encode the matrix is the same as the input sequences with t
 To build a variation graph $G_\textbf{msa}$ from the MSA we proceed from $i = 1 \to \upsilon$ through $X$.
 For each unique character ${\cal B}$ in the query alphabet $\Sigma \setminus \Box$ found in each row $i$, we create a node $n_{\cal B}$ in $G_\textbf{msa}$ and append a mapping to each path $p_i$ for which $n_{\cal B} \in q_i$.
 We construct the edges of $G_\textbf{msa}$ by taking the distinct pairs of consecutive node traversals found in the path set $P_\textbf{msa}$ produced after the generation of the nodes in MSA traversal.
-We add an edge $e_{ij}$ for each pair of nodes $(n_i, n_j)$ consecutively traversed in $P_\textbf{msa}$.
-We can optionally compact series of nodes (which represent single characters) where no bifurcations occur, which is similar to the operation used to compact DBGs to yield unitig graphs.
+Adding add an edge $e_{ij}$ for each pair of nodes $(n_i, n_j)$ consecutively traversed in $P_\textbf{msa}$ ensures that our sequences are present as walks through the graph.
+We can optionally compact series of nodes (which represent single characters) where no bifurcations occur to obtain a compacted graph.
 
 Instead of a matrix, we can formulate the multiple alignment as an alignment graph (described in section \ref{sec:genome_alignment_graphs}).
 By making this graph bidirectional, and thus equivalent in information content with the Enredo graph, we can see that it is equivalent to a variation graph.
@@ -230,7 +230,7 @@ The process of transferring sequence information from the edges to the nodes, wh
 
 We start by assigning the sequence of each node to be the sequence of the corresponding read.
 If we shorten the sequence of a node to reduce an overlap between a pair of nodes, it will render other overlaps on the same nodes incorrect.
-Thus it is essential that the bluntification algorithm work by the reduction of sets of overlaps on edges which are transitively closed by connection to the same ends of each node, $net(e_{ij}) \to \forall e_{i*} \in G \cup \forall e_{*j} \in G$, considering both strands of the graph when doing so.
+Thus, it is essential that the bluntification algorithm work by the reduction of sets of overlaps on edges which are transitively closed by connection to the same ends of each node, $net(e_{ij}) \to \forall e_{i*} \in G \cup \forall e_{*j} \in G$, considering both strands of the graph when doing so.
 For each net we apply a function $pinch(net(e_{ij})) \to G_{\textbf{pinch}_{ij}}$, which reduces the overlaps between the nodes in the net into a blunt-edged variation graph.
 We then link $G_{\textbf{pinch}_{ij}}$ back into the rest of the graph by connecting with the inbound links to each node involved in the net.
 We may thus rewrite the input overlap graph as a variation graph.
@@ -256,14 +256,14 @@ To distinguish the approach from string graphs, which imply error correction, I 
 
 % seqwish algoritm
 {\tt seqwish}\footnote{\url{https://github.com/ekg/seqwish}} implements a lossless conversion from pairwise alignments between sequences to a variation graph encoding the sequences and their alignments.
-As input we typically take all-versus-all alignments, but the exact structure of the alignment set may be defined in an application specific way.
+As input, we typically take all-versus-all alignments, but the exact structure of the alignment set may be defined in an application specific way.
 This algorithm uses a series of disk-backed sorts and passes over the alignment and sequence inputs to allow the graph to be constructed from very large inputs that are commonly encountered when working with large numbers of noisy input sequences. 
 Memory usage during construction and traversal is limited by the use of sorted disk-backed arrays and succinct rank/select dictionaries to record a queryable version of the graph.
 
 %## squish graph induction algorithm
 
-As input we have $Q$, which is a concatenation of the sequences from which we will build the graph.
-We build an compressed suffix array (CSA) mapping sequence names to offsets in $Q$, and also the inverse using a rank/select dictionary on a bitvector marking the starts of sequences in $Q$.
+As input, we have $Q$, which is a concatenation of the sequences from which we will build the graph.
+We build a compressed suffix array (CSA) mapping sequence names to offsets in $Q$, and also the inverse using a rank/select dictionary on a bitvector marking the starts of sequences in $Q$.
 This allows us to map between positions in the sequences of $Q$, which is the format in which alignment algorithms typically express alignments, and positions in $Q$ itself, which is the coordinate space we will use as a basis for the generation of our graph.
 We encode the set of input pairwise alignments between sequences in $Q$ as object $A$.
 Although these alignments tend to be represented using oriented interval pairs in $Q$, for simplicity and robustness to graph complexity, we describe $A$ as a set of pairs of bidirectional positions (sequence offsets and strands) $b \in Q$ , such that $A = \{ (b_{q}, b_{r}), \ldots \}$.
@@ -281,7 +281,7 @@ By sorting $N$ and $P$ by their first entries, we can build rank/select dictiona
 
 To fully induce the variation graph we need to establish the links between bases in $S$ that would be required for us to find any sequence in the input as a walk through the graph.
 We do so by rewriting $Q$ (in both the forward and reverse orientation) in terms of pairs of bases in $S$, then sorting the resulting pairs by their first element, which yields $L = [(b_{a}, b_{b}), \ldots ]$.
-These pairs record the links and their frequencies, which we can emit or filter (such as by frequency) as needed given particular applications.
+These pairs record the links and their frequencies, which we can emit or filter (such as by frequency) as needed in particular applications.
 In typical use we take the graph to be given by the unique elements of $L$.
 
 Our data model encodes the graph using single-base nodes, but often downstream use requires identifying nodes and thus we benefit from compressing the unitigs of the graph into single nodes, which reduces memory used by identifiers in analysis.
@@ -290,7 +290,7 @@ Maintaining a bitvector $S_{id}$ of length equal to $S$ we mark each base at whi
 By building a rank/select dictionary on $S_{id}$ we can assign a smaller set of node ids to the sequence space of the graph.
 
 Given the id space encoded by $S_{id}$ we can materialize the graph in a variety of interchange formats, or provide id-based interfaces to the indexed squish graph.
-To generate graphs in {\tt vg}  or GFA format, we want to decompose the graph into its nodes ($S$), edges ($L$) and paths ($P$).
+To generate graphs in {\tt vg} or GFA format, we want to decompose the graph into its nodes ($S$), edges ($L$) and paths ($P$).
 The nodes are given by $S$ and $S_{id}$, and similarly we project $L$ and $P$ through $S_{id}$ to obtain a compressed variation graph.
 
 
@@ -309,7 +309,6 @@ Due to the reliance on Protobuf, the only code needed to implement reading and w
 This greatly simplified the process of developing libraries for working with the variation graph data models.
 Although in practice the Protobuf data structures are slower to parse than handmade C-struct serializations like BAM, the amount of effort required to begin writing efficient and structured binary data formats was considerably less with the schema based approach.
 Most importantly, the schema based definition of the core data types in {\tt vg} helped new developers and researchers using the system quickly appreciate the basic concepts.
-It is not easy to measure, but I believe this has been a key cause of the success of the project and unifying many different research interests spread across many groups.
 
 Several data formats have been important to {\tt vg}.
 In {\tt .vg} format, the graph itself is serialized in non-overlapping chunks, where each edge $e_{ij}$ is stored once in the chunk $G_\textbf{chunk} : n_i \in G_\textbf{chunk}$.
@@ -319,7 +318,7 @@ A series of alignment objects is a sensible output of the mapping algorithm {\tt
 The file format produced by writing out a series of Protobuf alignment object serializations using the {\tt stream.hpp} library is called GAM, for Graphical Alignment/Map, in analogy to SAM (Sequence Alignment/Map format).
 
 These data models have various other equivalent serializations.
-As mentioned before, the GFA format can be used to directly encode VGs, although some of the default fields (particularly the overlap CIGAR on edges) are generally not useful and carry no information.
+As mentioned before, the GFA format can be used to directly encode VGs, although some default fields (particularly the overlap CIGAR on edges) are generally not useful and carry no information.
 However, GFA lacks a representation of an alignment with the same semantics as that described here.
 VGs that are partially ordered can be deconstructed into VCF files.
 As paths in variation graphs can be used to represent any kind of existing annotations, data providers who represent annotations across many genomes (such as ENSEMBL Genomes) can build their annotation sets which were previously spread across many genomes into a single one embedded in a VG.
@@ -338,7 +337,7 @@ When the genome is just a linear string, distances between locations may be comp
 However, this situation changes in graphs, where the computation of distances becomes greatly more complex and particular topologies of the graph must be recorded and reproduced.
 Here, I will show that graph distances may be estimated using an approximate sort and the paths embedded in the graph.
 However, to do so requires efficient indexes of the path structure in the graph.
-Furthermore, loading the entire graph into memory in a na\"{i}ve manner can be very expensive, and effort is required to minimize the runtime costs so as to enable resequencing even on lower-memory commodity compute servers.
+Furthermore, loading the entire graph into memory in a na\"{i}ve manner can be very expensive, and effort is required to minimize the runtime costs to enable resequencing even on lower-memory commodity compute servers.
 
 \subsection{Dynamic in-memory graph model}
 
@@ -356,8 +355,7 @@ This is particularly easy to implement for sequence DAG VGs, allowing for us to 
 %*2p 3h*
 While a dynamic in-memory model of a dense VG may be difficult to scale, it is comparatively easy to build succinct indexes of the graph that use only a small constant factor more memory than the uncompressed graph, yet provide support for a number of queries which are important for read mapping.
 
-When using a variation graph as a reference system, we are unlikely to need to modify it.
-As such we can compress it into a system that provides efficient access to important aspects of the graph.
+The graph is likely to remain static during many kinds of analysis, and so we have the opportunity to compress it into static data structures that provide efficient access to important aspects of the graph with low memory overhead.
 Specifically, we care about the node and edge structure of the graph and queries that allow us to extract and seek to positions in embedded paths.
 We would like to be able to query a part of the graph corresponding to a particular region of a chromosome in a reference path embedded in the graph.
 Similarly, if we find an exact match on the graph using GCSA2, we would like to load that region of the graph into memory for efficient local alignment.
@@ -370,14 +368,14 @@ Efficient traversal of the graph's topology via this structure is enabled by sto
 Paths provided to XG are used to induce alternative coordinate systems over the graph. 
 We store them using a collection of integer vectors and rank/select dictionaries that allow for efficient queries of the paths at or near a given graph position, as well as queries that give us the graph context near a given path position.
 
-An XG index of $G = (N, E, P)$ is comprised primarily of the backing graph vector $G_\textbf{iv} = g_1 \ldots g_{|N|}$, with each $g_i$ recording the edge context for node $n_i$ in the graph: $g_i = ( \eta_i, \Xi_i)$, a sequence vector $S_\textbf{iv}$ recording the sequences labels of the nodes in a bitcompressed form, and a path membership mapping $N_\textbf{path}$.
+An XG index of $G = (N, E, P)$ is composed primarily of the backing graph vector $G_\textbf{iv} = g_1 \ldots g_{|N|}$, with each $g_i$ recording the edge context for node $n_i$ in the graph: $g_i = ( \eta_i, \Xi_i)$, a sequence vector $S_\textbf{iv}$ recording the sequences labels of the nodes in a bitcompressed form, and a path membership mapping $N_\textbf{path}$.
 Each $p_i \in P$ is encoded with a set of structures that allow random access to the graph by path position, which is important for the use of paths as reference coordinate systems in the graph.
 
 To enable better compression, the node sequence space is recorded as a concatenation of node labels $S_\textbf{iv} = seq(n_i) \ldots seq(n_{|N|})$, in which each node has an offset in this sequence space defined by $seq_\textbf{offset}(n_i)$.
 In bitvector $S_\textbf{bv} : |S_\textbf{bv}| = |S_\textbf{iv}|$ we set 1 at each first character in a node label, and 0 otherwise: $S_\textbf{bv}[i] = 1 \iff \exists j : seq_\textbf{offset}(n_j) = i \lor 0$.
 Random access by node rank $i$ is provided by function $S_\textbf{bv}^{select_1}$, allowing us to find the sequence given a node rank in $G_\textbf{iv}$.
 
-Each $\eta_i$ records node contextual information, including an external id, its offset in the sequence vector, and the degree of of $n_i$ in terms of inbound and outbound nodes: $\eta_i = \left[ id(i), seq_\textbf{offset}(n_i), |seq(n_i)|, in(n_i), out(n_i) \right]$.
+Each $\eta_i$ records node contextual information, including an external id, its offset in the sequence vector, and the degree of $n_i$ in terms of inbound and outbound nodes: $\eta_i = \left[ id(i), seq_\textbf{offset}(n_i), |seq(n_i)|, in(n_i), out(n_i) \right]$.
 The use of an external identifier allows the index to work on subsets of larger graphs, and the information about node degree allows us to parse the edge records and efficiently traverse $G_\textbf{iv}$.
 
 The edge context $\Xi_i$ enumerates the set of edges that connect to this node in a structured way that allows for oriented traversals across the two strands of the graph.
@@ -391,7 +389,7 @@ Nodes with no path membership are marked in $N_\textbf{path}$ with a 0.
 
 Each path is represented in a set of succinct data structures that let us walk the path by starting at a particular node, query the path position of a given node, or find the node at a particular path position.
 We store the path $p_i = m_1 \ldots m_{|p_i|}$ by decomposing its mappings into the nodes (id and orientation) it traverses $p_{i_\textbf{ids}} = id(n_j) \forall n_j \in p_i$ and $p_{i_\textbf{dir}}$ such that $p_{i_\textbf{dir}}[j] = 0 \iff m_j = (n_j, \ldots) \lor 1 \iff m_j = (\overline{n_j}, \ldots)$.
-To allow rank and select queries on the node ids, we can store $p_{i_\textbf{ids}}$ in a wavelet tree, although in practice performance is greatly improved by also recording a minimum node id, so as to decrease the alphabet size of the wavelet tree, which has a large effect on WT size.
+To allow rank and select queries on the node ids, we can store $p_{i_\textbf{ids}}$ in a wavelet tree, although in practice performance is greatly improved by also recording a minimum node id, which decreases the alphabet size and thus memory and runtime costs of the wavelet tree.
 So that we may transform nodes to path positions, we use an integer vector to store a path position for each node traversal in the path, $p_{i_\textbf{pos}}$.
 To go from path offset to node, we build a bitvector that marks the beginning of each node traversal in the path in a manner similar to that used to mark the sequence beginning of each node in $S_\textbf{iv}$, such that $p_{i_\textbf{offset}}$ is a bitvector of length $\sum_{j=1}^{|p_i|} |seq(p_i[j])|$ where we have marked 1 for each node start in the path, $p_{i_\textbf{offset}}[j] = \left( 1 \iff \exists n_k \in p : j = \sum_{m=1}^{k} |seq(p_i[m])| \right) \lor 0$.
 By implementing $p_{i_\textbf{offset}}^{rank_1}$ we can find the node at a given path position $\mathcal{Q}$ by $p_{i_\textbf{offset}}^{rank_1}(\mathcal{Q}) \to j : \left( \sum_{k=1}^{j} |seq(p_i[k])| \leq \mathcal{Q} \land \sum_{k=1}^{j+1} |seq(p_i[k])| > \mathcal{Q} \right)$.
@@ -486,7 +484,7 @@ Efficient path indexes could be used for many operations in variant calling and 
 
 Haplotypes from the genomes of the same species are often shared exactly, which suggests that they may be very efficiently compressed.
 This property was first used to store large haplotype sets in the \emph{positional BWT} (PBWT) \cite{durbin2014efficient}.
-As input the PBWT assumes a set of haplotype strings $S_1 \ldots S_m$ of the same length which describe a set of haplotypes relative to a set of variable loci.
+As input, the PBWT assumes a set of haplotype strings $S_1 \ldots S_m$ of the same length which describe a set of haplotypes relative to a set of variable loci.
 $S_j[i]$ records the allele in haplotype $j$ found at locus $i$.
 We set $S_j[i] = 0$ when haplotype $j$ has the reference allele at locus $i$, and $S_j[i] > 0$ if it encodes one of possibly several alternate alleles.
 The PBWT can be understood as an FM-index of texts $T_1 \ldots T_m : T_j[i] = (i, S_j[i])$ \cite{gagie2017wheeler}.
@@ -501,15 +499,17 @@ To deal with the bidirectionality of paths in variation graphs, each haplotype m
 We demonstrated the expected sublinear scaling property for the gPBWT by building an index for chr22 with increasing numbers of samples.
 Constructing the gPBWT for large haplotype sets proved difficult when using our particular implementation.
 Progressive construction of the gPBWT in generic graphs was enabled by encoding the gPBWT into dynamic succinct data structures and adding a single haplotype thread and its inverse one at a time.
-The overheads associated with the dynamic succinct data structures and the linear time required resulted in an infeasible serial construction algorithm for large haplotype sets, and all experiments were carried out using a partially ordered construction algorithm that worked using a VCF file as input.
+While functional, we found this to be untenable for large graphs and haplotype sets.
+Overheads associated with the dynamic data structures it uses were significant, but the most-difficult issue was the serial nature of the progressive construction algorithm, which gives the algorithm $O(m)$ runtime.
+Consequently, all our large-scale experiments were carried out using a partially ordered construction algorithm that worked using a VCF file as input.
 
 The \emph{graph Burrows-Wheeler transform} (GBWT) \cite{siren2018haplotype} simplifies the data model used by gPBWT so that it is independent of {\tt vg} and can be applied to generic sequence graphs.
 The most generic conceptual model for the GBWT is as the FM-index of a transformation of the graph's paths $p_1\ldots p_m \cup \overline{p_1}\ldots \overline{p_m}$ into the text $T = \$( p1 = n_i\ldots n_j) \ldots \$ (\overline{p_m} = \overline{n_j} \ldots \overline{n_i}) $ wherein the paths are rewritten as a series of characters representing node traversals in a large alphabet and delimited by a marker $\$$.
-Unfortunately, this approach is technically challenging to implement due to the extremely large size of $T$ for moderately-sized haplotype sets embedded in variation graphs ($|T| \approx 10^{12}$ for the 1000GP  \cite{siren2018haplotype}).
+Unfortunately, this approach is challenging due to the extremely large size of $T$ for moderately-sized haplotype sets embedded in variation graphs ($|T| \approx 10^{12}$ for the 1000GP \cite{siren2018haplotype}).
 Serializing the path set during construction is not feasible, which suggests a dynamic version of the model is required.
-Also this approach it does not benefit from a number of features which distinguish paths in typical variation graphs.
+Also, this approach it does not benefit from a number of features which distinguish paths in typical variation graphs.
 Sequence graphs based on homology tend to be manifoldly partially ordered, as unique sequence will easily assemble into long coherently-ordered segments.
-If we sort the identifier space of these graphs, then most haplotypes passing through the graph will be comprised of increasing or decreasing sequences.
+If we sort the identifier space of these graphs, then most haplotypes passing through the graph will consist of increasing or decreasing sequences.
 This is even more true for VGs built from VCFs, although even there the issue of indels must be handled in a way that is very different from the assumptions that simplify the PBWT.
 The nodes in these regions of the graph will also tend to have low degree.
 These features suggest that a local compression of each node's context in the graph can be achieved very efficiently.
@@ -522,7 +522,7 @@ By encoding all paths in both orientations, the GBWT can be treated as a kind of
 In principle, this means that the GBWT turn supports MEM-based haplotype matching, which has potential uses in genotype imputation, phasing, association mapping, and other population genetic and evolutionary assays.
 
 The GBWT representation reflects a number of assumptions that tend to hold for most DNA sequence graphs.
-Nodes tend to have low degree, which means the local alphabet size $|\Sigma_i|$ is small and we can afford to decompress a local alphabet encoding efficiently.
+Nodes tend to have low degree, which means the local alphabet size $|\Sigma_i|$ is small, and we can afford to decompress a small local alphabet encoding efficiently.
 Most nodes are not traversed more than once by each path, so the $BWT_{n_i}$ remains small and can be accessed and modified in bounded time.
 Due to relatedness among individuals in many species, it is sensible to assume that haplotypes will be highly repetitive, which allows for efficient RLE encoding of $BWT_{n_i}$.
 The graph is sorted, and its identifier space has been compacted, which allows us to store the same information for the entire range of node identifiers in bounded memory with respect to $|N|$.
@@ -569,11 +569,11 @@ As variation graphs can remove specific bias towards any particular sequence, th
 One reductive form that this can take is a coverage map, which is similar to the labeling required to implement ``colors'' on a DBG.
 Here, we lose information about the edge traversals and the paths taken through the graph
 In principle, this doesn't matter for many kinds of variation.
-And in benefit,, but the complexity of computing the coverage map is linear in the number of the input alignment set, and it requires $O(\sum_{\forall{n_i\in N}}|n_i|)$ space.
+And in benefit, but the complexity of computing the coverage map is linear in the number of the input alignment set, and it requires $O(\sum_{\forall{n_i\in N}}|n_i|)$ space.
 In exploration of this, I developed an indexing method that allows us to build and query compact coverage indexes.
 Simply, we map the sequence space of the graph into a vector and record coverage across it for a GAM read set.
 During construction, a succinct format is employed to store the coverages in a single byte as long as they are below 255, and in a secondary hash table if they reach 256.
-Finally a compressed integer vector is generated, which be queried by graph position computed from the XG index of the graph.
+Finally, a compressed integer vector is generated, which be queried by graph position computed from the XG index of the graph.
 I extended this concept with a kind of succinct ``pileup'' format \cite{li2009sequence} generated from the edits against the graph.
 In this model edits in mappings which don't match the reference were serialized into a byte alphabet using Protobuf, such that each non-reference edit $e_j$ at position $b_i$ was recorded as a string $\$b_i e_j$, and these were combined and delimited by a character $\$$ escaped from the representation by duplication of all instances in the byte string.
 By building a CSA/FM-index from these I can obtain the set of edits at each graph position through pattern matching.
@@ -627,7 +627,7 @@ In our clustering step we can consider the multiple coordinate systems to develo
 %*0.5p 0.5h*
 \label{sec:collinear_chaining}
 
-If the MEMs do not cover the full read length then we attempt to link them together into chains by building a Markov model in which the best possible chains form high-scoring paths. 
+If the MEMs do not cover the full read length, then we attempt to link them together into chains by building a Markov model in which the best possible chains form high-scoring paths. 
 In this model the nodes correspond to the reference graph positions where MEMs in the read occur and the transitions between nodes correspond to a weight that is proportional to the indel size implied by the difference in distance between the positions of the MEMs in the read and their approximate or embedded path-relative distances in the graph. 
 To consider the coordinate spaces implied by all applicable embedded paths, we record one node per embedded path that each MEM touches. 
 We also record a node for each MEM based on its approximate position in the graph, which is estimated as its position in the concatenated nodes of the partially sorted graph. 
@@ -642,14 +642,14 @@ Although the exact algorithm is different, in spirit our implementation is simil
 Every node has an implicit default orientation (see Graph Representation below) so that it is possible to determine edges that cause an inversion, i.e. those which connect between a forward and a reverse complement node orientation. 
 In {\tt VG::unfold} we use a breadth first search starting at every inverting edge in the graph to explore the reverse complemented portions of the graph that we can reach within length $k$ from the inverting edge.
 We then copy this subgraph, take its reverse complement, and replace the inverting edges connecting it to the forward strand of the graph with non-inverting ones.
-If $k$ is greater than any length in our graph, then we are guaranteed to  duplicate the entire reverse complement of the graph on the forward strand, effectively doubling the size of the graph if we have any inversions in it.%, as shown in Supplementary Figure 3. %\ref{fig:unfold}.
+If $k$ is greater than any length in our graph, then we are guaranteed to duplicate the entire reverse complement of the graph on the forward strand, effectively doubling the size of the graph if we have any inversions in it.%, as shown in Supplementary Figure 3. %\ref{fig:unfold}.
 
 \subsection{DAGification}
 \label{sec:DAGify}
 
 Variation graphs may have cycles.
 These are useful as compact representations of copy number variable regions, and arise naturally in the process of genome assembly.
-However, our partial order alignment implementation does not handle these structures, and so when they occur we convert them into an $k$-path equivalent acyclic graph in order to align with DAG-based alignment algorithms.
+However, our partial order alignment implementation does not handle these structures, and so when they occur we convert them into a $k$-path equivalent acyclic graph in order to align with DAG-based alignment algorithms.
 To do so, we unroll cyclic structures by copying their internal nodes an appropriate number of times to allow a given query length to align through the unrolled version of the component.
 In this graph, we can find all paths of length $k$ found in the original graph.
 If our query is shorter than this limit, $k \geq |Q|$, then we are guaranteed to find the optimal alignment in the original graph by aligning against the DAGified one.
@@ -751,7 +751,7 @@ By modifying equation \ref{eqn:gssw_h} so that it is no longer capped at 0 and c
 The SIMD-based approach of GSSW is not adapted to negative scores, and so the implementation of global alignment to the graph is completed a standard DP approach as in POA.
 However, it may be \emph{banded} so that only a limited region of the DP tables need to be explored.
 This approach, as implemented in {\tt vg} by Jordan Eizenga, forms the basis for multipath mapping, in which alignments are represented probabilistically as DAGs rather than linear series of node traversals and edits.
-In multipath mapping, regions between MEMs in a particular cluster may be aligned using global alignment, so as to obtain full-length descriptions of the alignment in the non-matching region.
+In multipath mapping, regions between MEMs in a particular cluster may be aligned using global alignment, to obtain full-length descriptions of the alignment in the non-matching region.
 Multiple traceback allows for alternatives to be included, and each of these may be scored on the basis of both alignment score and haplotype matching score.
 His implementation is key to the development of haplotype aware mapping, which is the subject of a paper currently in development by collaborators on the {\tt vg} project.
 In the case of low-error reads, this limited exploration of the DP problem allows for fast derivation of the optimal alignments, and so the multipath mapper in {\tt vg mpmap} achieves runtime comparable to or exceeding the simpler algorithm in {\tt vg map}.
@@ -760,7 +760,7 @@ It is also important to mention here as it forms the basis for alignment surject
 \subsection{X-drop DP}
 
 As our query length $|Q|$ increases, so does the practical complexity of deriving the alignment using POA/GSSW.
-Given that we tend to align against proportionally larger graphs and so we effectively face a quadratic penalty with increasing alignment length, $|Q| \propto |L| \implies$ GSSW is $O(|Q|^2)$.
+We align longer queries against larger graphs, and so we effectively face a quadratic penalty with increasing alignment length, $|Q| \propto |L| \implies$ GSSW is $O(|Q|^2)$.
 The most direct solution to this is to use a banded alignment method like banded global alignment, as described in section \ref{sec:banded_global}.
 However, this method cannot exploit data parallel operations that allow dramatic speedups on modern processors.
 
@@ -769,7 +769,7 @@ In this approach, an antidiagonal band of cells are computed at each step, of a 
 The band can move either ``right'' or ``down'' at each step, depending on where the highest score is found.
 A termination criteria is given, so that alignment stops when the maximum score falls a given amount.
 This is similar to the X-drop parameter used in BLAST to stop alignment extension.
-Although it improves performance it can hurt sensitivity to indels.
+Although it improves performance, it can hurt sensitivity to indels.
 
 Suzki had already implemented a version alignment over graphs by transforming the graph into a tree through a dynamic unrolling process akin to that described in \ref{sec:DAGify} and aligning to the tree using libgaba\footnote{\url{https://github.com/ocxtal/comb}}.
 His implementation supports graph to graph alignment as described in section \ref{sec:translation}, but the exponential expansion of the alignment problem is fundamentally limiting.
@@ -788,7 +788,7 @@ I have since worked with Suzuki to integrate his implementation of this algorith
 Due to difficulties in handling paired end rescue, the approach is not yet performing as well as GSSW for {\tt vg map}.
 This remains a work in progress, but is a promising approach to enable the direct alignment of long sequences against the graph.
 It is orthogonal to the ``chunked'' alignment approach which I implemented and describe in section \ref{sec:chunked_alignment}.
-In principle they can be applied together to build a SV-aware, chunked and banded alignment process.
+In principle, they can be applied together to build a SV-aware, chunked and banded alignment process.
 Future work in this direction may yield a new VG alignment algorithm, but this lies outside the scope of this thesis.
 
 \subsection{Chunked alignment}
@@ -872,7 +872,7 @@ Using the close approximation of the LogSumExp function by element-wise maximum,
     Q(\hat A|X,Y) &\approx \frac{10\lambda}{\log 10}\left( S(\hat A | X,Y) - \max_{A \neq \hat A}S(A| X,Y)\right)
 \end{align}
 
-In practice, we do not compare the optimal alignment to all possible alignments, but to the optimal alignments from other seeds. Thus, the mapping quality indicates the confidence that we have aligned the read to approximately the correct part of the graph rather then that the fine-grained alignment in that part of the graph is correct. It is also worth noting that since this formula is based on alignment scores, it can incorporate base quality information through the base quality adjusted alignment scores.
+In practice, we do not compare the optimal alignment to all possible alignments, but to the optimal alignments from other seeds. Thus, the mapping quality indicates the confidence that we have aligned the read to approximately the correct part of the graph rather than that the fine-grained alignment in that part of the graph is correct. It is also worth noting that since this formula is based on alignment scores, it can incorporate base quality information through the base quality adjusted alignment scores.
 
 
 \section{Visualization}
@@ -882,7 +882,7 @@ While text-mode renderings are sufficient for understanding results in resequenc
 A set of dotplots can allow us to understand the relationship between many paths embedded in a graph.
 But this scales quadratically with the number of embedded paths and quickly becomes impossible to interpret.
 The only reasonable solution is to render graphs visually using a coherent set of visual motifs.
-If this language can capture the full information in the graph then it can yield complete understanding of small graph regions.
+If this language can capture the full information in the graph, then it can yield complete understanding of small graph regions.
 Here I describe several such techniques designed specifically for variation graphs.
 The simplest leverage standard utilities for graph drawing, and the most performant of these are hierarchical models that benefit from linear ordering which is often available in reference-ordered variation graphs.
 Force-directed layouts techniques developed for assembly graph interpretation allow us to interrogate larger-scale graphs.
@@ -906,7 +906,7 @@ To generate a visualization that captures the structure of the variation graph, 
 The layout is then driven entirely by the chosen algorithm in Graphviz, which is typically {\tt dot}.
 
 The set of nodes may be rendered as boxes labeled by $id(n_i)$ and $seq(n_i)$.
-The edges have four types, and to indicate these we use the top and bottom of the node boxes.
+Edges have four types, and to indicate these we use the top and bottom of the node boxes.
 The top left corner of each node $n_i$ receives incoming edges $e_{ji} \forall j : e_{ji} \in E$.
 While the bottom right corner of each node box represents edges arriving at $\overline{n_i}$ and thus $e_{j\overline{i}} \forall j : e_{j\overline{i}} \in E$.
 Similarly, the top right corner of each node box represents edges leaving $n_i$, and we add an edge for each $e_{ij} \forall j : e_{ij} \in E$.
@@ -1007,7 +1007,7 @@ If nodes did represent a single character, then nodes are basically atomic throu
 This approach is that used by POA.
 It is simple to edit a ``basepair'' graph of this type: $G = (N, E, P) : |N| = \sum_{\forall n \in N} |seq(n)|$.
 We walk through the alignments to it $A = a_1\ldots a_{|A|}$, adding novel bases represented by the alignment ($seq(A) \notin G = N_A$) as new nodes.
-Then for each alignment $a_i$, we add edges connecting all of the nodes by edges in the order they would be traversed by the path of the alignment embedded in the graph $p_{a_i} \in G'$, yielding $E_A$.
+Then for each alignment $a_i$, we add edges connecting nodes in the order they would be traversed by the path of the alignment embedded in the graph $p_{a_i} \in G'$, yielding $E_A$.
 Finally, we add paths representing the embedded alignments $P_A$.
 The resulting graph unifies these additions $G' = (N \cup N_A, E \cup E_A, P \cup P_A)$.
 
@@ -1023,7 +1023,7 @@ We can then apply $translate(A, \Phi) \to A'$, and add edges to $G'$ implied by 
 The number of paths in a sequence graph grows exponentially with the number of variable sites.
 As I have discussed, this causes problems for alignment algorithms and graph sequence indexing.
 While we can use efficient disk-backed index construction algorithms like GCSA2 to mitigate the effects of this exponential scaling, only a handful of dense clusters of variation in the graph can increase the memory requirements of path enumeration beyond any reasonable level.
-Thus there is no reasonable choice but to restructure the graph to limit recombinations in the global sequence index.
+Thus, there is no reasonable choice but to restructure the graph to limit recombinations in the global sequence index.
 
 We have explored two main techniques for the reduction of graph complexity.
 In the first, we prune regions of the graph which have high path complexity using a depth-first search (DFS).
@@ -1043,7 +1043,7 @@ We record the edge in $E_\textbf{complex} = \{ e_{ij} : \exists p \in G |p| > {\
 We thus derive the subgraph from the current graph by removing the complexity-inducing edges: $(N, E \setminus E_\textbf{complex}, P) \to G_\textbf{simple}$.
 It can be helpful to remove any short subgraphs that result from this pruning, which can be done with a linear subgraph enumeration algorithm and the measurement of the sequence length of each.
 A subgraph $G_\textbf{sub} \in G_\textbf{simple} : \forall_{e_{ij} \in N_\textbf{sub}} n_i \in N_\textbf{sub} \land n_j \in N_\textbf{sub}$ must have length $\sum_{\forall n \in N_\textbf{sub}} |seq(n)| \geq {\cal J}$.
-By default we use $k=24$, ${\cal x}=3$, and ${\cal J}=33$.
+By default, we use $k=24$, ${\cal x}=3$, and ${\cal J}=33$.
 
 \subsubsection{Filling gaps with haplotypes}
 
@@ -1067,7 +1067,7 @@ This filter is relatively simple, in that we remove nodes with more than ${\cal 
 It is not necessary that our local alignment suffers from high-degree nodes.
 The problem is that GSSW is provided an alignable graph that is an extracted subset of the full graph.
 If this subgraph is extracted using context expansion in the graph, then high-degree nodes will generate extremely large subgraphs.
-One solution would be to use the bit-parallel string to graph alignment approach in \cite{rautiainen2018bit}, as this achieves optimal bounds an the size of transformed graph to which we align.
+One solution would be to use the bit-parallel string to graph alignment approach in \cite{rautiainen2018bit}, as this achieves optimal bounds in the size of transformed graph to which we align.
 Alternatively, the graph exploration should be more directly linked to the alignment process.
 The X-drop aligner {\tt dozeu} could easily be adapted to this approach, as the X-drop parameter would provide a natural limit to the graph exploration.
 Such approaches may allow us to tolerate a larger ${\cal D}$, but it seems unlikely that they will allow alignment to be driven through the most-tangled areas of the graph without a large performance penalty relative to graphs with lower maximum degree.
@@ -1165,7 +1165,7 @@ Furthermore, the genome of the new sample may be diploid or polyploid, meaning t
 This leads to the need for variant calling against linear reference genomes.
 
 These steps do not change when our reference is a variation graph, but the scope in which they are relevant may be adjusted to meet our analysis needs.
-If we can construct a graph which embeds all of the sequences of all genomes which we are interested in, then all sequences in our study are represented in the sequence space of the graph.
+If we can construct a graph which embeds all the sequences of all genomes which we are interested in, then all sequences in our study are represented in the sequence space of the graph.
 This resolves the separation between reference sequence and variation that is present in standard resequencing.
 It also suggests that the intermediate steps in resequencing may be made redundant.
 If variation is already available during alignment then there is no need for a variant detection phase.
@@ -1210,7 +1210,7 @@ Snarls whose internal separated component are acyclic and do not contain any tip
 Paten observed that trees embedded in the Cactus graph transformation of a variation graph corresponded to the standard concept of superbubbles.
 Specifically, the cactus graph is transformed into a \emph{cactus tree} in which each simple cycle in the cactus graph becomes a special kind of node.
 Various rootings of this tree may then be used to define a hierarchy of bubbles.
-The bidirectional nature of the variation graph mean that snarls can embed each other in a manner akin to how the twist used to generate a M\"{o}bius strip results in it having a single surface and border.
+The bidirectional nature of the variation graph mean that snarls can embed each other in a manner akin to how the twist used to generate an M\"{o}bius strip results in it having a single surface and border.
 In these cases the resulting cactus tree will support multiple ultrabubble tree rootings, and so unlike the bubble and superbubble decompositions for DAGs the ultrabubble decomposition is not complete.
 We can enumerate a subset of these by identifying bridge edges (typically representing tips) in the ``bridge forest'', which is the result of a contraction of the cycles in the cactus graph into a set of top-level cycle representing nodes, and then use them to produce various rootings of the cactus tree.
 
