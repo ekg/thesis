@@ -22,17 +22,18 @@ A pangenomic reference system could allow us to represent multiple versions of e
 I propose the use of variation graphs as reference systems in resequencing.
 These path-labeled, bidirectional DNA sequence graphs allow us to represent collections of genomes in a single, coherent structure which fully capture the sequences and variation between them.
 They support the direct representation of all kinds of genomic variation.
-By building a software system supporting the construction, manipulation, indexing, and alignment of new read sets and genomes to variation graphs, I am able to shown that this model reduces bias towards the reference in alignment in a wide array of genomic contexts.
+By building a software system supporting the construction, manipulation, indexing, and alignment of new read sets and genomes to variation graphs, I am able to show that this model reduces bias towards the reference in alignment in a wide array of genomic contexts.
 These methods achieve a level of performance that will make them usable for large-scale resequencing analyses.
 As I have shown, their modular implementation, based around a handful of core data models, enables the rapid construction of novel graph-based analysis processes that provide conceptual unity to alignment, assembly, and variant calling.
 Although other methods for aligning sequences against pangenome data structures exist, {\tt vg} is the first set of tools that does so in a completely coherent manner against arbitrary bidirectional sequence graphs.
 This is also the first framework to provide graph based analogs of many of the data types standardly used in resequencing.
 
-In addition to developing methods to support alignment to variation graphs, I have explored a variety of related analyses.
-I developed new techniques for visualizing variation graphs that will help to build the genome browsers necessary to navigate data placed in the context of the graph.
-I have linked the variation graph data model to RDF, which in principle will allow for high-level inference based on the genomes and their annotations embedded in a variation graph. 
-I provide a method to losslessly induce variation graphs from a set of sequences and pairwise alignments between them using external memory.
-I built systems that allow for the efficient summarization of alignment data sets against variation graph, and worked on methods to support genotyping known and novel variation in graphs.
+In addition to developing methods to support alignment to variation graphs, we have explored a variety of related analyses.
+We developed new techniques for visualizing variation graphs that will help to build the genome browsers necessary to navigate data placed in the context of the graph.
+To record and interface with annotations embedded in a variation graphs, we have linked the variation graph data model to RDF.
+To simplify their construction, I provide a method to losslessly induce variation graphs from a set of aligned sequences.
+We built systems that allow for the efficient summarization of alignment data sets against variation graph.
+And we worked on methods to support genotyping known and novel variation in graphs.
 Throughout my work I have supported and worked with a growing group of researchers focused on these techniques, collaborating in the development of graph sequence and haplotype indexing techniques, the evaluation of diverse variation graph models, and the study of ancient DNA using variation graphs.
 
 Graphical models are often regarded with apprehension by members of the bioinformatics community who are accustomed to working with linear reference genomes.
@@ -65,7 +66,7 @@ Its adoption is now a social question.
 Can the community generate a unified set of data structures that encapsulate the ideas I have presented here?
 Large distributed projects like the 1000GP gave rise to the current generation of genomic data formats.
 It seems natural that the next, graphical, pangenomic phase will require the same.
-At present it is not clear what project might support this.
+At present, it is not clear what project might support this.
 Top-down approaches like that presented by the GA4GH have not proven as capable of promoting standards as analysis-oriented projects like the 1000GP, although they have served a coordinating role for the community of researchers interested in these topics.
 One obvious target for the widespread introduction of variation graph data models would be in the generation of a new reference genome system based on a collection of fully-resolved genomes.
 Motivation for such an advance increases as evidence mounts that a substantial and important fraction of genetic variation is neither small nor simple.

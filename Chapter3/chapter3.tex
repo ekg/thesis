@@ -42,7 +42,7 @@ The genome of \emph{S. cerevisiae} was the first eukaryotic genome sequenced, in
 Resequencing studies followed that used \emph{cerevisiae} as a model system to understand genome evolution.
 The Saccharomyces Genome Resequencing Project (SGRP) \cite{liti2009population}, which used low-coverage capillary Sanger sequencing to generate a population survey for \emph{cerevisiae} can be seen as a precursor to the 1000GP, in its use of low-coverage sequencing and imputation to establish the panel\footnote{\url{https://www.sanger.ac.uk/research/projects/genomeinformatics/assets/sgrp_manual.pdf}}.
 A followup project, the SGRP2, resequencing and whole genome assembly of high coverage, low cost Illumina sequencing to establish that the greater phenotypic diversity in \emph{S. cerevisiae} relative to its wild relative \emph{S. paradoxus} is likely due to structural variation (as measured by presence/absence and copy number) rather than SNP diversity \cite{bergstrom2014high}.
-Recently, whole genome \emph{de novo} assembly with long single-molecule reads has further refined this conclusion by demonstrating that the structural diversity is non-uniformly distributed through out the genomes of \emph{S. cerevisiae}, concentrating in subtelomeric regions \cite{yue2017contrasting}.
+Recently, whole genome \emph{de novo} assembly with long single-molecule reads has further refined this conclusion by demonstrating that the structural diversity is non-uniformly distributed throughout the genomes of \emph{S. cerevisiae}, concentrating in subtelomeric regions \cite{yue2017contrasting}.
 In this section, I use data from independent sequencing of the UK's National Center for Yeast Collections (NCYC) as well as long reads from \cite{yue2017contrasting} to demonstrate the capabilities of {\tt vg} and compare the utility of various variation graph models built from these population surveys.
 
 \subsection{A SNP-based SGRP2 graph}
@@ -56,7 +56,7 @@ Dense variation is also present in the results and this necessitates the applica
 Mistakes in the mapper could be readily observed and testing could easily be done on a laptop, whereas larger genomes require longer runtimes for indexing and larger servers in order to support the indexes during alignment.
 
 The SGRP2 graph can be built and indexed in around 10 minutes on a commodity compute server, including the construction of the GBWT index and the generation of an order-256 GCSA2 index using a pruned and refilled version of the graph.
-The graph contains exactly the number of bases in the SGD\_2010 reference plus the number of SNP alternate alleles in the SGRP2 VCF: 12163423 + 243629 = 12407052.
+It contains exactly the number of bases in the SGD\_2010 reference plus the number of SNP alternate alleles in the SGRP2 VCF: 12163423 + 243629 = 12407052.
 The graph itself is 23MB on disk, in contrast to that of the SGD\_2010 reference, which is only 7.6MB.
 Much of this difference is due to the larger number of entities required by to represent the variation-containing graph.
 The SGD\_2010 graph is linear, with a gap for each chromosome, and contains 380,115 nodes and 380,097 edges, while the SGRP2 graph contains SNPs and must be represented with 714,533 nodes and 969,690 edges.
@@ -137,7 +137,7 @@ The multiple genome graphs were constructed with the Cactus progressive aligner,
 \end{figure}
 
 
-Similarly to the human experiments, we simulated 100,000 150-bp paired-end reads from the SK1 reference, modeling sequencing errors, and mapped them to the four references (ROC curves, Figure \ref{fig:cactus_yeast_sim}).
+As in the human experiments, we simulated 100,000 150-bp paired-end reads from the SK1 reference, modeling sequencing errors, and mapped them to the four references (ROC curves, Figure \ref{fig:cactus_yeast_sim}).
 Not surprisingly, the best performance was obtained by mapping to a linear reference of the SK1 strain from which the data were simulated, with substantially higher sensitivity and specificity compared to mapping to the standard linear reference from the strain S288c with either {\tt vg} or {\tt bwa mem}.
 Mapping to the variation graphs gave intermediate performance, with >1\% more sensitivity and lower false-positive rates than mapping to the standard reference.
 There was surprisingly little difference between mapping to graphs with and without the SK1 private variation, probably because much of what is novel in SK1 compared to the reference is also seen in other strains.
@@ -174,7 +174,7 @@ Cactus & 31 & 13243056 & 1059173 & 1304205 & 580 \\
 \label{table:yeast_graphs}
 \end{table}
 
-Three of the graphs are effectively linear or DAG-like, with the exception of their mitochondria and plasmid chromosomes, which are included as circular components.
+Three of the graphs are effectively linear or DAG-like, except for their mitochondria and plasmid chromosomes, which are included as circular components.
 SGD\_2010 and S288c represent two assemblies of the reference genome, the former from the SGD genome sequencing project, and the latter is a \emph{de novo} assembly from \cite{yue2017contrasting}.
 The difference in quality between the two approaches will be made apparent in the subsequent section.
 As described in section \ref{sec:SGRP2_graph}, the SGRP2 graph adds SNP variation from the population survey in \cite{bergstrom2014high} to build a pangenome reference.
@@ -233,13 +233,13 @@ For other comparisons I focused on using the S288c reference, as it forms a part
 
 The minia graphs appear to provide very low quality as a reference for the alignment of long reads (bottom left and middle, figure \ref{fig:pacbio_yeast}).
 The minia unitig graph is too fragmented for any practical use.
-In almost no case does it provide a better a better match for the long reads.
+In almost no case does it provide a better match for the long reads.
 However, while the minia contig graph is also outperformed by the S288c graph, for a notable subset of the reads it provides a perfect match, while the S288c graph fails to match them at all.
 This suggests that some contigs in the Illumina assembly match the SK1 strain, which is to be expected and demonstrates that in principle this kind of graph can represent multiple genomes.
 
 Finally, the whole genome alignment graphs are notable in their similarity.
 Despite the fact that they were constructed using different algorithms, both provide a similar basis for alignment of the SK1 reads.
-It is notable that alignment time against the {\tt vg msga} graph was the highest of any of the tested graphs, and significantly higher than that for the Cactus graph.
+It is notable that alignment time against the {\tt vg msga} graph was the highest of the tested graphs, and significantly higher than that for the Cactus graph.
 This may relate to the un-collapsed state of the repeats in the graph.
 The alignment algorithm will attempt more alignments for each band where there is ambiguity, and the ``patching'' at the end of the alignment process will be more intensive.
 
@@ -297,7 +297,7 @@ GRCh37 & 0 & 1:09:54 & 1.76 & 23:30:41 & 25.11 & 33:34 & 28:33 \\
 \label{sec:1000GP_sim}
 
 We next aligned ten million 150-bp paired-end reads simulated with errors from the parentally phased haplotypes of an Ashkenazim male NA24385, sequenced by the Genome in a Bottle (GIAB) Consortium \cite{zook2016extensive} and not included in the 1000GP sample set, to each of these graphs as well as to the linear reference using {\tt bwa mem}.
-Figure \ref{fig:HG002_1000GP_sim} shows the accuracy of these alignments compared with {\tt bwa mem} for the the full range of frequency thresholded graph, in terms of receiver operating characteristic (ROC) curves.
+Figure \ref{fig:HG002_1000GP_sim} shows the accuracy of these alignments compared with {\tt bwa mem} for the full range of frequency thresholded graph, in terms of receiver operating characteristic (ROC) curves.
 
 Reads that come from parts of the sequence without differences from the reference (middle panels of Figure \ref{fig:HG002_1000GP_sim}) mapped slightly better to the reference sequence (green) than to the 1000GP graph (red), which we attribute to a combination of the increase in options for alternative places to map reads provided by the variation graph, and the fact that we needed to prune some search index $k$-mers in the most complex regions of the graph.
 The best balance of performance appears at the threshold of 0.01.
@@ -429,9 +429,9 @@ This adds ambiguity to the mapping and apparently causes problems when attemptin
 
 \subsection{Progressive alignment of human chromosomes}
 
-There are only a handful of truly \emph{de novo} human genome assemblies which achieve near-complete chromosomes, and so a reference-guided variant detection approach has prevailed for the discovery of novel structural variation \cite{fan2017hysa}.
+There are only a few truly \emph{de novo} human genome assemblies which achieve near-complete chromosomes, and so a reference-guided variant detection approach has prevailed for the discovery of novel structural variation \cite{fan2017hysa}.
 Using {\tt vg msga}, I explored if it would be possible to use the HGSVC reference-guided assemblies directly in progressive alignment.
-It was possible to produce the progressive alignment of the six haplotypes for chr20 on the compute system I used at the Sanger for most experiments, which has 256GB of RAM and 32 vCPUs.
+It was possible to produce the progressive alignment of the six haplotypes for chr20 on system I used at the Sanger for most experiments, which has 256GB of RAM and 32 vCPUs.
 However, doing so took more than week of wall clock time, suggesting that this approach is untenable in its current form.
 I was not able to complete the progressive alignment of the six haplotypes of chromosome 2.
 Optimization may improve the performance of {\tt vg msga}, but the linear nature of the approach suggests that aligning more than a handful of sequences will never be feasible.
@@ -508,7 +508,7 @@ A different parameterization of the aligner might need to be used to reconstruct
 To appreciate the effect of repeat collapse on the resulting graph, I applied {\tt vg dotplot}, which generates dotplots from indexed variation graphs, to compare the in-graph alignments of the same pair of sequences in both the {\tt seqwish} and {\tt vg msga} graphs.
 These results are presented in figure \ref{fig:mhc_dotplots}.
 It is clear (in \ref{subfig:seqwish_mhc_dotplot}) that the {\tt minimap2} based alignment process does not sufficiently filter repeat structures from the alignment, which results in the large off-diagonal blocks of graph positional matches between the sequences.
-In contrast (panel \ref{subfig:vg_msga_mhc_dotplot}) shows that the sequences can naturally align through the graph in an approximately linear fashion, with little repeat collapse.
+In contrast, (panel \ref{subfig:vg_msga_mhc_dotplot}) shows that the sequences can naturally align through the graph in an approximately linear fashion, with little repeat collapse.
 This linearity is enforced by setting a high bandwidth parameter ({\tt -J 16384}) in the alignment chaining model (described in section \ref{sec:chunked_alignment}).
 With an overlap of 1/8th band at each alignment chunk end and a bandwidth of 512, this corresponds to a chain model bandwidth of 6,291,456bp, which roughly covers the entire MHC for any input sequence.
 Setting a shorter bandwidth allows repeat collapse to occur in a manner similar to what occurs when inducing the graph from the {\tt minimap2} alignments.
@@ -612,7 +612,7 @@ At high levels of error alignment against the linear reference prevents the obse
 This effect is notable at damage rates as low as 10\%, and with 30\% PMD error the rate of alignment to non-reference alleles is reduced by nearly 15\% relative to the total.
 While {\tt bwa aln} suffers a significant reference bias with increasing simulated PMD rates (dashed dark blue versus orange fit lines representing alternate and reference alleles), we observe no such effect for {\tt vg map} (light blue and yellow) (figure \ref{fig:aDNA_simulations}).
 Presumably, most of the alleles in the Human Origins panel are also in the 1000GP, which suggests that modern sources are useful when constructing a pangenomic reference for ancient samples.
-Furthermore, it can be seen that even alleles that are not in the reference may be detected, and presumably these could be included in a stepwise fashion in the reference genome in order to then improve genotype or genotype likelihood estimation.
+Furthermore, it can be seen that even alleles that are not in the reference may be detected, and presumably these could be included in the reference genome in order to then improve genotype or genotype likelihood estimation.
 
 \subsection{Aligning ancient samples against the 1000GP pangenome}
 %*2p 4h*
@@ -628,7 +628,7 @@ We called variants on chromosome 21 using bcftools \cite{li2009sequence} for bot
 To evaluate the effect of reference bias with decreasing coverage, we then used these callsets as ground truth and measured our ability to recover the heterozygous variants in the full coverage set at coverage levels of 0.1, 0.2, 0.3, 0.4, 0.5 of the original.
 As seen in figure \ref{fig:aDNA_downsampling}, at lower coverages common in ancient DNA sequencing, {\tt bwa aln} recovers notably fewer heterozygous SNPs than {\tt vg map} alignment to the 1000GP graph.
 At the sampling rate of 0.2, which corresponds to coverage $\approx$4, {\tt vg map} recovers almost 10\% more heterozygotes as a fraction of the total.
-{\tt vg map} recovers more heterozygous SNPs than {\tt bwa aln} at all of the coverage levels, although at higher levels the difference is less pronounced.
+{\tt vg map} recovers more heterozygous SNPs than {\tt bwa aln} at all the coverage levels, although at higher levels the difference is less pronounced.
 We expect this would have a significant effect on population genetic analyses depending on these alignments.
 
 \begin{figure}[htbp!]
@@ -695,7 +695,7 @@ Our results, summarized in figure \ref{fig:aDNA_dstats}, indicate an excess of a
 All but a handful of replicates have negative $D$-statistics, which implies that alignment against GRCh37 makes the samples appear more like the reference (subfigure \ref{subfig:aDNA_dstats_absolute}).
 The effect is most pronounced for samples whose ancestries are less likely to be captured by the reference genome, which we expect to represent a synthetic European and African admixture with a greater European contribution.
 This can be seen by the strong significance of the $D$-statistics for the Yamna and Botai samples in subfigure \ref{subfig:aDNA_dstats_zscore}, as these individuals are from an ancient central Asian population.
-In contrast the effect is less extreme for the ancient Anglo Saxon, Roman, and Iron Age British individuals.
+In contrast, the effect is less extreme for the ancient Anglo-Saxon, Roman, and Iron Age British individuals.
 We conclude that reference bias is strong enough to affect common population genetic analysis completed with ancient DNA, and this can be mitigated at least for known alleles by aligning against a pangenomic reference.
 
 \section{Neoclassical bacterial pangenomics}
@@ -748,9 +748,9 @@ These data total 2.3GB of compressed FASTQ in 2x151bp paired end format.
 I built a compressed DBG using {\tt minia} with $k=51$ and an abundance minimum of 10, which was selected due to the very high genomic coverage offered by this data, although I did not observe large changes in assembly structure when varying it.
 I then processed the resulting graph with {\tt vg} to decompress long nodes into nodes with a maximum length of 32bp, then sort it pseudotopologically and compact its node identifier space.
 These steps are required for efficient mapping given the absence of any annotated reference paths to provide distance estimates.
-As seen in figure \ref{fig:ecoli_pangenome}, the assembly graph features a giant component representing most of input sequencing data.
+As seen in figure \ref{fig:ecoli_pangenome}, the assembly graph features a giant component representing most of the input sequencing data.
 Other fragments could represent plasmids or other contaminating elements.
-The normalized graph contains 10,456,557bp of sequence, in 429,377 nodes and 455,892 edges, which suggests that although it appears very tangled it is mostly comprised of linear components.
+The normalized graph contains 10,456,557bp of sequence, in 429,377 nodes and 455,892 edges, which suggests that although it appears very tangled it is mostly composed of linear components.
 The assembly and indexing of the graph was completed in less than an hour, and yielded 6.3MB {\tt vg} graph, a 37MB {\tt xg} index, and a 47MB {\tt GCSA2} index.
 
 \subsection{Evaluating the core and accessory pangenome}
@@ -794,9 +794,9 @@ I find that 26.9\% of the pangenome is covered by all ten strains, while 25.6\% 
 The remaining 47.5\% of the pangenome has intermediate numbers of strains mapping to it.
 As such we can conclude that around $\frac{1}{4}$ of the pangenome is the conserved ``core,'' and $\frac{1}{4}$ is purely ``accessory,'' occuring in only a single strain.
 
-Virtually all of the graph is covered by some strain, with only 80bp receiving no mappings, which indicates that the pangenome object is complete.
+Virtually all the graph is covered by some strain, with only 80bp receiving no mappings, which indicates that the pangenome object is complete.
 However, the read sets are not equivalently contained in the pangenome, and a significant ($p=0.00534$) correlation exists between the realignment rate of the reads to the pangenome and the number of raw reads from each strain, as seen in figure \ref{subfig:ecoli_realignment_vs_input}.
-This statistic suggests that a small number of strain-specific regions are not assembled.
+This statistic suggests that a few strain-specific regions are not assembled.
 Naturally, the rate at which this failure occurs is dependent on read depth.
 It is possible that this effect is driven by the high abundance count (10) used in constructing the compressed DBG, and possibly it could be mitigated by tuning this parameter and the $k$-mer length.
 
@@ -897,7 +897,7 @@ Overall, we can observe a similar level of change in the alignment score, with {
 The longer N50 of contigs in this graph and the lack of small circular contigs apparently contribute to the reduction in relative improvement offered by alignment to the graph in this bacterial context.
 A scatterplot of alignment scores between the two methods reveals a slight shift in density below the diagonal in {\tt vg}'s favor (figure \ref{fig:human_gut_microbiome_scatter}).
 It is possible that an assembly designed to capture more variation in the strains might benefit more greatly from the use of {\tt vg}.
-A number of issues appear when inspecting these results, for instance it is concerning that here {\tt vg} does not align some reads that {\tt bwa} does.
+A number of issues appear when inspecting these results, for instance that {\tt vg} does not align some reads that {\tt bwa} does.
 This should represent a bug in the aligner or the effect of pruning on the gut metagenome graph's GCSA2 index, and it is possible that a relaxation in pruning would resolve this issue but further testing will be required to establish this.
 We can conclude that while this method shows promise in a variety of metagenomic applications, particular improvements may be required for it to yield benefits in some contexts.
 
@@ -916,7 +916,7 @@ To build a splicing graph in {\tt vg} requires a linear reference and a gene mod
 An obvious application of {\tt vg} is to the direct alignment of reads to a splicing graph.
 I have only begun to explore this at the end of my work.
 I built a gene model graph (SGD+CDS) using the yeast reference genome from the Saccharomyces Genome Database (SGD) and its gene annotations\footnote{I used the 20150113 release from \url{https://downloads.yeastgenome.org/sequence/S288C_reference/genome_releases/S288C_reference_genome_R64-2-1_20150113.tgz}.}.
-At 8.8MB, the serialized SGD+CDS {\tt vg} graph itself is only slightly larger than the the SGD linear reference graph, which is 7.3MB.
+At 8.8MB, the serialized SGD+CDS {\tt vg} graph itself is only slightly larger than the SGD linear reference graph, which is 7.3MB.
 However, its {\tt xg} index is much larger, 642MB, in contrast to the linear index at 38MB.
 This index suffers a large penalty for the embedded transcript annotations, as each becomes a full reference path, usable in alignment for positional inference.
 To verify that the splicing graph would allow reads to align full length across splice junctions, I aligned 100k reads from a yeast mRNA sequencing data set\footnote{SRR2069949 in SRA, \url{https://www.ncbi.nlm.nih.gov/sra/?term=SRR2069949}}.
@@ -935,7 +935,7 @@ In summary, future work will be required to explore the use of {\tt vg} for RNA-
   \includegraphics[width=0.7\textwidth]{Chapter3/Figs/SRR2069949_100k_ref_vs_gene_model.png}
   \caption[Aligning reads against the yeast transcriptome]{
     Comparing alignment identity between {\tt vg map} on the linear SGD reference ($y$-axis) and the SGD reference augmented by the transcripts in the annotated CDS ($x$-axis).
-  }
+   }
   \label{fig:yeast_rnaseq}
 \end{figure}
 
