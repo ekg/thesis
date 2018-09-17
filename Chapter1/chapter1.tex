@@ -17,11 +17,14 @@ Over time, the genomes of organisms are copied, sometimes with error or recombin
 These mutations give rise to genetic, and ultimately phenotypic diversity.
 Through isolation and drift, genetic diversity enables and defines the generation of new species.
 
-Although easily surmised, this basic process is often forgotten at the level of the most common analysis patterns used in the field of genomics.
+Although easily surmised, this basic process is often forgotten at the level of the most common analyses in genomics.
 When considering the genomes of many individuals, we frequently pluck a single related genome from the tree of life to use as a reference.
 Using alignment, we express our sequencing data from the collection of samples in terms of positions and edits to the reference sequence.
-We then use variant calling and phasing algorithms to filter and structure these edits into a reconstruction of the underlying haplotypes in the set of non-reference samples which we have sequenced.
+We then use variant calling and phasing algorithms to filter and structure these edits into a reconstruction of the underlying haplotypes.
 We can then proceed to use the inferred genotypes and haplotypes to answer biological questions of interest.
+
+In this way, we have not fully sequenced the new genomes, but \emph{resequenced} them against the reference genome.
+Pieces of the new genomes which could not be mapped to the reference will be left out of our analysis, which can distort our results.
 
 \begin{figure}[htbp!]
   \centering
@@ -31,11 +34,6 @@ We can then proceed to use the inferred genotypes and haplotypes to answer biolo
     } 
 \label{fig:pangenomic_processes}.
 \end{figure}
-
-In this way, we have not fully sequenced the new genomes, but \emph{resequenced} them against the reference genome.
-Pieces of the new genomes which could not be mapped to the reference will be left out of our analysis.
-Resequencing may thus distort our perspective of the genomes which we are attempting to reconstruct.
-It may yield an uncertain and incomplete image of the total genomic complexity of the system we are assaying.
 
 Resequencing has arisen in response to the technical properties of the most commonly-used DNA sequencing technologies.
 These ``second generation'' sequencing-by-synthesis technologies produce abundant and inexpensive short reads of up to 250 base pairs, and in the past decade have become the largest source of data in the DNA sequencing market.
@@ -62,20 +60,19 @@ We can avoid reference bias by working on pure assemblies generated only from th
 Doing so can be rigorous, but comes at a significant cost, especially when the assembly algorithm requires us to load all the sequencing data into memory simultaneously.
 We will require much higher coverage to obtain the same level of accuracy in our assembly as we will have when resequencing, and our read lengths will limit the length of contiguous sequences we can infer.
 Virtually all assembly algorithms lose information about their source reads through the process of assembly, and this information must be somehow reconstituted if we wish to apply downstream algorithms to the input data in the context of the output of the assembler.
-Although many approximations exist, no practical algorithm allows us to jointly consider all the samples in a large sequencing experiment in the context of an assembly generated from their reads.
+%No practical algorithm allows us to jointly consider all the samples in a large sequencing experiment in the context of an assembly generated from their reads.
 
-Genome assemblers frequently use a compacted graphical representation of their inputs to support the algorithms they used to derive contiguous sequences from the fragmented input they are given.
+Genome assemblers frequently use a graphical transformation of their inputs that supports algorithm steps used to infer contigs implied by the reads.
 These data structures are typically bidirectional graphs in which nodes are labeled by sequences and edges represent observed linkages between sequences.
 If constructed from a set of reads that fully cover the genome, it can be shown that such a graph contains the genome which has been sequenced.
 In effect, the assembler works to filter the edges from the graph and un-collapse repeats in order to establish a sequence assembly.
 
-The aim of my contribution in this work is to resolve the problem of reference bias by re-purposing and extending the assembly graph data model to build a pangenomic reference system.
-By patterning its structure on the data structures used in assembly, I resolve the issue of reference bias by enabling the construction of reference systems that incorporate data representing variation in the population without bias towards any particular sample.
-This supports a uniform and coherent basis space for sequence analysis.
+In this work I repurpose the assembly graph data model to build a pangenomic reference system.
+Assembly graphs are designed to represent the full set of genomic information to which they are applied, so it is natural to use them to develop coherent reference systems for unbiased sequence analysis.
 By building a conceptual framework and data structures that enable resequencing against this structure, we can mirror the patterns and workflows that have already been developed for resequencing.
-This allows us to retain the benefits of out of core and distributed analysis even while we resolve the issue of reference bias.
-By recording reference sequences, or other sequences of interest, as paths through this graph I provide anchors for existing annotations and positional systems within the pangenome.
-I term these bidirectional sequence graphs with paths \emph{variation graphs}.
+This allows us to retain the benefits of parallel analysis even while we resolve the issue of reference bias.
+By recording genomic sequences as paths through this graph I provide anchors for existing annotations and positional systems within the pangenome.
+I call these bidirectional sequence graphs with paths \emph{variation graphs}.
 
 
 \begin{figure}[htbp!]
@@ -93,8 +90,8 @@ I term these bidirectional sequence graphs with paths \emph{variation graphs}.
 
 In this chapter I will provide background context for my work.
 I will cover the history of DNA sequencing methods, assembly algorithms, and the development of reference genomes and their use in resequencing.
-Finally, I will review similar data models to mine, both preceding and contemporary in development.
-In the remainder of the work I will first describe the development of data structures and algorithms that allow the use of variation graphs as a universal reference system for unbiased genome inference, and then a series of experimental results that support their utility as such.
+Finally, I will review similar data models that are used in genome inference.
+In the remainder of the work I describe data structures and algorithms that allow the use of variation graphs as a reference system for unbiased genome inference, and demonstrate the benefits of this approach with a series of experiments.
 
 \section{Genome inference}
 
@@ -103,10 +100,10 @@ In the remainder of the work I will first describe the development of data struc
 Not two centuries have passed since the first experiments that demonstrated the existence of genetic material \cite{mendel1866versuche}.
 In the first part of the twentieth century, these ideas about heredity grew into the core of a modern synthesis linking biological micro- and macro-evolutionary theory to the quantitative basis of genetics \cite{huxley1942evolution}.
 It was understood that DNA encoded the information that gave rise to biological structures \cite{avery1944studies}.
-The discovery of the structure of DNA in the 1950s \cite{watson1953molecular} made clear the nature of that information and the physical basis for its faithful transmission from generation to generation.
-This observation, coupled with the sequencing and synthesis of proteins, which demonstrated that they had distinct polymeric chemical identities \cite{sanger1951amino} led to Crick's postulation of the ``central dogma'' of biology \cite{crick1958protein}.
-Simply stated, the ``dogma'' argues that in living systems' information is transcribed from DNA to RNA and ultimately translated into proteins, which then guide and structure the cell and thus living organisms.
-The central dogma made the need to determine the specific sequence of the genome clear, and over the following decades a series of projects scaled up the throughput and fidelity of DNA sequencing until \emph{genome inference} became a practical and everyday reality in biology.
+The discovery of the structure of DNA in the 1950s \cite{watson1953molecular} made clear the nature of that information and the mechanism for its faithful transmission from generation to generation.
+This knowledge, coupled with the sequencing and synthesis of proteins, which demonstrated that they had distinct polymeric chemical identities \cite{sanger1951amino} led to Crick's postulation of the ``central dogma'' of biology \cite{crick1958protein}.
+Simply stated, the ``dogma'' argues that in living systems' information is transcribed from DNA to RNA and ultimately translated into proteins, which guide and structure the cell and thus living organisms.
+The central dogma clarifies the significance of the sequence of the genome, and over the following decades a series of projects scaled up the throughput and fidelity of DNA sequencing until \emph{genome inference} became a practical and everyday reality in biology.
 
 \subsection{Reading DNA}
 % Genome sequencing techniques
@@ -115,23 +112,22 @@ The central dogma made the need to determine the specific sequence of the genome
 The quest to sequence genomes began with arduous and sometimes dangerously radioactive experimental techniques, in which years of researcher time could be spent in obtaining sequences of tens of bases from partly-characterized sources.
 It has then progressed through three distinct phases.
 In the first, these early laboratory techniques gave way to automated sequencing using chain terminator chemistry, and related techniques were ultimately used to generate genome sequences for human and a number of organisms, albeit at high costs.
-In the second phase, \emph{multiplex} sequencing reactions were used to miniaturize the chain terminator reaction and observe its progression using fluorescent imaging or electrical sensing, evoking a drop in cost per sequenced base of many orders of magnitude, and simplifying library preparation steps dramatically by sequencing \emph{in vitro} clones of individual molecules.
+In the second phase, \emph{multiplex} sequencing reactions were used to miniaturize the chain terminator reaction and observe its progression using fluorescent imaging or electrical sensing, evoking a drop in cost per sequenced base of many orders of magnitude, and simplifying library preparation steps dramatically by sequencing clones of individual molecules.
 The third wave of development has been characterized by two techniques which allow realtime observation of single DNA molecules.
 These produce enormously long read lengths that are limited by the molecular weight of input DNA, but produce readouts with high per-base error rates.
-In theory, DNA could be directly input into such systems, obviating the need for library preparation, but in practice this has yet to be realized.
 Supporting the second and third wave are methods that allow for haplotype-specific sequencing and the observation of long range structures in the genome.
 
 \subsubsection{The old school}
 % Sanger sequencing, BACs, etc.
 
-In the 1970s a group led by Walter Fiers published the first complete gene \cite{jou1972nucleotide}, and then genome sequence \cite{fiers1976complete} from the MS2 bacteriophage using extremely laborious digestion and 2-dimensional gel electrophoresis techniques to sequence RNA based on work by Fredrick Sanger and colleagues \cite{sanger1965two, adams1969nucleotide}.
+In the 1970s a group led by Walter Fiers published the first complete gene \cite{jou1972nucleotide}, and then genome sequence \cite{fiers1976complete} from the MS2 bacteriophage using laborious digestion and 2-dimensional gel electrophoresis techniques to sequence RNA based on work by Fredrick Sanger and colleagues \cite{sanger1965two, adams1969nucleotide}.
 To avoid the limitations of digestion based assays, Ray Wu and colleagues developed a sequencing technique based on the partial blockage of DNA polymerization with radiolabeled nucleotides \cite{wu1972nucleotide, padmanabhan1974chemical}.
 Subsequently, Sanger developed a reliable DNA sequencing method based on the same DNA polymerization chain-termination concept by dividing the sequencing reaction into four, one for each base, and sorting the resulting DNA fragments in parallel on an acrylamide gel \cite{sanger1977dna}.
 Optimized and implemented using fluorescent chemistry \cite{strauss1986specific}, this approach, now known as Sanger sequencing, became the foundation of the first commercial sequencing machines in the late 1980s.
 
 Sanger sequencing was the workhorse standard of biology for nearly 30 years, from the late 1970s until the mid 2000s.
 Its read length is limited by the reaction efficiency required to obtain a fraction of terminations at every base in the sequence.
-In practice, reads of 500 to 1000 base pairs can be reliably obtained, which are sufficient to cover a large portion of a gene.
+In practice, reads of 500 to 1000 base pairs can be obtained.
 With clonal DNA as input the per base accuracy of the method is extremely high, as each base readout reflects the termination of large numbers of molecules \cite{castiblanco2013primer}, a feature which has ensured it remains important for validation of sequencing results \cite{sikkema2013targeted}.
 However, heterogeneity in the input DNA library can produce muddled signals that rapidly become uninterpretable.
 Insertions and deletions (indels) will cause a loss of phase in the sequencing trace \cite{tenney2007tale}, a problem which is still encouraging algorithm development \cite{hill2014poly}.
@@ -142,7 +138,7 @@ To yield fully assembled genomes, these data required the development of suitabl
 
 \subsubsection{``Next generation'' sequencing}
 
-In the late 1990s and early 2000s, several groups began exploring an alternative sequencing strategies.
+In the late 1990s and early 2000s, several groups began exploring alternative sequencing strategies.
 In the ultimately dominant one, DNA that has been clonally arrayed on a surface is directly sequenced using fluorescent imaging.
 Sequencing progresses through the synthesis of the second strand of each of the molecules, and so these techniques are typically called ``sequencing-by-synthesis.''
 This modality allowed for a massive parallelization of the sequencing reaction, and has resulted in a dramatic reduction of cost.
@@ -177,7 +173,7 @@ It may be combined with other sequencing information to obtain estimates of the 
 
 All previously described sequencing techniques are dependent on the observation of pools of molecules.
 These methods benefit from amplification of DNA, which increases signal, but also adds and a potential source of error to DNA sequencing.
-They also suffer from phasing and stepwise reaction efficiency effects, which fundamentally limit the maximum length of an accurate read.
+They also suffer from de-phasing resulting from imperfect stepwise reaction efficiency, which fundamentally limit the maximum length of an accurate read.
 A method to sequence single molecules accurately would theoretically allow longer read lengths, but this requires the difficult, direct observation of DNA.
 Efforts to develop such a method have been continuously underway throughout 2000s and 2010s.
 Two successful commercial sequencing platforms based on this principle are rapidly defining a new technical phase of genome inference.
@@ -207,7 +203,7 @@ Nanopore sequencing can also obtain the longest reads of any sequencing technolo
 
 Due to technical limits that are unlikely to ever be fully eliminated, individual DNA sequence reads are rarely able to cover the entire genome of an organism.
 This means that in many cases, the best sequencing data possible is a set of random reads sampled from fragments of the genome. 
-The standard response to this limitation is whole genome ``shotgun'' sequencing, wherein the genome is fragmented, perhaps by sonication or enzymatic digestion, and the resulting fragments are sequenced and then reassembled using computer programs \cite{gardner1981complete, sanger1982nucleotide}.
+In whole genome ``shotgun'' sequencing the genome is fragmented, perhaps by sonication or enzymatic digestion, and the resulting fragments are sequenced and then reassembled using computer programs \cite{gardner1981complete, sanger1982nucleotide}.
 This process necessitates a reconstructive step in which the information obtained from the sequenced fragments is reassembled into the whole genome from which they arose.
 This process is known as \emph{assembly}, and computer algorithms implementing it have been used when inferring genome sequences since the generation of the first whole genome sequence for bacteriophage $\varphi$X174 in 1977 \cite{sanger1977nucleotide, staden1979strategy}.
 
@@ -216,12 +212,12 @@ They first establish a set of head to tail overlaps between reads (overlap), an 
 However, given an efficient method to find read pairs that are very likely to match together, the overlap step remains tractable as the overall complexity of matching can be reduced to be approximately quadratic in read depth and linear in genome size \cite{huang1992contig}.
 These overlaps are then used to establish an estimate of the ordering of the reads (layout).
 The layout is then used to generate a consensus sequence through heuristics or dynamic programming over the layout \cite{kececioglu1995combinatorial}.
-This final phase is equivalent to the multiple sequence alignment (MSA) problem, although instead of generating an MSA as output methods would typically take the consensus sequence, as the objective was to reconstruct a linear representation of the input genome.
-Assembly errors were frequent, which necessitated a time-consuming manual ``finishing'' step in order to resolve ambiguity, resulting in the development of software to aid this process \cite{gordon1998consed}.
-The OLC assembly approach was utilized by genome projects for the following twenty-five years, and was employed even in the completion of the public Human Genome Project (HGP), where BAC clones of 150kb fragments of the genome were sequenced, initially assembled by algorithm and finally manually finished into the ``golden path'' that would become the reference genome \cite{international2001initial}.
+This final phase is equivalent to the multiple sequence alignment (MSA) problem, although instead of generating an MSA as output methods would typically take the consensus sequence, as the objective is often to reconstruct a linear representation of the input genome.
+Early assemblers committed frequent assembly errors, which necessitated time-consuming manual ``finishing'' \cite{gordon1998consed}.
+The OLC assembly approach was utilized by genome projects for the following twenty-five years, including in the public Human Genome Project (HGP), where BAC clones of 150kb fragments of the genome were sequenced, initially assembled by algorithm and finally manually finished into the ``golden path'' that would become the reference genome \cite{international2001initial}.
 
 In principle, the assembly process could be fully automated, but as late as the early 1990s this frequently was not seen as feasible due to the lack of reliable algorithms \cite{mahy1991sequencing}.
-The improvement of OLC algorithms eventually met the challenge, yielding methods such as PHRAP \cite{green1999phrap} (a quality aware assembler that saw extensive use downstream of Sanger sequencers), TIGR \cite{sutton1995tigr} (which was used in the generation of the first assembly of a free living organism, the 1.8Mpb genome of \emph{Haemophilus influenzae} \cite{fleischmann1995whole}), GigAssembler \cite{kent2001assembly} (which was used by the HGP), and the Celera assembler \cite{myers2000whole,miller2008aggressive} (which saw extensive use in the generation of early large whole genome assemblies in the late 1990s and early 2000s, including the privately funded genome project \cite{venter2001sequence}).\footnote{This project apparently still relied on data produced by the HGP \cite{waterston2002sequencing}, but the significance of this reliance was disputed by researchers involved in the private project \cite{myers2002sequencing}, who argued that the manner in which they used the public sequences avoided contamination by manual finishing done by the HGP.}
+The improvement of OLC algorithms eventually met the challenge, yielding methods such as PHRAP \cite{green1999phrap} (a quality aware assembler that saw extensive use downstream of Sanger sequencers), TIGR \cite{sutton1995tigr} (which was used in the generation of the first assembly of a free living organism, the 1.8Mpb genome of \emph{Haemophilus influenzae} \cite{fleischmann1995whole}), GigAssembler \cite{kent2001assembly} (which was used by the HGP), and the Celera assembler \cite{myers2000whole,miller2008aggressive} (which saw extensive use in the generation of early large whole genome assemblies in the late 1990s and early 2000s, including the privately funded genome project \cite{venter2001sequence}\footnote{This project apparently still relied on data produced by the HGP \cite{waterston2002sequencing}, but the significance of this reliance was disputed by researchers involved in the private project \cite{myers2002sequencing}, who argued that the manner in which they used the public sequences avoided contamination by manual finishing done by the HGP.}.)
 The process implemented in the Celera assembler (including repeat masking) has remained essential to the genome assembly problem until the present.
 
 In 2005, Myers formalized an idealized version of the assembly problem in the \emph{string graph} data structure \cite{myers2005}, which is a sequence graph induced from the overlaps in a set of shotgun sequencing reads.
@@ -229,11 +225,11 @@ This model demonstrates that repeats greater than the length of a sequence read 
 The string graph can be shown to represent the full information available in the input sequence data, and successful assembly algorithms are built around an induction of the string graph via the construction of the FM-index \cite{ferragina2001experimental} from Illumina read sets \cite{simpson2010,simpson2012efficient,li2015fermikit}.
 If not using compressed data structures and low-error reads, the repeats are often irresolvable and may be masked from the assembly process to improve performance on the tractable non-repetitive regions of the genome, which is a strategy still promoted and employed by Myers \cite{myers2014efficient}.
 Canu and FALCON, which to some extent stand as contemporary implementations of the Celera assembly process, are among the best-performing assemblers for noisy single-molecule sequencing data that is the mainstay of current genome assembly projects \cite{chin2016phased,koren2017canu}.
-These and other similar methods have shown that recent long reads can be used to fully assemble genomes directly from shotgun sequencing and without human finishing \cite{loman2015complete,jain2018nanopore}.
+These and similar methods have shown that long reads can be used to fully assemble genomes without human finishing \cite{loman2015complete,jain2018nanopore}.
 
 The repeat problem has been tackled in various ways, but one of the most enduring solutions resolves the issue through the reduction of the assembly overlap graph to a de Bruijn graph (DBG) \cite{pevzner2001eulerian}.
 In this approach, the read set is fragmented into all subsequences of reads of a given length $k$, and a graph is constructed where $k$-mers label nodes and overlaps of $k-1$ between successive $k$-mers induce edges representing linkages between them.
-The de Bruijn graph model simplifies the representation of the read set, providing a clean model for assembly algorithms.
+The de Bruijn graph simplifies the representation of the read set, providing a clean basis for assembly algorithms.
 It enabled the first \cite{zerbino2008velvet,simpson2009abyss,iqbal2012novo}, and most memory-efficient assembly methods for short read sequencing data, with techniques like bloom filters \cite{chikhi2013space}, succinct DBGs \cite{bowe2012succinct,li2015megahit}, and minimizer partitioning \cite{chikhi2016compacting} applied to generate a compressed representation of the graph.
 DBG based assemblies suffer from the loss of information induced through the $k$-merization of their input, causing a reduction in assembly contiguity \cite{earl2011assemblathon}, although in practice this can be mitigated by reconsideration of the input reads and read pairs \cite{butler2008allpaths}.
 They also are applicable only where the sequence error rate is low enough for overlapping reads to be expected to have exact matching $k$-mers of the appropriate size (typically, $k \in [20 \ldots 50]$ base pairs), and as such cannot be applied to third generation single molecule sequencing due to its inherently high error rate.
@@ -247,7 +243,7 @@ This file format and the data model it implies is an essential link between the 
 
 \section{Reference genomes}
 
-As we have seen in the previous section, obtaining a single genome sequence \emph{de novo} is an arduous task, and remains a complex problem.
+Obtaining a single genome sequence \emph{de novo} is an arduous task, and remains a complex problem.
 The result is a valuable object which can be used to lower the cost of subsequent analyses and enable direct whole genome comparisons which provide a full perspective on the genetic relationship between multiple individuals or species.
 The need for reference genomes is clear, and they are collected in open public databases to allow their dissemination and use by researchers.
 NCBI's RefSeq release 89 of July 13, 2018 contains some 81,345 organisms\footnote{\url{https://www.ncbi.nlm.nih.gov/refseq/}}, although it should be noted that only a small fraction of these genomes are eukaryotic.
@@ -256,12 +252,12 @@ Recent developments in long read, single molecule sequencing have enabled great 
 The reference genome serves as an anchor for annotations that describe sequences and regions of interest within the genome, such as genes, exons, chromatin structures, DNA interacting proteins, and genetic variation \cite{sherry2001dbsnp,quinlan2010bedtools,encode2012integrated}.
 An established reference genome can serve as a conceptual foundation for the communication and interpretation of scientific results \cite{kent2002human}, and is seen as essential for collaboration and the development of a genome research community in a particular organism \cite{smith1998functional,cherry1998sgd}.
 
-Traditionally, references are seen as haploid models of the genome, and represent only a single version of each genomic locus.
+Reference genomes tend to represent only a single version of each genomic locus.
 This conceptual simplicity is a core feature of their public use.
 Although the issue of genetic diversity has always been appreciated by those who work with genomes, expediency has encouraged the use of linear models for reference genomes.
-For instance, within the HGP members of the consortium could observe diversity within the BAC clones that they had sequenced from different human donors, and initiated a debate about the inclusion of heterozygosity in the reference itself.
-Ultimately, the twin needs of ``completing'' the reference sequence and maintaining a simple conceptual system (the haploid sequence became known as the ``golden path'') encouraged the publication of a simple linear reference\footnote{Personal communication with David Haussler.}.
-Recent releases of the reference do incorporate a concept of alternative locus \cite{schneider2017evaluation}, but these are represented as linear sequences without a unifying alignment between them, which complicates their use in resequencing \cite{jager2016alternate}.
+Within the HGP, members of the consortium could observe diversity within the BAC clones that they had sequenced from different human donors, and initiated a debate about the inclusion of heterozygosity in the reference itself.
+Ultimately, a graphical model was seen as too complicated, and practicality necessitated the publication of a linear reference based around what came to be called the ``golden path'' through the assembly\footnote{Personal communication with David Haussler.}.
+Since early releases, the human reference genome has included alternative versions of some loci \cite{schneider2017evaluation,church2018genomes}, but these are represented as linear sequences without a unifying alignment between them, which complicates their use in resequencing and annotation \cite{jager2016alternate}.
 
 % history of reference sequences
 % use of the reference sequence in analysis
@@ -270,8 +266,8 @@ Recent releases of the reference do incorporate a concept of alternative locus \
 Due to the high cost of obtaining error-free, full length genomes, standard practice will use the best genome assembly for a given organism as a \emph{reference genome} when analyzing the sequences of other organisms from the same species.
 To do so, the genomes of the other individuals do not need to be fully assembled, and instead shotgun sequencing libraries from these new individuals may be aligned back to the reference to find small differences between the genomes.
 To distinguish it from whole genome sequencing and assembly, this process is known as \emph{re}sequencing.
-In effect, it provides a low-cost and low-effort route to the inference of a new genome, with the caveat that the inferred genome must be expressed in terms of the reference one.
-Resequencing typically is understood as having two phases.
+
+Resequencing has two phases.
 In the first phase, reads from the sample or samples under study are aligned against an appropriate, genetically similar, reference genome.
 In the second phase, the aligned reads (alignments) are processed together locus by locus to determine allelic variation within the samples relative to the reference genome.
 
@@ -279,23 +275,25 @@ In the second phase, the aligned reads (alignments) are processed together locus
 \label{sec:sequence_alignment}
 
 An \emph{alignment} expresses one sequence in terms of a set of positions, edits, and matches to another.
-Algorithms to determine the most plausible alignment between a pair of sequences have as long a history as sequencing itself, with the first significant attempts to algorithmically assess sequence homology and divergence between protein sequences arising in the 1960s with Fitch's method for homology detection \cite{fitch1966improved}.
-To account for insertions and deletions, this method required the comparison of many subsequences of two sequences to be compared, a fact which Needleman and Wunsch appreciated in their development of an O(NM) time algorithm for the global alignment of sequences in 1970 \cite{needleman1970general}.
+Algorithms to determine the most plausible alignment between a pair of sequences have as long a history as sequencing itself.
+The first significant attempts to algorithmically assess sequence homology and divergence between protein sequences arose in the 1960s with Fitch's method for homology detection \cite{fitch1966improved}.
+To account for insertions and deletions, this method required the comparison of many subsequences of two sequences to be compared, resulting in poor computational bounds.
+In 1970, Needleman and Wunsch responded with an O(NM) time algorithm for the global alignment of sequences \cite{needleman1970general}.
 Given strings to compare of length $N$ and $M$, the algorithm builds an $M \times N$ matrix in which any possible full length alignment between both sequences can be expressed as a path through a series of cells.
 The matrix is designed such that a match corresponds to the shortest (diagonal) path through the matrix, and insertions and deletions correspond to horizontal or vertical movements.
 To determine the most-likely path, Needleman and Wunsch apply a recurrence relation dependent on the characters at each pair of positions in the strings and the values of the cells above and/or to the left.
 This implements a dynamic programming (DP) method \cite{bellman1952theory}.
 For each cell, the score is given as the maximum of: the score of cell to the diagonal plus a bonus if the corresponding sequence characters are the same and minus a penalty if they are different; and the scores of the cells above and below minus a penalty corresponding to the weight given to an insertion or deletion.
 Finally, we determine the optimal path beginning from the opposite extreme cell of the matrix from where the scoring began, in which we walk back through the successive maximum scores until reaching the opposite extreme corner of the matrix.
-This traceback encodes the alignment, which is most-simply represented as a vector of pairs of matched bases in each sequence.
+This ``traceback'' encodes the alignment, which is most-simply represented as a vector of pairs of matched bases in each sequence.
 It can be shown that provided full evaluation of the dynamic programming problem, the optimal alignment is obtained given a set of scores parameterizing the recurrence relation.
 
 This alignment algorithm is known as a ``global'' alignment algorithm, in that the alignment covers all bases of both sequences.
 In practice, this type of comparison is not always needed, and it can be advantageous to obtain only the optimal sub alignments between sequences.
-Smith and Waterman provided a clean modification of the algorithm of Needleman and Wunsch, modifying it to prevent negative scores, a step which allowed them to produce the optimal ``local'' alignments \cite{smith1981comparison}, ignoring regions unlikely to contain significant homology.
+Smith and Waterman provided a clean modification of the algorithm of Needleman and Wunsch, altering it to prevent negative scores, which allowed it to produce optimal ``local'' alignments \cite{smith1981comparison}, while ignoring regions unlikely to contain significant homology.
 The algorithm, further refined by Gotoh \cite{gotoh1982improved} to enable affine gaps\footnote{In affine gap schemes the cost of a gap per base decreases as its length increases. Such a scheme approximates the $\zeta$-distributed excursions of a particle under Brownian motion, which structure the length of insertions and deletion mutations observed in nature.} and computation in $O(MN)$ time, is today one of the most important in genome analysis.
 The amount of work on this topic is considerable, and the subsequent decade yielded numerous modifications of the basic alignment concept, for instance reducing the memory bounds to $O(N)$ through a divide and conquer approach \cite{myers1988optimal}, and further explorations of affine gap scoring schemes \cite{altschul1986optimal,gotoh1990optimal}.
-Numerous following works have offered improved implementations, using vectorized instructions to improve the runtime of the algorithm \cite{farrar2007striped} and heuristics to selectively evaluate only part of the DP matrix \cite{suzuki2017acceleration}.
+Subsequent works have offered improved implementations, using vectorized instructions to improve the runtime of the algorithm \cite{farrar2007striped} and heuristics to selectively evaluate only part of the DP matrix \cite{suzuki2017acceleration}.
 However, such changes were not sufficient to enable alignment against large sequence databases.
 
 $O(MN)$ algorithms for sequence alignment are impractical when either $M$ or $N$ becomes large.
@@ -303,35 +301,33 @@ Naturally, as sequence databases grew and the size of sequenced genomes increase
 When aligning a short sequence against a large database we expect to obtain a sensitive alignment, but provided sufficient homology between the sequence and the database it is unlikely that we need to evaluate the full problem using an algorithm like Smith-Waterman-Gotoh (SWG).
 By indexing either the query or target set of sequences to efficiently obtain patterns of exact matches, candidate sub-regions of both can be isolated and submitted for more sensitive alignment.
 
-This strategy was implemented in the mid to late 1980s in the FASTA \cite{pearson1988improved} and BLAST \cite{altschul1990basic} alignment algorithms.
-FASTA greatly accelerates pairwise alignment by a pattern which remains common in the current generation of sequence aligners.
-It first uses a seeding step that finds exact matches between the query and target, using chains of short $k$-mer seeds to establish the longest matching subsequences.
+This strategy was implemented in the mid- to late-1980s in the FASTA \cite{pearson1988improved} and BLAST \cite{altschul1990basic} alignment algorithms.
+FASTA first uses a seeding step that finds exact matches between the query and target, using chains of short $k$-mer seeds to establish the longest matching subsequences.
 A few of the best scoring candidates are enumerated and evaluated using a banded SWG algorithm.
-In contrast, by default BLAST implements a fully heuristic alignment process based solely on the $k$-mer seeds and ungapped alignment.
-This is much faster than FASTA but can perform slightly worse in the context of highly divergent sequences.
-BLAST's heuristic alignment comprises a speedup of many orders of magnitude over full DP based algorithms at a minor cost to accuracy.
+In contrast, BLAST implements a fully heuristic alignment process based solely on the $k$-mer seeds and ungapped alignment.
+This is much faster than FASTA but can perform slightly worse with highly divergent sequences.
+BLAST's heuristic alignment is many orders of magnitude faster than full DP based algorithms at a minor cost to accuracy.
 The popularity of BLAST in biology\footnote{The BLAST1 paper has been cited more than 70,000 times as of August 2018.} is clear evidence of the importance of the alignment problem to all kinds of genomic analysis.
 It is also evidence that minor losses in accuracy are acceptable given the cost of sequence analysis in large data sets.
 Jim Kent's Blast-like alignment tool (BLAT) indexes the target set with non-overlapping $k$-mers and queries all $k$-mers in the reads, yielding a method that is less sensitive but several orders of magnitude faster again than BLAST \cite{kent2002blat}.
-The increased performance was a necessity when working with the scale of data generated in the HGP.
 
 As reliable commercial second-generation sequencing systems became available the rate of sequence data acquisition growth rapidly outstripped the rate of improvement in computing performance \cite{leinonen2010sequence,kodama2011sequence}.
 This necessitated further improvements in the computational cost of sequence alignment.
 The most-widely used of these methods focused on the increasingly prevalent problem of aligning short reads to reference genome type sequence databases.
 Due to the high quality of the reference sequence, low error rate of the short ($\leq$100bp) reads, and low nucleotide diversity of humans (where $\theta \approx 10^{-3}$), algorithms that focused on exact string matching had great success.
-Much like BLAST and BLAT, the first wave of aligners capable of indexing the human reference genome and aligning short reads to it efficiently utilized exact $k$-mer matching via hash tables followed by local alignment via heuristic or DP methods \cite{li2008soap,lee2014mosaik,li2008mapping}.
+Much like BLAST and BLAT, the first wave of aligners capable of indexing the human reference genome and aligning short reads to it utilized exact $k$-mer matching via hash tables followed by local alignment \cite{li2008soap,lee2014mosaik,li2008mapping}.
 Substantial improvements would be yielded by the development of aligners based on contemporary developments in compressed data structures.
 
-The suffix tree \cite{weiner1973linear} encodes all suffixes of a sequence in the structure of a tree such that the suffixes may be enumerated by a depth first search (DFS) of the tree.
-This structure can be used to determine if a given sequence $q = c_{1}c_{2}\ldots c_{|q|}$ is present in the sequence from which the tree was built in $O(|q|)$ time.
+The suffix tree \cite{weiner1973linear} encodes all suffixes of a sequence $S$ in the structure of a tree such that the suffixes may be enumerated by a depth first search (DFS) of the tree.
+This structure can be used to determine if a given sequence $q = c_{1}c_{2}\ldots c_{|q|}$ is present in $S$ in $O(|q|)$ time.
 Search begins at the root, progressing across the topology (edge or node) of the tree which is labeled with the next character until no further matches may be found.
-By augmenting the tree with the sequence positions corresponding to each node, the search may also yield the positions of the exact matches detected within the target sequence from which the tree was built.
+By labeling the tree with the sequence positions corresponding to each node, the search may also yield the positions of the exact matches detected within $S$.
 Suffix trees may be built in linear time and space relative to their input \cite{ukkonen1995line}, and support diverse algorithms for string comparison \cite{apostolico1985myriad}, such as whole genome alignment \cite{delcher1999alignment}, but they require relatively large amounts of memory per input base.
-In practice, they were superseded by equivalent data structures with better memory bounds such as the suffix array (which represents the tree in a linear array of suffix sort ranks) \cite{manber1993suffix}, and its compressible and dual sibling the Burrows-Wheeler Transform (BWT) \cite{burrows1994block}.
+They were superseded by equivalent data structures with better memory bounds such as the suffix array (which represents the tree in a linear array of suffix sort ranks) \cite{manber1993suffix}, and its compressible sibling the Burrows-Wheeler Transform (BWT) \cite{burrows1994block}.
 
 By augmenting the BWT to enable the exact matching via emulation of the suffix tree, Paolo Ferragina and Giovanni Manzini developed the FM-index \cite{ferragina2000opportunistic,ferragina2004alphabet}.
-Given a string $S$, the FM-index may be built using a series of transformations and auxiliary data structures that induce the suffix tree in the context of the highly-compressible BWT.
-First, we add marker characters for the start and end with lexicographic order less and greater than the rest of the characters in the alphabet, e.g. $\#,S,\$$.
+Given a string $S$, the FM-index may be built using a series of transformations and auxiliary data structures that induce the suffix tree by constructing the BWT.
+First, we add marker characters for the start and end with lexicographic order less and greater than the rest of the characters in the alphabet, e.g. $\#S\$$.
 Conceptually, we take all rotations of the sequence and sort them, yielding matrix $M$, which is sometimes called the Burrows-Wheeler Matrix (BWM), but in fact this is done in a space-efficient manner without the enumeration of the rotations.
 This sort has many similarities to the suffix tree, and for instance it can be seen that a lexicographically-ordered DFS through the suffix tree would enumerate the prefixes of the rotations of the sequence preceding the terminal character $\#$ in the same order as they are sorted.
 The suffix array $SA$ is given by the vector of the suffix ranks in the sorted order they occur in $M$, and is related to the ordering of characters in the first column $F$, while the BWT is given as the last column, $L$.
@@ -348,59 +344,58 @@ The various matches of $q$ in $S$ may now be obtained by the positions in $SA[s 
 The addition of the longest common prefix (LCP) array on the sorted suffixes can be used to emulate all algorithms on suffix trees in this context \cite{abouelhoda2004replacing}, and in turn this enables $O(|q|)$ search of queries against $S$.
 Of particular relevance to this work, when completing a phase of backward search we could use the LCP to traverse the suffix links in the suffix tree and continue with the next (partially overlapping) maximal exact match.
 
-The FM-index became one of the core data structures used in modern short-read aligners such as BWA \cite{li2009fast} and BOWTIE \cite{langmead2009ultrafast}, which used backtracking LF alignment to directly align sequences to the suffix array encoded in the FM-index.
-This backtracking search is impressively fast, and perfectly matches the needs of aligning short human sequencing reads to the reference genome, but has problems detecting indels (as these require exponentially more backtracks to infer) and performs less well with increasing read length.
+The FM-index is used in modern short-read aligners such as BWA \cite{li2009fast} and BOWTIE \cite{langmead2009ultrafast}, which used backtracking LF alignment to directly align sequences to the suffix array encoded in the FM-index.
+This backtracking search is fast, but has problems detecting indels (as these require exponentially more backtracks to infer) and performs less well with increasing read length.
 In response, the authors merged initial exact matching with a final DP step to yield ``long read'' capable aligners like BWA-SW \cite{li2010fast} and BOWTIE2 \cite{langmead2012fast}.
 Further refinements of this concept yielded BWA MEM \cite{li2013aligning}, which uses a heuristic algorithm to determine ``supermaximal exact matches'' (SMEMs) and reseed ``sub matches'' within them using a bidirectional FM-index (the FMD index).
 Due to its relative robustness to error and variation, the MEM concept has ultimately prevailed and as of the time of this writing BWA MEM can be seen as the industry standard method for aligning short reads to the genome.
 
-Much of the new sequencing data has been generated for humans in medically-motivated genome wide association studies \cite{uk10k2015uk10k} or population survey projects like the 1000 Genomes Project (1000GP) \cite{1000Gphase1,1000g2015}. % TODO not sure about this phrasing
+Much of the second generation sequencing data has been generated for humans in medically-motivated genome wide association studies \cite{uk10k2015uk10k} or population survey projects like the 1000 Genomes Project (1000GP) \cite{1000Gphase1,1000g2015}. % TODO not sure about this phrasing
 The development of these methods was accelerated by an open, competitive spirit fostered during the 1000GP, whose primary sequencing data remains the largest completely publicly available data set, with more than 100TB of sequence data available for download from public URLs without any authentication.
 There, project participants formalized the resequencing process by generating a series of data formats linking the various stages of analysis, including the sequence alignment/map format (SAM) and its binary equivalent (BAM) \cite{li2009sequence} that is the standard output format for contemporary aligners.
 
 
 \subsection{Variant calling}
 
-As we have seen, DNA sequencing reads of all types contain errors, and genomes contain diversity.
-This means that we must aggregate sequencing information to infer the genomic state at a given locus.
-In the context of resequencing, techniques to do this have come to be known as \emph{variant calling}.
-The simplest methods for this process resemble the consensus step in OLC assembly, and can be implemented as heuristic filters on the mutually gapped alignment matrix of a set of homologous sequence reads \cite{koboldt2009varscan}.
-A natural framework in which to do so is a Bayesian one, in which prior expectations about the genomic state are combined with the available data to generate a posterior probability that allows the propagation of information about uncertainty to downstream analyses.
-Such a model allows the integration of various sources of information in addition to the sequence of the reads themselves, including the base quality (BQ), or machine-estimated probability of an erroneous base call, and mapping quality (MQ), which represents the aligner's estimate that the given alignment is a mismapping or ambiguous \cite{li2011statistical}.
-Furthermore, collections of genomes can be modeled at the same time using population genetic theoretical expectations. For instance, in a panmictic population under neutral selection the pattern of observed genotypes should be consistent with Hardy-Weinberg Equilibrium (HWE), and to have confidence in a given genotyping call, the evidence for variation should be stronger than the prior odds of there being no genetic variation at the site.
+DNA sequencing reads of all types contain errors, and genomes contain diversity.
+To resolve these errors and infer the genome's state, we aggregate information from many reads mapping to each locus.
+In the context of resequencing, this process is known as \emph{variant calling}.
+The simplest methods resemble the consensus step in OLC assembly, and are implemented as heuristic filters on the mutually gapped alignment matrix of a set of homologous sequence reads \cite{koboldt2009varscan}.
+A Bayesian model can incorporate prior expectations about the genomic state with the available data to generate a posterior estimate of the probability of polymorphism that can propagate uncertainty to downstream analyses.
+It can use first principles to integrate various sources of information in addition to the sequence of the reads themselves, including the base quality (BQ), or machine-estimated probability of an erroneous base call, and mapping quality (MQ), which represents the aligner's estimate that the given alignment is a mismapping or ambiguous \cite{li2011statistical}.
+A Bayesian approach also supports the joint analysis of a large number of individuals from the same population.
+For instance, in a panmictic population under neutral selection the pattern of observed genotypes should be consistent with Hardy-Weinberg Equilibrium (HWE), and to have confidence in a given genotyping call, the evidence for variation should be stronger than the prior odds of there being no genetic variation at the site.
 
-The earliest implementations of this technique focused on genotyping samples using expressed sequence transcripts (ESTs) \cite{marth1999general}, which were promoted by Celera and others as a technique to focus genome analysis on coding sequences.
+The earliest implementations of Bayesian variant calling and genotyping were applied to expressed sequence transcripts (ESTs) \cite{marth1999general}.
 Competition fostered by the 1000GP encouraged the development of variant calling algorithms based on a variety of principles.
 The simplest methods would detect variation given pointwise SNP and indel descriptions directly from the alignments \cite{li2009sequence,depristo2011framework}.
 However, this technique was shown to be susceptible to inconsistencies in the alignment process, and several groups developed methods that would reevaluate the alignments in a reference-independent manner in order to homogenize the representation of small variation.
 These techniques became known as ``local assembly'' variant detection algorithms, and include the windowed haplotype detection implemented in freebayes \cite{garrison2012haplotype} as well as full local \emph{de novo} assembly based on de Bruijn graphs as implemented in Dindel \cite{albers2010dindel}, Platypus \cite{rimmer2014integrating} and the GATK's HaplotypeCaller.
-In parallel, several whole genome \emph{de novo} assembly methods, including SGA and Cortex, were applied to the full data set, yielding variant calls that were expected to be unbiased due to the reference genome.
-The final project results were merged into a jointly inferred population genome assembly using statistical phasing techniques \cite{browning2007,howie2011,delaneau2012}, which were themselves guided by genotype patterns presented in a number of data sources, not limited to sequencing and including genotyping arrays \cite{1000g2015}.
-As they did for alignments, members of the 1000GP also developed a standard format for describing collections of resequenced genomes, including their genotypes and inferred haplotypes, which is known as the variant call format (VCF) \cite{danecek2011variant}.
-All current methods for variant calling produce this format.
+In parallel, several whole genome \emph{de novo} assembly methods, including SGA and Cortex, were applied to the full data set, yielding variant calls that minimized bias towards the reference genome.
+The final project results were merged into a population genome assembly using statistical phasing algorithms \cite{browning2007,howie2011,delaneau2012} guided by genotyping results from sequencing and genotyping arrays \cite{1000g2015}.
+Members of the 1000GP also developed a file format for describing collections of resequenced genomes, including their genotypes and inferred haplotypes, the variant call format (VCF) \cite{danecek2011variant}, which has become the standard interchange format for sequencing-based variant and genotyping information.
 
-Due to the absence of a reliable truth set, traditional algorithmic design rather than machine learning had to be used to develop most of the algorithms.
-The complexity of the problem and its relatively low computational cost relative to alignment encouraged the development of many competing solutions.
+Due to the absence of a reliable truth set, early variant calling method implemented conceptually-derived inference methods rather than machine learning techniques.
 Subsequently, projects at Illumina (Platinum genomes) and NIST (Genome in a Bottle) have generated ``truth sets'' for variant calls matched to cell lines for which large amounts of sequencing data is publicly-available \cite{eberle2013platinum,zook2014integrating}.
-These truth sets have then enabled the development of ``universal'' variant callers using machine learning techniques \cite{poplin2017creating}.
+These truth sets have then enabled the development of ``universal'' variant callers using machine learning techniques \cite{poplin2017creating}\footnote{Along with Nicol\'{a}s Della Penna, I developed a similar but much simpler method based on a linear learner: \url{https://github.com/ekg/hhga}}.
 It may be expected that this trend will continue as the number of highly accurate independently sequenced genomes increases.
 
 \subsection{The reference bias problem}
 
-When inferring genomes using resequencing, the reference can be thought of as a kind of prior.
-Short reads are insufficient to generate \emph{de novo} assemblies of reference quality, and this issue is exacerbated when they are used in resequencing, as the prior information provided by the reference is relatively strong and can distort our perspective on the genome we wish to infer \cite{sudmant2015integrated}.
-Contemporary aligners operate on the principle of matching each sequence read to the linear reference, and differences between the read and the reference induced by both error and variation will tend to reduce the success of mapping.
+Short reads are insufficient to generate \emph{de novo} assemblies of reference quality, and this issue is exacerbated when they are used in resequencing, as the prior information provided by the reference is relatively strong and can distort our results \cite{sudmant2015integrated}.
+Most aligners operate on the principle of matching each sequence read to the linear reference, and differences between the read and the reference induced by both error and variation will tend to reduce the success of mapping.
 As I will demonstrate later in this work, reference bias is most severe for larger variants.
 However, the bias towards the reference is relevant even for SNPs, a fact which adds great complexity to experimental contexts that are sensitive to slight changes in allele observation count, such as allele specific expression (ASE) quantification from RNA sequencing \cite{stevenson2013sources}, or in the context of short and high error reads as are common in the sequencing of ancient DNA \cite{zhou2017antcaller}.
 
 Advances in sequencing technology can reduce reference bias in some contexts where long reads can be obtained.
-For instance, a long read aligned against the reference will much more easily represent a structural variant than a short read.
-However, costs have continued to reduce in second generation sequencing even as long read sequencing has become established, so it seems likely that there will continue to be a cost advantage to resequencing with short reads for the near future.
-Nonetheless, reference bias remains even in a future in which all sequencing is completed with long, low-error reads.
-As long as the reference is used as a basis space for analysis, it will be impossible to develop coherent representations of all sequences in a given cohort.
-In effect, we cannot observe variation in sequences which are not in the reference unless we bring these sequences into communication with each other, and even the problem of establishing whether large variants represent the same entity becomes complicated \cite{chaisson2018multi}.
+Long reads can overlap structural variants that would contain shorter reads, allowing their direct discovery by alignment.
+However, costs of second generation sequencing continue to drop, so it seems likely that there will continue to be a cost advantage to resequencing with short reads for the near future.
+Nonetheless, reference bias remains relevant even in a future in which all sequencing is completed with long, low-error reads.
+As long as the reference is used as a basis space for analysis, it will be impossible to develop unbiased representations of all sequences in a given cohort.
+We cannot consistently describe variation in sequences which are not in the reference unless we bring these sequences into communication with each other.
+It is non-trivial to establish if structural variants independently described against the reference represent the same allele \cite{chaisson2018multi}.
 We can use improvements in assembly methods, such as the linked DBG \cite{turner2018integrating}, to build space-efficient joint assemblies of populations of genomes.
-But these approaches will not allow out of core analysis processes like those implemented in resequencing pipelines, and are unlikely to improve in efficiency by the many orders of magnitude required to consider applying them directly to sequencing from hundreds of thousands or millions of genomes.
+But these approaches are unlikely to improve in efficiency by the many orders of magnitude required to consider applying them directly to sequencing from hundreds of thousands or millions of genomes.
 
 %By laying out the history of the field in detail, I hope to have built a case that such a change is justified and likely to be useful in any likely future state of sequencing and genome inference.
 %We have seen that no sequencing method is perfect, and techniques retain utility for long periods of time due to the numerous tradeoffs inherent in all sequencing methods.
@@ -412,8 +407,6 @@ But these approaches will not allow out of core analysis processes like those im
 
 \section{Pangenomes}
 
-The reference is a prior guide to resequencing.
-If it could represent variation within itself, then we could build a resequencing model that avoided the traditional problem of reference bias.
 Following the completion of the 1000GP, researchers have sought to use the population reference established by that project as an input to genome inference processes.
 Rather than establishing a single linear reference genome, these methods base their analysis on a representation that contains some or all of the known variation in the species of interest.
 In these approaches, the reference system becomes a \emph{pangenome}\footnote{``pan-'' from Greek $\pi\alpha\nu-$, meaning ``all'' or ``every''}, or data space representing all the genomes and their interrelationships.
@@ -421,10 +414,10 @@ The term was first used to describe the sequence information obtained from DNA a
 Due to horizontal gene transfer (driven in large part by the permissive sex lives of bacteria), mobile DNA in the form of viruses and transposable elements, and their enormous population sizes, the genome diversity of many prokaryotes is much greater than that seen in larger, complex organisms.
 In microbial pangenomic theory, the main object of interest is the open reading frame (ORF) and its distribution across species in a clade \cite{vernikos2015ten}, with particular interest to classification of ORFs or genes into a gradient between those that are essential and found in every species (the ``core'' pangenome) to those that are found infrequently (the ``dispensable'' pangenome).
 The term ``pangenome'' is by no means microbiology-specific, and has also seen use in species contexts where small, homozygous genomes support practical direct whole genome comparison, such as \emph{Arabidopsis thaliana} \cite{cao2011whole}.
-With reducing sequencing costs, the levels of diversity in eukaryotic genomes could be more easily appreciated, and in the 2010s evidence has rapidly accumulated that significant levels of large-scale variation occur in the genomes of many species, humans \cite{li2010building,sudmant2010,sudmant2015integrated,chaisson2018multi}, arabidopsis \cite{alonso2016arabidopsis}, brewer's yeast \cite{yue2017contrasting}, and the fruit fly \cite{chakraborty2018hidden}.
+With reducing sequencing costs, the levels of diversity in eukaryotic genomes can be more easily appreciated, and in the 2010s evidence has rapidly accumulated that significant levels of large-scale variation occur in the genomes of many species, humans \cite{li2010building,sudmant2010,sudmant2015integrated,chaisson2018multi}, arabidopsis \cite{alonso2016arabidopsis}, brewer's yeast \cite{yue2017contrasting}, and the fruit fly \cite{chakraborty2018hidden}.
 %  Computational Pan-Genomics Consortium formed at a workshop held from 8 to 12 June 2015, at the Lorentz Center in Leiden
 
-The increasing evidence that the non-reference genomic variation matters even in a human or medical context motivated extensive discussion within a sub-project of the Global Alliance for Genomics and Health (GA4GH)\footnote{The GA4GH is an international consortium of researchers and genomics professionals chartered with the development of new genomics data formats and interchange systems \url{https://www.ga4gh.org/}.}.
+Evidence that non-reference genomic variation matters even in a human or medical context motivated extensive discussion within a sub-project of the Global Alliance for Genomics and Health (GA4GH)\footnote{The GA4GH is an international consortium of researchers and genomics professionals chartered with the development of new genomics data formats and interchange systems \url{https://www.ga4gh.org/}.}.
 At the beginning of my studies I participated in the GA4GH's reference variation task team (RefVar), which was led by Benedict Paten, David Haussler, and Richard Durbin.
 The group had regular meetings where its members entertained proposals for new variation-aware genomic data models and discussed results obtained with software implementations of them.
 By chance, a meeting of the GA4GH in June 2015 in Leiden overlapped a conference held at the Lorentz Centre on ``Future Perspectives in Computational Pan-Genomics''\footnote{\url{https://www.lorentzcenter.nl/lc/web/2015/698/info.php3?wsid=698\&venue=Oort}}, whose participants were discussing ways to apply the concept of pangenomics to many problems in genomics.
@@ -432,7 +425,7 @@ Can Alkan, who had been invited to both meetings, brought members of the GA4GH's
 This exchange motivated members of the RefVar group to consider many alternative resequencing and genome modeling problems.
 For the consortium, our software {\tt vg} became a template for the pangenomic resequencing concept that it would present in the paper resulting from the meeting \cite{computational2016computational} (figure \ref{fig:pangenomic_processes}).
 And in turn, the consortium imagined the missing pieces that would be required to fully enable a pangenomic reference system and support common genome inference patterns using it.
-Much of the work I will present in chapters 2 and 3 of this thesis follows the design developed by this group.
+Much of the work I will present in chapters 2 and 3 of this thesis follows the design presented by this group.
 
 \begin{figure}[htbp!]
   \centering
@@ -461,7 +454,7 @@ Traditional techniques from microbial pangenomics have focused on cataloging the
 In this sense the pangenome is not so much a sequence-based object, but a matrix encoding the presence or absence of genes across the species of a given clade.
 
 If we want to use pangenomic principles to resolve issues with resequencing, then we must take the concept of pangenome more literally, and build a representation that losslessly encodes genomes together with a focus on their sequence content.
-In this perspective, the classical bacterial pangenome becomes a derivative product that we can produce using analyses on our sequence-oriented pangenomic reference.
+In this perspective, the classical bacterial pangenome becomes a derivative product that we can produce using analyses based on a sequence-oriented pangenomic reference.
 I will mostly focus on sequence-based pangenomic models.
 The main classes are described visually in figure \ref{fig:pangenomic_models}.
 
@@ -480,34 +473,33 @@ The main classes are described visually in figure \ref{fig:pangenomic_models}.
   \label{fig:pangenomic_models}.
 \end{figure}
 
-The simplest possible sequence-aware pangenome is just a list of whole genome sequences of many species or individuals.
-In this unfolded pangenome all sequence homologies and evolutionary relationships are implicit (figure \ref{fig:pangenomic_models}A).
-In principle the unfolded pangenome could resolve reference bias, and allow simple augmentation with new data by adding new genome sequences, although this operation already exposes a weakness, which is that adding a new genome always adds all the sequence in that genome to our system.
-Because it does not model homologies between sequences, an unfolded pangenome cannot represent new sequences in terms of recombinants between known sequences.
+The simplest possible sequence-aware pangenome is just a set of whole genome sequences of many species or individuals, in which all sequence homologies and evolutionary relationships are implicit (figure \ref{fig:pangenomic_models}A).
+The unfolded pangenome resolves reference bias, and can be extended with with new data by simply including new genome sequences.
+This model does not benefit from compression related to shared sequences in the pangenome, as adding a new genome always adds all the sequence in that genome to our system.
+Without additional information about homologies, an unfolded pangenome cannot represent new sequences in terms of recombinants between known sequences.
 
 An MSA (figure \ref{fig:pangenomic_models}B) provides a matrix describing the relationships between the sequences as well as the sequences themselves.
-This is not without some additional complexity.
 We must introduce a concept of a gap character to pad the matrix.
 The MSA is a linear object, and cannot represent structural variation compactly.
 An MSA has an equivalent representation as a sequence DAG, as in figure \ref{fig:pangenomic_models}D.
 
 Assembly graphs, in particular DBGs (figure \ref{fig:pangenomic_models}C), provide a simple decomposition of collections of genomes.
-However, a strict DBG without any labeling loses the mapping back to the original genomes, and thus is a poor foundation for a reference system.
+However, a strict DBG without any labeling loses the mapping back to the original genomes.
 Sequence graphs, as in figure \ref{fig:pangenomic_models}E, when annotated with the full set of input paths, provide a lossless representation of the input genomes.
 If they are also bidirectional like DBGs (not shown in figure \ref{fig:pangenomic_models}E) then they can directly represent copy number variations and inversions.
 
 \subsection{The variation graph}
 \label{sec:the_variation_graph}
 
-The implication of these examples is that we need a data model for the reference that losslessly encodes sequence-level relationships between genomes, in effect representing a kind of all-versus-all alignment between the sequences in the pangenome.
-If the data model is to allow recombination between known sequences (a key contributor to genomic diversity) and tandem repeat copy number variation (which occurs readily in genomes), then it could naturally be represented as a regular language, and thus could be represented using a graphical model like a nondeterministic finite automaton (NFA).
+In this thesis I employ a reference system that encodes genomes and the base-level relationships between them.
+This model can be understood as a kind of all-versus-all alignment between the sequences in the pangenome.
+If the data model is to allow recombination between known sequences (a key contributor to genomic diversity) and tandem repeat copy number variation (which occurs readily in genomes), then it can be represented as a regular language encoded in a graphical model like a nondeterministic finite automaton (NFA).
 
 We can adjust the regular language model slightly so that it has properties similar to those of DNA.
-Traditionally, NFAs are represented graphically with states (in our case, pangenomic coordinates) as nodes connected by edges labeled by characters (e.g. DNA bases) in the alphabet of strings that the language recognizes.
-In DNA the essential component is the DNA base, which is represented as a character in a string.
-Strings are thus often regarded as an essential object in bioinformatics, and graphical models with nodes labeled by sequences and edges representing allowed transitions between them are a straightforward generalization of the linear string and have often been employed in bioinformatics.
-As maintaining identifiable positions requires the storage of auxiliary information such as their identity, compression can be achieved by allowing the labels on the nodes to have more than a single character on them.
-This also allows the model to represent de Bruijn graphs, whose nodes are labeled with $k$-mer strings.
+NFAs are represented graphically with states (in our case, pangenomic coordinates) as nodes connected by edges labeled by characters (e.g. DNA bases) in the alphabet of strings that the language recognizes.
+In DNA the atomic element is the DNA base, which is represented as a character.
+Graphical models with nodes (or edges) labeled by sequences and edges (or nodes) representing allowed transitions between them are a straightforward generalization of the linear string.
+Compression can be achieved by allowing the labels on the nodes to have more than a single character on them.
 Because DNA is double-stranded, any such a language implies a reverse complement language which recognizes the reverse complement of any sequence in the first.
 Formalizing this by allowing edges to transition between different strands of the graph allows the model to directly represent sequence inversions.
 
