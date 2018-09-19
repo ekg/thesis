@@ -908,12 +908,12 @@ I posit that by extending the reference genome to be a pangenome with a graphica
 The model I develop, the variation graph, extends the bidirectional sequence graph models used in assembly to support the labeling of paths through the graph, and allowing the representation and relation of linear reference systems within itself.
 
 Variation graphs are related to a wide array of graphical models used in bioinformatics.
-They have deep similarity with string graphs, multiple sequence alignments, and whole genome alignment graphs.
-This similarity indicates that they could serve as a unifying basis for many domains of sequence analysis which have traditionally been separated by methodological differences, such as assembly and variant calling.
+They have similarity with string graphs, multiple sequence alignments, and whole genome alignment graphs.
+This indicates that they could serve as a unifying basis for many domains of sequence analysis which have traditionally been separated by methodological differences, such as assembly and variant calling.
 
-Recently, numerous methods have been published which provide variation-aware alignment or genotyping based on sequence DAGs built from population resequencing.
+Recently, several methods have been published which provide variation-aware alignment or genotyping based on sequence DAGs built from population resequencing.
 These methods demonstrate the difficulty of the problem of generalizing resequencing to graphical reference systems at the multi-gigabase scale of vertebrate genomes.
-In virtually all cases, they use a graph reference model internally, but express their results in terms of a linear reference genome, producing BAM alignments, or genotyping results in VCF format.
+In virtually all cases, they use a graph reference model internally, but express their results in terms of a linear reference genome, producing BAM alignments or genotyping results in VCF format.
 None implement a generic strategy to work with a graphical model equivalent to the variation graph.
 The method I develop, {\tt vg}, is not the first pangenomic aligner, but it is the first that models its results in terms of the pangenome itself, enabling full resequencing analyses to be completed within the graphical model.
 
