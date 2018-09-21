@@ -370,6 +370,15 @@ We store them using a collection of integer vectors and rank/select dictionaries
 
 An XG index of $G = (N, E, P)$ is composed primarily of the backing graph vector $G_\textbf{iv} = g_1 \ldots g_{|N|}$, with each $g_i$ recording the edge context for node $n_i$ in the graph: $g_i = ( \eta_i, \Xi_i)$, a sequence vector $S_\textbf{iv}$ recording the sequences labels of the nodes in a bitcompressed form, and a path membership mapping $N_\textbf{path}$.
 Each $p_i \in P$ is encoded with a set of structures that allow random access to the graph by path position, which is important for the use of paths as reference coordinate systems in the graph.
+A visual sketch of this model is provided in figure \ref{fig:xg_index}.
+
+\begin{figure}[htbp!]
+  \includegraphics[width=\textwidth]{Chapter2/Figs/xg_index_sketch.pdf}
+  \caption[A visual sketch of the XG index]{
+    A visual sketch of the key elements of the XG index for the given graph.
+  }
+  \label{fig:xg_index}
+\end{figure}
 
 To enable better compression, the node sequence space is recorded as a concatenation of node labels $S_\textbf{iv} = seq(n_i) \ldots seq(n_{|N|})$, in which each node has an offset in this sequence space defined by $seq_\textbf{offset}(n_i)$.
 In bitvector $S_\textbf{bv} : |S_\textbf{bv}| = |S_\textbf{iv}|$ we set 1 at each first character in a node label, and 0 otherwise: $S_\textbf{bv}[i] = 1 \iff \exists j : seq_\textbf{offset}(n_j) = i \lor 0$.
@@ -666,6 +675,37 @@ The resulting graph is acyclic and supports queries up to length $k$ on the orig
 %Figure \ref{fig:kdagify} 
 %Supplementary Figure 4 provides a visual description of the process.
 
+\begin{figure}[htbp!] 
+  \centering
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter2/Figs/loopy_dagify0.pdf}
+    \caption{$k=0$} \label{subfig:dagify_k0}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter2/Figs/loopy_dagify1.pdf}
+    \caption{$k=1$} \label{subfig:dagify_k1}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter2/Figs/loopy_dagify4.pdf}
+    \caption{$k=4$} \label{subfig:dagify_k4}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter2/Figs/loopy_dagify10.pdf}
+    \caption{$k=10$} \label{subfig:dagify_k10}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter2/Figs/loopy_dagify17.pdf}
+    \caption{$k=17$} \label{subfig:dagify_k17}
+  \end{subfigure}
+  \begin{subfigure}[t]{0.49\textwidth}
+    \includegraphics[width=1.0\textwidth]{Chapter2/Figs/loopy_dagify25.pdf}
+    \caption{$k=25$} \label{subfig:dagify_k25}
+  \end{subfigure}
+  \caption[DAGification]{
+    DAGification of a small graph, as seen in \ref{subfig:dagify_k0}, with the $k$ unrolling parameter given below each graph.
+  }
+\label{fig:dagify}
+\end{figure}
 
 \subsection{POA and GSSW}
 %*2p 2h*

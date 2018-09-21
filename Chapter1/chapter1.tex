@@ -162,7 +162,7 @@ Illumina's sequencing technology is characterized by short reads (<250bp) with p
 Although the read length has been increased by optimization of the technology, the difficulty of achieving perfect per-base reaction efficiency apparently prevents greater extension of the read length.
 
 A number of methods extend the genome inference capacity of Illumina sequencing, allowing it to be used to infer long haplotypes and genome organization.
-Moleculo, and later 10X Genomics commercialized barcode-guided haplotype sequencing and assembly.
+Moleculo, and later 10X Genomics commercialized barcode-guided haplotype sequencing and assembly \cite{zheng2016haplotyping}.
 The later has focused on providing raw tag information that could be used downstream by an array of haplotype-resolution and assembly tools \cite{mostovoy2016hybrid}.
 The single template aspect of Illumina paired end sequencing allows longer contiguous DNA reads to be obtained by merging partly-overlapping read pairs computationally \cite{magovc2011flash}.
 Single-cell DNA template strand sequencing (strand-seq) can be used to obtain reads from only one half of the chromatids in a single cell \cite{falconer2012dna} via bromodeoxyuridine (BrdU) treatment and cleavage of the nascent strand, which can aid in haplotype reconstruction \cite{porubsky2016direct}.
@@ -615,7 +615,7 @@ Similarly, improvements in performance have been yielded by linking read pairs i
 
 The simplicity of the DBG has made it possible to develop very memory-efficient data models to support its use in assembly.
 The DBG can be effectively encoded in the FM-index of a read set \cite{bowe2012succinct}, and this \emph{succinct} DBG model underpins the most-scalable assembly methods currently available \cite{li2015megahit}.
-Other techniques, such as bloom filter encodings and minimizer partitioning schemes are also used to provide time and space efficiency to DBG methods \cite{chikhi2012space, chikhi2016compacting}.
+Other techniques, such as bloom filter encodings and minimizer partitioning schemes are also used to provide time and space efficiency to DBG methods \cite{chikhi2013space, chikhi2016compacting}.
 
 In the compacted DBG generalization non-furcating regions of the graph are merged into a single node with label length $>k$.
 The compacted DBG is now often a typical output for DBG assemblers \cite{chikhi2016compacting,minkin2016twopaco}.
