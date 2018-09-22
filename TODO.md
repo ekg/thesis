@@ -1,7 +1,7 @@
 # todo for completion of thesis
 
 - add in unfold figure
-- add in xg figure
+- MEM mapping figure
 - fix proportion label problem on aDNA sim figure
 - Richard's suggestions
 - automated grammar check (again)
