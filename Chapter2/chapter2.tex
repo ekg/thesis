@@ -718,11 +718,12 @@ The traceback can be represented as moves in the matrix, or equivalently as the 
 By modifying equation \ref{eqn:gssw_h} so that it is no longer lower-bounded at 0 and changing the traceback so that it goes from beginning to end of query $Q$ and graph $G$, we obtain a ``global'' alignment algorithm with the same properties as Needleman-Wunsch.
 To reduce computational costs, we can \emph{band} the algorithm to limit the region of the DP tables which needs to be explored.
 This approach, as implemented in {\tt vg} by Jordan Eizenga, forms the basis for multipath mapping, in which alignments are represented probabilistically as DAGs rather than linear series of node traversals and edits.
-In multipath mapping, regions between MEMs in a particular cluster may be aligned using global alignment, to obtain full-length descriptions of the alignment in the non-matching region.
+In multipath mapping, regions between MEMs in a particular cluster are aligned using global alignment.
+The use of global alignment ensures that the alignment fully covers the gap between the MEMs.
 Multiple traceback allows for alternatives to be included, and each of these may be scored on the basis of both alignment score and haplotype matching score.
 His implementation is key to the development of haplotype aware mapping, which is the subject of a paper currently in preparation by myself and collaborators on the {\tt vg} project.
-In the case of low-error reads, this limited exploration of the DP problem allows for fast derivation of the optimal alignments, and so the multipath mapper in {\tt vg mpmap} achieves runtime comparable to or exceeding the simpler algorithm in {\tt vg map}.
-It is also important to mention here as it forms the basis for alignment surjection, in which an alignment to the graph is projected into the linear reference.
+In the case of low-error reads, this limited exploration of the DP problem allows for fast derivation of the optimal alignments, and so the multipath mapper in {\tt vg mpmap} achieves runtime comparable to or exceeding {\tt vg map}.
+Multipath mapping concepts also form the basis for alignment surjection, in which an alignment to the graph is projected into the linear reference.
 
 \subsection{X-drop DP}
 
@@ -748,7 +749,7 @@ During a biohackathon meeting in Kyoto, Suzuki presented an alternative banding 
 In this model, the alignment is matrix broken into vertical non-striped windows that tile across the DP matrices over fixed subsequences in the query.
 To efficiently resolve the data dependencies between successive steps, a SIMD shuffle operation is applied to the cell values stored in each window.
 Forward progression of each window stops when the highest score in the forefront cells drops $X$ below the previously-observed maximum.
-This approach thus allows the band to spread as wide as needed to accommodate larger insertions, but can be parameterized through the modification of the $X$-drop parameter.
+This approach thus allows the band to spread as wide as needed to accommodate larger insertions, while being bounded by the $X$-drop parameter.
 The result is an approach that is more sensitive than the antidiagonal banded alignment in libgaba, but runs a factor of 2 slower for equivalent band sizes.
 
 \begin{figure}[htbp!] 
@@ -766,8 +767,7 @@ The result is an approach that is more sensitive than the antidiagonal banded al
 I have since worked with Suzuki to integrate his implementation of this algorithm \emph{dozeu}\footnote{\url{https://github.com/ocxtal/dozeu}} into {\tt vg}.
 Due to difficulties in handling paired end rescue, the approach is not yet performing as well as GSSW for {\tt vg map}.
 This remains a work in progress, but is a promising approach to enable the direct alignment of long sequences against the graph.
-It is orthogonal to the ``chunked'' alignment approach which I implemented.
-In principle, they can be applied together to build a SV-aware, chunked and banded alignment process.
+It is orthogonal to the ``chunked'' alignment approach, and in principle, they can be applied together to build a SV-aware, chunked and banded alignment process.
 Future work in this direction may yield a new VG alignment algorithm, but this lies outside the scope of this thesis.
 
 \subsection{Chunked alignment}
@@ -777,8 +777,8 @@ Future work in this direction may yield a new VG alignment algorithm, but this l
 For long reads, where in the worst case the local dynamic programming can become prohibitively expensive, we break the reads into ``bands'' of a fixed width $w$ (default 256 base pairs) with overlap between successive bands of $w/8$.
 We align these bands independently, trim the overlaps from the alignments, and build a Markov model from them similar to that built for MEM chaining, only that here we consider sub alignments as nodes in the model rather than MEMs.
 In this model we put weights on transitions between alignments that relate to the estimated distance between the alignments in the graph versus their distance in the read, with the objective of making long co-linear chains be the highest-scoring walks through the Markov model.
-We take the Viterbi path through the model to be the first-best alignment.
-Then, we mask out this path, re-score, and take the Viterbi path to get the 2nd, 3rd, and ultimately $N$th best alignment, where we want to obtain multiple alignments. 
+We take the Viterbi path through the model to be the best alignment.
+Then, to obtain multiple alignments, we mask out this path, re-score, and take the Viterbi path to get the 2nd-, 3rd-, and ultimately $N$th-best alignment.
 After they have been extracted from the model, alignments are ``patched'' using local alignment of unaligned regions anchored in the graph near the end of previous mapped regions, so that sub-alignments which may have been misaligned due to repeats may be locally aligned correctly.
 Although this sounds complex, in a very high fraction of cases neighbouring alignments overlap exactly in the overlap region of size w/8, and chaining is trivial.
 This model allows {\tt vg} to map noisy reads of arbitrary length, and is used as a core component in the long read progressive assembler {\tt vg msga}.
@@ -794,7 +794,7 @@ This can be resolved to some extent by applying global alignment of the alignmen
 But a more rigorous approach rebuilds the alignment in parts.
 For each piece that is not aligned to the reference, we extract the intervening reference sequence and align only the subset of the query that is no longer matching to this region.
 A kind of anchored semi-global alignment may be used on the ends of the reads, where the opposite reference-matching end is not defined.
-The resulting alignment to a graph built only from a particular reference path may easily be expressed in the BAM format and thus be used by standard downstream variant calling and analysis methods.
+The resulting alignment may easily be expressed in the BAM format and thus be used by standard downstream variant calling and analysis methods.
 
 \subsection{Base quality adjusted alignment}
 %*2p 2h*
@@ -850,13 +850,13 @@ Using the close approximation of the LogSumExp function by element-wise maximum,
     Q(\hat A|X,Y) &\approx \frac{10\lambda}{\log 10}\left( S(\hat A | X,Y) - \max_{A \neq \hat A}S(A| X,Y)\right)
 \end{align}
 
-In practice, we do not compare the optimal alignment to all possible alignments, but to the optimal alignments from other seeds. Thus, the mapping quality indicates the confidence that we have aligned the read to approximately the correct part of the graph rather than that the fine-grained alignment in that part of the graph is correct. It is also worth noting that since this formula is based on alignment scores, it can incorporate base quality information through the base quality adjusted alignment scores.
+In practice, we do not compare the optimal alignment to all possible alignments, but to the optimal alignments from other seeds. Thus, the mapping quality indicates the confidence that we have aligned the read to approximately the correct part of the graph rather than that the fine-grained alignment in that part of the graph is correct. Since this formula is based on alignment scores, it can incorporate base quality information through the base quality adjusted alignment scores.
 
 
 \section{Visualization}
 
 Visualization helps enormously to understand variation graphs and algorithms on them.
-While text-mode renderings are sufficient for understanding results in resequencing against the linear reference, this is simply impractical when the reference is a graph.
+While text-mode renderings are sufficient for evaluating results in resequencing against the linear reference, they are simply impractical when the reference is a graph.
 A set of dotplots can allow us to understand the relationship between many paths embedded in a graph.
 But this scales quadratically with the number of embedded paths and quickly becomes impossible to interpret.
 The alternative is to render graphs visually using a coherent set of visual motifs.
@@ -871,16 +871,16 @@ By exploiting a linear sort of the graph I provide a linear-time layout algorith
 %*0.5p 0.5h*
 
 To develop a visualization method quickly, I relied most heavily on the four-phase hierarchical graph layout algorithm {\tt dot} \cite{gansner1993technique} that is part of the Graphviz package \cite{gansner2000open,ellson2001graphviz}.
-This approach heuristically attempts to generate a layout in which hierarchical structures in the graph are exposed, visual anomalies such as edge crossings and sharp edge bends are avoided, edges are short, and the layout is overall balanced or symmetric.
+This approach tries to generate a layout in which hierarchical structures in the graph are exposed, visual anomalies such as edge crossings and sharp edge bends are avoided, edges are short, and the layout is overall balanced or symmetric.
 It first uses a partial sort on the graph to derive a rank for each node.
 This aspect of the algorithm means it is best suited for DAGs.
 Then the unordered regions of the partially sorted graph are ordered to reduce edge crossings.
 Finally, the actual layout is derived and splines are drawn to show edges.
 The output of {\tt dot} as well as other tools in Graphviz is a vector graphic, so the resulting renderings may be viewed in a number of ways.
-This allows us to view rather large chunks of graphs, up to tens of kilobases, provided the graph is partially orderable.
 
 To generate a visualization that captures the structure of the variation graph, I transform the graph into a visualization oriented structure in which the graph paths are rendered as nodes and edges.
 The layout is then driven entirely by the chosen algorithm in Graphviz, which is typically {\tt dot}.
+This approach allows us to view rather large chunks of graphs, up to tens of kilobases, provided the graph is partially orderable.
 
 The set of nodes may be rendered as boxes labeled by $id(n_i)$ and $seq(n_i)$.
 Edges have four types, and to indicate these we use the top and bottom of the node boxes.
@@ -894,7 +894,7 @@ Paths are not naturally supported in the Graphviz data model, and must be added 
 In order to achieve a visually meaningful layout, these subgraphs must be also anchored appropriately into the graph.
 For each path, I hash the path name $name(p_i)$ into a set of colors and Unicode emoji, yielding $8 \times 766 = 6128$ possible color/symbol combinations.
 This generates a symbol for each path that is unlikely to collide with another given the typical application rendering a graph with tens of embedded paths.
-The hashing process also ensures the same rendering is returned as long as the same VG (and path names) are given.
+The hashing process also ensures the same rendering is returned as long as the same path names are given.
 For each mapping $m_i\ldots m_{|p_j|} \in p_j$ I add invisible edges to the graph that link the mapping to the particular node it maps to as well as a visible edge in the path color from $m_{i-1} \to m_i$ when $i > 1$ and from $m_i \to m_{i+1}$ when $i < |p_j|$.
 A hint is given to {\tt dot} to force the rank of each mapping to be the same as the node it maps to.
 Otherwise, the invisible edges encourage {\tt dot} to render the path mappings close to the node they refer to.
@@ -926,7 +926,7 @@ While this rendering captures the path space of the graph even in arbitrary grap
 The largest graphs I have visualized using this method contain tens of kilobases of sequence.
 {\tt Bandage} \cite{wick2015bandage} is an alternative method which is oriented towards visualizing assembly graphs.
 It reads GFA as input and provides an interactive rendering of the graph topology.
-This assembly graph oriented approach allows for much better scaling for rendering variation graphs, and graphs of up to tens of megabases may be rendered.
+This approach can render graphs of up to tens of megabases.
 Figure \ref{fig:vg_view_bandage} shows the properties of this technique using the same region of H-3136.
 
 \begin{figure}[htbp!] 
@@ -940,12 +940,11 @@ Figure \ref{fig:vg_view_bandage} shows the properties of this technique using th
 
 Graph layout algorithms are computationally complex due to their need to iteratively relate all components of the graph to all others.
 In these layouts, we can observe large scale features about the topology and organization of the graph.
-These views are helpful in many contexts, but the computational complexity of obtaining them should not prevent us from quickly visualizing graphs as we can with linear sequences.
-Furthermore, they do not scale efficiently to large path sets, and it is often difficult to understand alignments or other path-related on the graph using them.
-Standard graph visualization algorithms exist outside of {\tt vg} as external tools.
+These views are helpful in many contexts, but the computational complexity of obtaining them prevents us from quickly visualizing larger graphs.
+Also, they do not scale efficiently to large path sets, and it is often difficult to understand alignments or other path-related on the graph using them.
 
 To resolve these issues I developed a linear time rendering algorithm that projects a given VG, as indexed by XG, into a vector graphics format using the widely-available graphics library {\tt libcairo}.
-The key idea is to use the sequence basis vector $S_\textbf{iv}$ as a coordinate system to position all elements of the graph.
+This visualization algorithm uses the sequence basis vector $S_\textbf{iv}$ as a coordinate system to position all elements of the graph.
 The graph topology itself is laid out in accordance with the node representation in $S_\textbf{iv}$, flowing from left to right at the top of the rendering.
 Node lengths are shown using a black bar, with the sequence labels given below.
 The graph topology is rendered above the node set, and layout of these edges can be completed in linear time as they are rendered as simple splines connecting node ends.
@@ -969,8 +968,7 @@ The linear scaling of the algorithm should allow it to be applied to whole genom
 
 \section{Graph mutating algorithms}
 
-Traversing the topology of the graph and querying its sequence space are important operations when using variation graphs as reference systems.
-But to build these graphs, we need to be able to modify them.
+To use variation graphs as reference systems, we need to be able to modify them.
 Algorithms in graph theory are frequently based on graph transformations, and I have discussed some of them in the context of assembly and whole genome alignment.
 {\tt vg} implements many algorithms that alter the graph, but a number are of importance to its development as a system for resequencing, and I detail them here.
 
@@ -981,12 +979,12 @@ The main issue which adds complexity to this process is that nodes represent mor
 
 If nodes did represent a single character, then they would remain atomic through graph extension.
 It is simple to edit a ``basepair'' graph of this type: $G = (N, E, P)$, where $\forall_{n \in N}{|seq(n)| = 1}$.
-We walk through the alignments to it $A = a_1\ldots a_{|A|}$, adding novel bases represented by the alignment ($seq(A) \notin G = N_A$) as new nodes.
+We walk through the alignments to it $A = a_1\ldots a_{|A|}$, adding novel bases represented in them ($seq(A) \notin G = N_A$) as new nodes.
 Then for each alignment $a_i$, we add edges connecting nodes in the order they would be traversed by the path of the alignment embedded in the graph $p_{a_i} \in G'$, yielding $E_A$.
 Finally, we add paths representing the embedded alignments $P_A$.
 The resulting graph unifies these additions $G' = (N \cup N_A, E \cup E_A, P \cup P_A)$.
 
-To achieve lower representation costs in graphs with sparse variation, we compress the graph so that nodes cover multiple bases and thus we must consider the editing process hierarchically.
+To achieve lower representation costs in graphs with sparse variation, we usually compress the graph so that nodes cover multiple bases and thus we must consider the editing process in multiple phases.
 We first modify graph $G$ so that every novel sequence will be added at the start or end of a node.
 We do this by breaking nodes into multiple derivative nodes when they overlap mappings that do not match the graph using $break(G, A) \to (G', \Phi)$.
 For instance, if $seq(n_i) = {\tt GATTACA}$ and we have a SNP ${\tt T} \to {\tt C}$ at offset 4, we would obtain $n_i \to n_i', n_i'', n_i''' : seq(n_i') = {\tt GAT} $, $seq(n_i'') = {\tt T}$, $seq(n_i'') = {\tt ACA}$.
@@ -1004,8 +1002,8 @@ We have explored two main techniques for the reduction of graph complexity.
 In the first, we prune regions of the graph which have high path complexity using a depth-first search (DFS).
 We can optionally add back known haplotypes, in order to mitigate the loss of information from the index.
 For VCF-based VGs, where we have haplotype panels, the performance of local alignment is unaffected by the topological complexity, so we only need to apply this pruning to the graph input to GCSA2 indexing.
-In assembly graphs, we find that some nodes which represent repeats can have extremely high degree, which causes problems both for indexing and local alignment to the graph.
-There, we must remove these nodes in order to use the graph at all.
+In assembly graphs, we find that nodes which represent repeats can sometimes have extremely high degree, which causes problems both for indexing and local alignment to the graph.
+There, we must remove these nodes in order to use the graph even for local alignment.
 
 \subsubsection{$k$-mer $m$-edge crossing complexity reduction}
 
@@ -1023,7 +1021,7 @@ By default, we use $k=24$, $m=3$, and ${\cal J}=33$.
 
 Although removing complex regions will reduce the number of recombinant haplotypes represented by the graph, it is likely to also remove sections of known haplotypes.
 We can retain the complexity reduction without losing sequences in known haplotypes by replacing the pruned regions in $G_\textbf{simple}$ with unfolded copies of each haplotype sequence.
-When we have a single reference path, we can accomplish this by overlaying $G_\textbf{simple}$ and $G_\textbf{ref}$.
+When we have a single reference path in $G_\textbf{ref}$, we can accomplish this by overlaying $G_\textbf{simple}$ and $G_\textbf{ref}$.
 However, this will not achieve the desired result with even two overlapping paths, as where these differ they would reintroduce the re-combinatorial explosion that we hope to resolve with pruning.
 An alternative is to copy the haplotypes in the GBWT index that stretch from one border to the other of each removed region into the removed subgraphs in $G_\textbf{simple}$.
 Doing so, we must preserve a mapping between the new nodes and the previous underlying ones in $G$.
@@ -1035,7 +1033,7 @@ The exact method by which this filling implemented is described in \cite{siren20
 Because they separate dense variation into heterozygous bubbles, assembly graphs may feature greater ``smoothness'' than VCF-based graphs locally.
 But, in the context of repeats, they can contain nodes with exceptionally high degree.
 If these cluster together then they generate highly-connected regions that introduce degeneracy in the path space of the graph, and cause problems for $k$-mer enumeration and GCSA2 indexing.
-Furthermore, the local alignment methods in VG do not directly support alignment through such dense regions.
+Furthermore, the local alignment methods in VG do not support efficient alignment through such dense regions.
 Preventing this is relatively simple, in that we remove nodes with more than ${\cal D}$ edges linking them to the graph, yielding $G_\textbf{prune} : \forall_{n_i \in N_\textbf{prune}}{{\cal D} \geq |\{ e_{*i} \cup e_{i*} \cup e_{\overline{i}*} \cup e_{*\overline{i}} \}|}$.
 
 It is not necessary that our local alignment suffers from high-degree nodes.
@@ -1051,10 +1049,10 @@ Such approaches may allow us to tolerate a larger ${\cal D}$, but it seems unlik
 
 To achieve as much partial ordering as possible, we order and orient the nodes in the graph using a topological sort.
 The sort is guaranteed to be machine-independent given the initial graph's node and edge ordering.
-The algorithm is well-defined on non-DAG graphs, but the order is necessarily not a topological order.
-To do this we use a bidirected adaptation of Kahn's topological sort \cite{kahn1962topological}, which is extended to handle graph components with no heads or tails.
+The algorithm is well-defined on non-DAG graphs, but in these cases the order is necessarily not a topological order.
+Our approach is a bidirected adaptation of Kahn's topological sort \cite{kahn1962topological}, which is extended to handle graph components with no heads or tails.
 This algorithm can be understood as a kind of seeded depth first search through the graph.
-Where the graph has nodes which are pure heads, it begins there
+Where the graph has nodes which are pure heads, it begins there.
 Otherwise, a set of seed nodes which are stably selected given a particular graph are used to begin the sort.
 The details of this procedure are provided in algorithm \ref{alg:pseudotoposort}.
 
@@ -1131,11 +1129,9 @@ Simplification has a number of potential applications, for instance in reducing 
 \section{Graphs as basis spaces for sequence data}
 \label{sec:basis_space}
 
-If we can construct a graph which embeds all the sequences of all genomes which we are interested in, then all sequences in our study are represented in the sequence space of the graph.
-This resolves the separation between reference sequence and variation that is present in standard resequencing.
-It also suggests that the intermediate steps in resequencing may be made redundant.
+If we can construct a graph which embeds all the sequences of all genomes which we are interested in, we resolves the separation between reference sequence and variation that is present in standard resequencing.
+This suggests that the intermediate steps in resequencing may be made redundant.
 If variation is already available during alignment then there is no need for a variant detection phase.
-
 However, if the graph does not include variation in our samples, then variant calling is required.
 In {\tt vg} we have implemented several methods to do so.
 Similarly, we have implemented coverage summaries of read sets that may be used directly in downstream analyses.
@@ -1144,20 +1140,20 @@ Similarly, we have implemented coverage summaries of read sets that may be used 
 
 Numerous population genetic analyses are based on matrix representations of a collection of genomes.
 Such models can be used to infer population structure and phylogeny, as well as to associate phenotypes to genomic variants.
-If the variation graph used as a reference contains all sequences relevant to our analysis, then a matrix of per-base coverage of the graph by sample will provide nearly-full information to downstream analyses.
+If the variation graph used as a reference contains all sequences relevant to our analysis, then a matrix of per-base coverage of the graph by sample will provide highly representative information to downstream analyses.
 Exceptions include structural variation that does not result in coverage changes, such as balanced events like inversions.
 Also, some local patterns of variation between successive small variation will not be distinguishable.
 If we were to annotate edge coverages, this method would produce a result equivalent in information content to a Markov model.
 It is thus clear that any coverage based index will be lossy relative to the full read set.
 However, the lossiness reduces the information cost of storing and processing these coverage maps.
-As I described in section \ref{sec:coverage_index}, in {\tt vg} I developed an efficient method to accumulate coverage information of this kind across the graph, but I have limited experimental results describing its utility.
+As I described in section \ref{sec:coverage_index}, in {\tt vg} I developed an efficient method to accumulate coverage information of this kind across the graph.
 
 \subsection{Bubbles}
 
 In a sequence graph, a \emph{bubble} is a pair of paths which start and end at the same nodes ($s$, $t$) but are otherwise disjoint in the graph \cite{zerbino2008velvet}.
 Bubbles encompass our intuition about genetic variation in graphs.
 A homologous sequence corresponding to the common start and end nodes in the bubble flanks two or more alternative alleles in the middle.
-These structures were first considered only in the process of finding small variation, and it was only in recent years that methods were developed to efficiently enumerate all bubbles of any size in DAGs \cite{birmele2012efficient}.
+These structures were first considered in the context of finding small variation, and it was only in recent years that methods were developed to efficiently enumerate all bubbles of any size in DAGs \cite{birmele2012efficient}.
 
 Bubbles can nest and contain more complicated internal structures between the paths through them.
 The bubble may be generalized to the idea of a \emph{superbubble}, which is a directed, acyclic component of a graph with a single head and tail node \cite{onodera2013detecting}.
@@ -1169,7 +1165,7 @@ As sort is linear $O(|N| + |E|)$, and the candidate enumeration and RMQ may be i
 
 The DAG requirement of this method is a significant limitation.
 In order to apply the superbubble enumeration to an arbitrary graph we must first DAGify it.
-In response, along with Benedict Paten and others, I worked to further generalize the idea of a genetic site to work on arbitrary bidirectional sequence graphs \cite{paten2018superbubbles}.
+In response, I worked with Benedict Paten and others to generalize the idea of a genetic site to support arbitrary bidirectional sequence graphs \cite{paten2018superbubbles}.
 To formulate a generalization of superbubbles, we introduce the concept of a \emph{snarl}, which is any graph component connected to the rest of the graph by two or fewer bordering nodes\footnote{In the paper the formulation is based on a bi-edged graph akin to the Enredo graph, but we note that a node-based formulation is equivalent and matches the other models in this section.}.
 Snarls whose internal separated component is acyclic and does not contain any tips are \emph{ultrabubbles}.
 
