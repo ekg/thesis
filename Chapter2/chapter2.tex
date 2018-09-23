@@ -548,10 +548,23 @@ This subdivision provides a kind of banding to the alignment algorithm, preventi
 Each chunk is aligned independently.
 The same collinear chaining model, with different parameters, is used to establish the optimal global chain through the alignment chunks, thus yielding a full alignment for an input sequence of any size.
 Where our reads are shorter than the standard chunk size (256bp), the alignment behaves exactly as in {\tt bwa mem}.
+Figure \ref{fig:alignment_to_cactus_yeast} illustrates the alignment of a long read against a complex graph.
 
 \emph{Unfolding} and \emph{DAGification} transform a cyclic bidirectional sequence graph with inversions to an acyclic simple sequence graph one in which all $k$-paths in the first graph are represented.
 Any alignment algorithm that may be implemented on a sequence DAG can thus be used.
 Optionally, other alternative DP alignment algorithms implementing a banded global alignment can be applied, and I describe one of these that I implemented to \emph{surject} alignments into a particular reference path.
+
+\begin{figure}[htbp!]
+\centering
+\includegraphics[width=1.0\textwidth]{Chapter2/Figs/mapping_cactus_pacbio_aln_viz.pdf}
+\caption[Alignment of a PacBio read to a yeast pangenome]{
+  A single 32,737bp PacBio read from yeast strain SK1 aligned to the yeast pangenome described in section \ref{sec:yeast_cactus}.
+  Blue nodes correspond to those traversed by the first-best alignment (A) and magenta ones are in the second-best alignment (B), while red nodes contain initial MEM hits, many of which appear to match chromosome ends visible as tips in the graph (C).
+  The primary alignment is substantially better than any of its secondary alignments, thus the small size of the annotation corresponding to the second-best alignment (B).
+  Most nodes in the primary alignment appear to be found by exact matching, with only a subset obtained through the final alignment.
+}
+\label{fig:alignment_to_cactus_yeast}
+\end{figure}
 
 \subsection{MEM finding}
 %*2p 2h*
