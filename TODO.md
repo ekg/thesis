@@ -1,8 +1,6 @@
 # todo for completion of thesis
 
-- MEM mapping figure
-- fix proportion label problem on aDNA sim figure
-- Richard's suggestions
+- correct issues in bibliography
 - automated grammar check (again)
 - spell check (again)
 - final read through
