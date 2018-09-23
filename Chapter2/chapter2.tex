@@ -606,7 +606,7 @@ Although the exact algorithm is different, in spirit our implementation is simil
 \subsection{Unfolding}
 
 Every node has an implicit default orientation so that it is possible to determine edges that cause an inversion, i.e. those which connect between a forward and a reverse complement node orientation. 
-In {\tt VG::unfold} we use a breadth first search starting at every inverting edge in the graph to explore the reverse complemented portions of the graph that we can reach within length $k$ from the inverting edge.
+When \emph{unfolding} the graph we use a breadth first search starting at every inverting edge in the graph to explore the reverse complemented portions of the graph that we can reach within length $k$ from the inverting edge.
 We then copy this subgraph, take its reverse complement, and replace the inverting edges connecting it to the forward strand of the graph with non-inverting ones.
 
 \subsection{DAGification}
