@@ -462,11 +462,11 @@ To search for a haplotype of $h$ in the range $[i,j]$ we look for pattern $h' = 
 The alphabet size of this FM-index is large, but the matrix like structure of the haplotype set means that we can implicitly encode the array indexes by building a separate sub index for each position.
 Applying run length encoding to the BWT allows extremely good compression of real haplotype sets.
 
-With the \emph{graph positional Burrows–Wheeler transform} (gPBWT) \cite{Novak2016gPBWT}, we extended this model to work on variation graphs.
-The basic model is the same as the generic PBWT except that instead of variant matrix positions we consider haplotype traversals of oriented nodes\footnote{These are described as ``sides'' in \cite{Novak2016gPBWT}.} $n_i$ or $\overline{n_i}$, and rather than a local alphabet of variant alleles we encode a local alphabet $\Sigma_{n_i} = \{ j \in N | e_{ij} \in E \}$ which describes the set of nodes $n_{\{j \in N | e_{ij} \in E \}}$ to which haplotypes go after the current node $n_i$.
+With the \emph{graph positional Burrows–Wheeler transform} (gPBWT) \cite{Novak2017gPBWT}, we extended this model to work on variation graphs.
+The basic model is the same as the generic PBWT except that instead of variant matrix positions we consider haplotype traversals of oriented nodes\footnote{These are described as ``sides'' in \cite{Novak2017gPBWT}.} $n_i$ or $\overline{n_i}$, and rather than a local alphabet of variant alleles we encode a local alphabet $\Sigma_{n_i} = \{ j \in N | e_{ij} \in E \}$ which describes the set of nodes $n_{\{j \in N | e_{ij} \in E \}}$ to which haplotypes go after the current node $n_i$.
 As in the generic PBWT we build an FM-index of $T_1 \ldots T_m$, encoded in what we call the $B_s$ arrays, which provide the local description of prefix sorted haplotypes (equivalently, threads) traversing each node $n_s$.
 To deal with the bidirectionality of paths in variation graphs, each haplotype must be encoded in its forward and reverse orientation.
-In \cite{Novak2016gPBWT} we demonstrated the expected sublinear scaling of the gPBWT by building an index for chr22 with increasing numbers of samples.
+In \cite{Novak2017gPBWT} we demonstrated the expected sublinear scaling of the gPBWT by building an index for chr22 with increasing numbers of samples.
 Constructing the gPBWT for haplotype sets representing more than a few hundred samples proved difficult when using our particular implementation.
 Progressive construction of the gPBWT in generic graphs was enabled by encoding the gPBWT into dynamic succinct data structures and adding a single haplotype thread and its inverse one at a time.
 While functional, we found this to be untenable for large graphs and haplotype sets.
