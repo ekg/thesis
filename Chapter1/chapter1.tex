@@ -32,7 +32,7 @@ Pieces of the new genomes which could not be mapped to the reference will be lef
   \caption{
     The tree of life, reference genomes, and variation graphs.
     } 
-\label{fig:pangenomic_processes}.
+\label{fig:tree_of_life}.
 \end{figure}
 
 Resequencing has arisen in response to the technical properties of the most commonly-used DNA sequencing technologies.
@@ -85,7 +85,7 @@ I call these bidirectional sequence graphs with paths \emph{variation graphs}.
     The construction and properties of the graph are described in section \ref{sec:yeast_cactus}.
     This visualization was rendered using the SequenceTubeMap \url{https://github.com/vgteam/sequenceTubeMap}.
     } 
-\label{fig:pangenomic_processes}.
+\label{fig:variation_graph_tubemap}.
 \end{figure}
 
 In this chapter I will provide background context for my work.
@@ -880,7 +880,7 @@ This positional information is used to drive the prefix doubling step required t
 The space requirements of GCSA are avoided by terminating the prefix doubling at a length appropriate to accommodate queries of interest, which in practice is limited to 256bp.
 By computing the longest common prefix array (LCP) of its sorted suffixes, GCSA2 encodes the implied suffix tree, which supports MEM-based seed generation algorithms for efficient and sensitive alignment against variation graphs.
 
-\subsubsection{Mapping to $k$-mer based pangenome indexes}
+\subsubsection{Mapping to \emph{k}-mer based pangenome indexes}
 
 A $k$-mer index is trivial to build from a graph: one just needs to be able to enumerate or sample $k$-long walks through the graph and link the graph position to the $k$-mer in an efficient hash table or other kind of index.
 The size of the index can be reduced by sampling $k$-mers in some pattern.

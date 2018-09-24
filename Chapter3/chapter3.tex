@@ -49,7 +49,7 @@ In this section, I use data from independent sequencing of the UK's National Cen
 \label{sec:SGRP2_graph}
 %*1p 1h*T
 %I consider only \emph{S. cerevisiae}, using the SGD reference genome and the SNP variation results from the SGRP2.
-The earliest rigorous testing of {\tt vg}'s alignment method was against a variation graph constructed from the SGRP2's released VCF for \emph{S. cerevisiae}\footnote{\url{http://www.moseslab.csb.utoronto.ca/sgrp/data/SGRP2-cerevisiae-freebayes-snps-Q30-GQ30.vcf.gz}}.
+The earliest rigorous testing of {\tt vg}'s alignment method was against a variation graph constructed from the SGRP2's released VCF for \emph{S. cerevisiae}\footnote{\scriptsize{\url{http://www.moseslab.csb.utoronto.ca/sgrp/data/SGRP2-cerevisiae-freebayes-snps-Q30-GQ30.vcf.gz}}}.
 This early population resequencing project produced a VCF including only SNPs, yet using it already presented problems typical even when working with larger scale genomes.
 The transposable elements in the genome generate rich patterns of repeats which make alignment difficult and require the development of mapping quality.
 Dense variation is also present in the results and this necessitates the application of pruning strategies to the graph to mask out high-complexity regions for indexing.
@@ -71,7 +71,7 @@ When we map the real reads from new strains not used to build the graph, 24.5\% 
 A small fraction of reads (0.46\%) map better to the linear than to the pangenome graph, which could result from changes in paired alignment rescue, the effects of the pruning process, the slightly different minimum MEM size calculated for the two graphs, or errors in the SGRP2.
 %Although differences in the relative benefit of using the SGRP2 pangenome appear between samples, they are minor and not apparently systematic (Figures \ref{subfig:NCYC_score_diff_hist} and \ref{subfig:NCYC_id_diff_hist}).
 
-\begin{figure}[htbp!] 
+\begin{figure}[htbp!]
   \centering
   \begin{subfigure}[t]{0.49\textwidth}
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/NCYC_SGRP2_SGD_comparison_score.png}
@@ -90,12 +90,12 @@ A small fraction of reads (0.46\%) map better to the linear than to the pangenom
     \caption{Difference in alignment identity} \label{subfig:NCYC_id_diff_hist}
   \end{subfigure}
   \caption[Comparing alignment to the linear reference and SGRP2]{
-    Alignment of 100k read pairs from 12 NCYC \emph{S. cerevisiae} strains against the SGD\_2010 reference genome (SGD) or the SGRP2 pangenome (SGRP2).
+    Alignment of 100k read pairs from 12 NCYC \emph{S. cerevisiae} strains against the reference genome (SGD) or the pangenome (SGRP2).
     In (\ref{subfig:NCYC_score}) alignment scores are plotted for each read.
     The shift in density to the right relative to $y=x$ indicates improved alignments to the pangenome.
     In (\ref{subfig:NCYC_identity}) we observe the same pattern when using alignment identity rather than score.
     Subfigures \ref{subfig:NCYC_score_diff_hist} and \ref{subfig:NCYC_id_diff_hist} provide a stacked log-scaled histogram of the difference in score and identity between the two graphs.
-    Note that the $y$-axes in these histograms represent the stacking of the log-transformed groups, which ensures that the relative width of each group's band is not distorted by its order in the plotting.
+    %Note that the $y$-axes in these histograms represent the stacking of the log-transformed groups, which ensures that the relative width of each group's band is not distorted by its order in the plotting.
   }
 \label{fig:NCYC_SGD_SGRP2}
 \end{figure}
@@ -202,17 +202,18 @@ This observation is supported by the length statistics in table \ref{table:yeast
 At the same time, the node count of the {\tt vg msga} graph is higher, which perhaps reflects a different local alignment result.
 
 \begin{figure}[htbp!]
-  \begin{subfigure}[t]{0.9\textwidth}
+  \centering
+  \begin{subfigure}[t]{0.85\textwidth}
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/cactus_yeast.png}
     \caption{Cactus assembly} \label{subfig:cactus_yeast_bandage}
   \end{subfigure}
-  \begin{subfigure}[t]{0.9\textwidth}
+  \begin{subfigure}[t]{0.85\textwidth}
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/vg_msga_yeast.png}
     \caption{{\tt vg msga} assembly} \label{subfig:msga_yeast_bandage}
   \end{subfigure}
   \caption[Whole genome alignment graphs for \emph{S. cerevisiae}]{
     Whole genome alignment graphs for \emph{S. cerevisiae} visualized using Bandage.
-    The scale in \ref{subfig:msga_yeast_bandage} is greater than that in \ref{subfig:cactus_yeast_bandage}, with the latter showing a greater propensity to collapse repeat structures.
+    %The scale in \ref{subfig:msga_yeast_bandage} is greater than that in \ref{subfig:cactus_yeast_bandage}.
   }
   \label{fig:yeast_bandage}
 \end{figure}
@@ -270,7 +271,7 @@ We show that vg does this, and then that vg maps more informatively around diver
 \subsection{1000GP graph construction and indexing}
 %*3p 3h*
 
-The final phase of the 1000 Genomes Project (1000GP) produced a data set of ~80 million variants in 2,504 humans \cite{1000g2015}.
+The final phase of the 1000 Genomes Project (1000GP) produced a data set of $\sim$80 million variants in 2,504 humans \cite{1000g2015}.
 We made a series of vg graphs containing all variants or those above minor allele frequency thresholds of 0.1\%, 1\%, or 10\%, as well as a graph corresponding to the standard GRCh37 linear reference sequence without any variation.
 The full vg graph uses 3.92 GB when serialized to disk, and contains 3.181 Gbp of sequence, which is exactly equivalent to the length of the input reference plus the length of the novel alleles in the VCF file.
 Complete file sizes including indices range from 25 GB to 63 GB, with details including build and mapping times given in table \ref{table:1000GP}.
@@ -296,14 +297,14 @@ GRCh37 & 0 & 1:09:54 & 1.76 & 23:30:41 & 25.11 & 33:34 & 28:33 \\
 \subsection{Simulations based on phased HG002}
 \label{sec:1000GP_sim}
 
-We next aligned ten million 150-bp paired-end reads simulated with errors from the parentally phased haplotypes of an Ashkenazim male NA24385, sequenced by the Genome in a Bottle (GIAB) Consortium \cite{zook2016extensive} and not included in the 1000GP sample set, to each of these graphs as well as to the linear reference using {\tt bwa mem}.
+We next aligned ten million 150-bp paired-end reads simulated with errors\footnote{SNP errors are introduced at a rate of 0.01 per base and indels at a rate of 0.002 per base.} from the parentally phased haplotypes of an Ashkenazim male NA24385, sequenced by the Genome in a Bottle (GIAB) Consortium \cite{zook2016extensive} and not included in the 1000GP sample set, to each of these graphs as well as to the linear reference using {\tt bwa mem}.
 Figure \ref{fig:HG002_1000GP_sim} shows the accuracy of these alignments compared with {\tt bwa mem} for the full range of frequency thresholded graphs, in terms of receiver operating characteristic (ROC) curves.
 
 Reads that come from parts of the sequence without differences from the reference (middle panels of Figure \ref{fig:HG002_1000GP_sim}) mapped slightly better to the reference sequence (green) than to the 1000GP graph (red), which we attribute to a combination of the increase in options for alternative places to map reads provided by the variation graph, and the fact that we needed to prune some search index $k$-mers in the most complex regions of the graph.
 The best balance of performance appears at the threshold of 0.01.
 As expected, this difference increased as the allele frequency threshold was lowered and more variants were included in the graph.
 
-For reads that were simulated from segments containing non-reference alleles (~10\% of reads), which are the reads relevant to variant calling, {\tt vg} mapping to the 1000GP graph (red) gave better performance than either {\tt vg} (green) or {\tt bwa mem} (blue) mapping to the linear reference (right panels of Figure \ref{fig:HG002_1000GP_sim}), because many variants present in NA24385 are already represented in the 1000GP graph.
+For reads that were simulated from segments containing non-reference alleles ($\sim$10\% of reads), which are the reads relevant to variant calling, {\tt vg} mapping to the 1000GP graph (red) gave better performance than either {\tt vg} (green) or {\tt bwa mem} (blue) mapping to the linear reference (right panels of Figure \ref{fig:HG002_1000GP_sim}), because many variants present in NA24385 are already represented in the 1000GP graph.
 This is particularly clear for single-end mapping, since many paired-end reads are rescued by the mate read mapping.
 Overall, vg performed at least as well as bwa mem, even on reference-derived reads, and substantially better on reads containing non-reference variants.
 
@@ -312,16 +313,15 @@ Overall, vg performed at least as well as bwa mem, even on reference-derived rea
 \includegraphics[width=1.0\textwidth]{Chapter3/Figs/human-10M-results-7358a67_merge_panel_labeled.pdf}
 \caption[Simulated reads from HG002 versus various human pangenome graphs.]{
   ROC curves parameterized by mapping quality for 10M read pairs simulated from NA24385 as mapped by bwa mem, vg to various 1000GP pangenome references, and vg with a linear reference, using single end (se) or paired end (pe) mapping.
-  Allele frequency thresholds for the various panels are (top) all variants, (second) 0.001, (third) 0.01, and (bottom) 0.1.
-  Within each panel, the left subpanel is based on all reads, middle on reads simulated from segments with no genetic variants from the linear reference, right on reads simulated from segments containing variants.
-  All reads may contain simulated sequencing errors reflecting SNPs at a rate of 0.01 per base and indels at a rate of 0.002 per base.
+  Allele frequency thresholds are given to the left of each row.
+  Within each panel, the left subpanel is based on all reads, middle on reads simulated from segments with no genetic variants from the linear reference, and the right on reads simulated from segments containing variants.
   Reprinted from \cite{garrison2018variation}.}
 \label{fig:HG002_1000GP_sim}
 \end{figure}
 
 \subsection{Aligning and analyzing a real genome}
 
-We also mapped a real human genome read set with ~50× coverage of Illumina 150-bp paired-end reads from the NA24385 sample to the 1000GP graph. vg produced mappings for 98.7\% of the reads, 88.7\%
+We also mapped a real human genome read set with $\sim$50× coverage of Illumina 150-bp paired-end reads from the NA24385 sample to the 1000GP graph. vg produced mappings for 98.7\% of the reads, 88.7\%
 with reported mapping quality score 30 on the Phred scale, and 76.8\% with perfect, full-length sequence identity to the reported path on the graph.
 For comparison, we also used vg to map these reads to the linear reference.
 Similar proportions of reads mapped (98.7\%) and with reported quality score 30 (88.8\%), but considerably fewer with perfect identity (67.6\%).
@@ -379,7 +379,7 @@ We note, however, that GraphTyper was developed by its authors for {\tt bwa mem}
 %*2.5p 5h*
 
 The Human Genome Structural Variation Consortium (HGSVC)\footnote{\url{http://www.internationalgenome.org/human-genome-structural-variation-consortium/}} has continued the difficult process of cataloging structural variation in humans.
-Recently, the group has developed a set of haplotype-resolved structural variation callsets for six individuals \cite{chaisson2018multi}.
+Recently, the group has developed a set of haplotype-resolved structural variation callsets for the children in three parent-child trios from diverse populations: NA19240 (Yoruban Nigerian), HG00733 (Puerto Rican), and HG00514 (Han Chinese) \cite{chaisson2018multi}.
 These variant calls are derived from many sources, and are unified into a common framework in phased VCF files.
 I built a graph from these variants and the GRCh38 reference against which they are represented, then used {\tt vg map} to align short reads from a sample in the HGSVC set (NA19240) as well as a sample that was not included (HG002/NA24385).
 
@@ -445,7 +445,7 @@ The low performance of the method prevented its application to the whole genome.
 
 In \cite{novak2017genome} we explored methods to build graphs from the GRCh38's ALT sequences and reference genome.
 One of the most challenging regions is the Major Histocompatibility Complex (MHC) on chromosome 6.
-In this ~5Mb region, balancing selection has generated a high level of genetic diversity, and today we observe up to 40 million years of divergence between alternative copies of the locus, dating far back into the primate lineage.
+In this $\sim$5Mb region, balancing selection has generated a high level of genetic diversity, and today we observe up to 40 million years of divergence between alternative copies of the locus, dating far back into the primate lineage.
 Previous efforts to build reference graphs from this region have often required hand curation to achieve reliable results \cite{dilthey2015improved}.
 
 Automatically building a sensible MHC graph with tools in {\tt vg} requires that the tools work correctly, and over the course of my work I have used this region as an important test case.
@@ -458,13 +458,14 @@ The goal is to build a pangenome graph in which pairwise alignments between the 
 Unlike {\tt vg msga}, it is fully dependent on an input alignment set, and is not progressive.
 
 As an exposition of the differing solutions to this problem offered by these two methods, I built the MHC graph from the 9 haplotypes overlapping the MHC in GRCh38\footnote{These were collected for use in the GA4GH-DWG by the human genome variation map (HGVM) project \cite{blow2015decoding}.}.
-To build the {\tt seqwish} graph, I used \cite{li2018minimap2} to generate an all versus all alignment, and induce the graph from this\footnote{{\tt minimap2 MHC.fa MHC.fa -c -X -x asm20 -t 32 >MHC.paf \&\& seqwish -s MHC.fa -a MHC.paf -b MHC.seqwish >MHC.gfa}}.
+To build the {\tt seqwish} graph, I used \cite{li2018minimap2} to generate an all versus all alignment\footnote{{\tt minimap2 MHC.fa MHC.fa -c -X -x asm20 -t 32 >MHC.paf}}, and induce the graph from this\footnote{{\tt seqwish -s MHC.fa -a MHC.paf -b MHC.seqwish >MHC.gfa}}.
 With {\tt vg msga} I supplied suitable parameters to encourage greater colliniearity in the alignment, but otherwise used defaults\footnote{{\tt vg msga -f MHC.fa -w 512 -J 16384 -b ref -D >MHC.vg}}.
 {\tt seqwish} used very little memory, never more than around a gigabyte, but wrote 12GB of intermediate files to disk during graph induction.
 {\tt vg msga} used several times this much RAM at peak, indicating that it will be difficult to scale its application beyond small genomic regions.
 Both processes took around 2 hours to complete on the 256GB/32vCPU server I used for most of the experiments in this thesis.
 
 \begin{figure}[htbp!]
+  \centering
   \begin{subfigure}[t]{0.49\textwidth}
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/seqwish_MHC.png}
     \caption{The full seqwish MHC graph}
@@ -611,7 +612,7 @@ This effect is notable at deamination rates as low as 10\%, and with 30\% PMD er
 While {\tt bwa aln} suffers a significant reference bias with increasing simulated PMD rates (dashed dark blue versus orange fit lines representing alternate and reference alleles), we observe no such effect for {\tt vg map} (light blue and yellow) (figure \ref{fig:aDNA_simulations}).
 Most of the alleles in the Human Origins panel are also in the 1000GP, which suggests that modern sources are useful when constructing a pangenomic reference for ancient samples.
 
-\subsection{Aligning ancient samples against the 1000GP pangenome}
+\subsection{Aligning ancient samples to the 1000GP pangenome}
 %*2p 4h*
 
 To evaluate whether pangenomic read mapping techniques could mitigate reference bias in real samples, we collected data from a number of recently published ancient DNA studies.
@@ -646,7 +647,7 @@ This is not the case for those called alleles (N $\approx$ 300K) which are not i
 
 \begin{figure}[htbp!]
   \centering
-  \includegraphics[width=0.7\textwidth]{Chapter3/Figs/yamna_1000GP_AB_het_hist.pdf}
+  \includegraphics[width=0.8\textwidth]{Chapter3/Figs/yamna_1000GP_AB_het_hist.pdf}
   \caption[Allele balance in the Yamnaya sample]{
     Allele balance in the {\tt vg} alignment of the Yamnaya sample to the 1000GP graph versus its presence in the 1000GP graph.
   }
@@ -656,7 +657,7 @@ This is not the case for those called alleles (N $\approx$ 300K) which are not i
 We expect reference bias of the degree demonstrated in these experiments to affect population genetic inference.
 To evaluate this, we apply the ABBA BABA test of phylogenetic tree topology based on Patterson's $D$-statistic of population relationship \cite{green2010draft}.
 To do so, we used the Human Origins dataset distributed with \cite{lazaridis2014ancient}.
-For each sample we ran samtools pileup yielding ~1.2 million SNPs.
+For each sample we ran samtools pileup yielding $\sim$1.2 million SNPs.
 We converted the pileup results to plink format, selecting one allele at random from the confidently mapped reads spanning each site, as is standard in the field.
 This was done 5 times, generating 5 replicates of randomly selected alleles for each sample.
 We then filtered by genotyping rate, excluding poorly genotyped SNPs\footnote{We used the plink filter {\tt --geno 0.05}.}, resulting in 1,142,867 SNPs.
@@ -834,7 +835,7 @@ When using $k=31$, indexing and alignment against the graph were impossible with
 
 I held out 100,000 reads from the input to the assembly graph.
 To evaluate the utility of using this graph as a reference for alignment, I aligned these 100,000 reads using {\tt vg map} and {\tt bwa mem} to the assembly graph and linear contig set respectively.
-Although both methods mapped ~96\% of the reads, {\tt vg} had an average identity score of 95\% compared to 87\% for {\tt bwa}, reflecting that the {\tt bwa} alignments in many cases are not full length while those of {\tt vg} are. Furthermore, many reads mapped with higher scores (longer matches) to the graph than to the contig set (figure \ref{fig:viral_metagenome_scatter}).
+Although both methods mapped $\sim$96\% of the reads, {\tt vg} had an average identity score of 95\% compared to 87\% for {\tt bwa}, reflecting that the {\tt bwa} alignments in many cases are not full length while those of {\tt vg} are. Furthermore, many reads mapped with higher scores (longer matches) to the graph than to the contig set (figure \ref{fig:viral_metagenome_scatter}).
 
 \begin{figure}[htbp!]
   \centering
@@ -906,11 +907,11 @@ To build a splicing graph in {\tt vg} requires a linear reference and a gene mod
 
 An obvious application of {\tt vg} is to the direct alignment of reads to a splicing graph.
 I have only begun to explore this at the end of my studentship.
-Once again, I started with yeast, which has only a small number (~280) of spliced genes.
+Once again, I started with yeast, which has only a small number ($\sim$280) of spliced genes.
 I built a gene model graph (SGD+CDS) using the yeast reference genome from the Saccharomyces Genome Database (SGD) and its gene annotations\footnote{I used the 20150113 release from \url{https://downloads.yeastgenome.org/sequence/S288C_reference/genome_releases/S288C_reference_genome_R64-2-1_20150113.tgz}.}.
 At 8.8MB, the serialized SGD+CDS {\tt vg} graph itself is only slightly larger than the SGD linear reference graph, which is 7.3MB.
 However, its {\tt xg} index is much larger, 642MB, in contrast to the linear index at 38MB.
-This index suffers a large penalty for the ~5000 embedded transcript annotations, as each becomes a full reference path, usable in alignment for positional inference.
+This index suffers a large penalty for the $\sim$5000 embedded transcript annotations, as each becomes a full reference path, usable in alignment for positional inference.
 To verify that the splicing graph would allow reads to align full length across splice junctions, I aligned 100k reads from a yeast mRNA sequencing data set\footnote{SRR2069949 in SRA, \url{https://www.ncbi.nlm.nih.gov/sra/?term=SRR2069949}}.
 
 The low rate of alternative splicing in yeast means that only a handful of reads map across splice junctions encoded in the graph, but those that do now align full length, as seen in figure \ref{fig:yeast_rnaseq}.

@@ -100,7 +100,7 @@ We do so by projecting the $p_t$ through $\Phi_\beta$, and finally adding any $\
 As path to path relationships can provide descriptions of allelic diversity, they form the basis for a graph-relative genotype encoding.
 To represent the exact genotype of a particular sample with ploidy $\nu$ at a given locus $\iota$ we can simply collect the multiset of alleles $\pi_\iota = ( p_1 \ldots p_\nu)$.
 We could alternatively build a probabilistic model $\varpi$ of an unphased genotype by using a set of $\mu$ alleles $\{ p_1 \ldots p_\mu\}$.
-To do so we associate likelihoods $\gamma_\xi$ for each possible genotype $\pi_{\iota_\xi}$ that could be sampled from the alleles such that $\varpi = \gamma_1 \ldots \gamma_{\mu! \over{\nu!(\mu-\nu)!} }$.
+To do so we associate likelihoods $\gamma_\xi$ for each possible genotype $\pi_{\iota_\xi}$ that could be sampled from the alleles such that $\varpi = \gamma_1 \ldots \gamma_{\frac{\mu!}{\nu!(\mu-\nu)!} }$.
 In practice, we develop our $\gamma_\xi$ out of quality information from the reads and a sampling model related to $\nu$ \cite{garrison2012haplotype,li2011statistical}.
 Existing genotyping models can be applied to drive genotyping using read sets aligned to the graph, and the output of the genotyper is defined fully in the space of the graph.
 
@@ -556,12 +556,13 @@ Optionally, other alternative DP alignment algorithms implementing a banded glob
 
 \begin{figure}[htbp!]
 \centering
-\includegraphics[width=1.0\textwidth]{Chapter2/Figs/mapping_cactus_pacbio_aln_viz.pdf}
+\includegraphics[width=0.95\textwidth]{Chapter2/Figs/mapping_cactus_pacbio_aln_viz_tall.pdf}
 \caption[Alignment of a PacBio read to a yeast pangenome]{
-  A single 32,737bp PacBio read from yeast strain SK1 aligned to the yeast pangenome described in section \ref{sec:yeast_cactus}.
-  Blue nodes correspond to those traversed by the first-best alignment (A) and magenta ones are in the second-best alignment (B), while red nodes contain initial MEM hits, many of which appear to match chromosome ends visible as tips in the graph (C).
-  The primary alignment is substantially better than any of its secondary alignments, thus the small size of the annotation corresponding to the second-best alignment (B).
-  Most nodes in the primary alignment appear to be found by exact matching, with only a subset obtained through the final alignment.
+  Aligning a 32,737bp PacBio read from the SK1 strain to a yeast pangenome graph (section \ref{sec:yeast_cactus}).
+  Red nodes contain initial MEM hits, while other colors indicate nodes matched during alignment.
+  (A) The nodes found in the best alignment are labeled in blue.
+  (B) A much smaller secondary alignment is shown in magenta.
+  (C) MEM hits for this read cluster in chromosome ends, which are seen as tips in the graph visualization.
 }
 \label{fig:alignment_to_cactus_yeast}
 \end{figure}
@@ -771,7 +772,7 @@ The result is an approach that is more sensitive than the antidiagonal banded al
 \caption[The \emph{dozeu} X-drop alignment algorithm]{
   The \emph{dozeu} X-drop alignment algorithm.
   Black rectangles represent the evaluated region of the score matrix, which each box corresponding to a SIMD vector value.
-  Grey cells represent the part of the score matrix for which our X-drop paramater would allow evaluation if we were calculating the matrix one cell at a time.
+  Grey cells represent the part of the score matrix for which our X-drop parameter would allow evaluation if we were calculating the matrix one cell at a time.
   Reprinted with permission from \url{https://github.com/ocxtal/dozeu}.
 }
 \label{fig:xdrop}
@@ -1018,7 +1019,7 @@ For VCF-based VGs, where we have haplotype panels, the performance of local alig
 In assembly graphs, we find that nodes which represent repeats can sometimes have extremely high degree, which causes problems both for indexing and local alignment to the graph.
 There, we must remove these nodes in order to use the graph even for local alignment.
 
-\subsubsection{$k$-mer $m$-edge crossing complexity reduction}
+\subsubsection{\emph{k}-mer \emph{m}-edge crossing complexity reduction}
 
 In $k$-mer complexity reduction, we enumerate the $k$-mers of the graph, removing edges when a given $k$-mer crossing them would cross $> m$ edges.
 We implement this filter, $prune(G, k, m) \to G_\textbf{simple}$, using the $k$-mer enumeration algorithm that generates a DBG from the variation graph, only that our walks through the graph are bounded at $m$ edge crossings.
