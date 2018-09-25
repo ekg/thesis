@@ -1,7 +1,6 @@
 # todo for completion of thesis
 
 - fix related publications
-- fix XG index image so it's realistic or remove it
 - automated grammar check (again)
 - spell check (again)
 - final read through
