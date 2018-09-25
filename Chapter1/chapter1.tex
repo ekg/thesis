@@ -363,7 +363,7 @@ In the context of resequencing, this process is known as \emph{variant calling}.
 The simplest methods resemble the consensus step in OLC assembly, and are implemented as heuristic filters on the mutually gapped alignment matrix of a set of homologous sequence reads \cite{koboldt2009varscan}.
 A Bayesian model can incorporate prior expectations about the genomic state with the available data to generate a posterior estimate of the probability of polymorphism that can propagate uncertainty to downstream analyses.
 It can use first principles to integrate various sources of information in addition to the sequence of the reads themselves, including the base quality (BQ), or machine-estimated probability of an erroneous base call, and mapping quality (MQ), which represents the aligner's estimate that the given alignment is a mismapping or ambiguous \cite{li2011statistical}.
-A Bayesian approach also supports the joint analysis of a large number of individuals from the same population.
+A Bayesian approach also supports the joint analysis of many individuals from the same population.
 For instance, in a panmictic population under neutral selection the pattern of observed genotypes should be consistent with Hardy-Weinberg Equilibrium (HWE), and to have confidence in a given genotyping call, the evidence for variation should be stronger than the prior odds of there being no genetic variation at the site.
 
 The earliest implementations of Bayesian variant calling and genotyping were applied to expressed sequence transcripts (ESTs) \cite{marth1999general}.
@@ -475,7 +475,7 @@ The main classes are described visually in figure \ref{fig:pangenomic_models}.
 \end{figure}
 
 The simplest possible sequence-aware pangenome is just a set of whole genome sequences of many species or individuals, in which all sequence homologies and evolutionary relationships are implicit (figure \ref{fig:pangenomic_models}A).
-The unfolded pangenome resolves reference bias, and can be extended with with new data by simply including new genome sequences.
+The unfolded pangenome resolves reference bias, and can be extended with new data by simply including new genome sequences.
 This model does not benefit from compression related to shared sequences in the pangenome, as adding a new genome always adds all the sequence in that genome to our system.
 Without additional information about homologies, an unfolded pangenome cannot represent new sequences in terms of recombinants between known sequences.
 
@@ -723,7 +723,7 @@ Such a model grows linearly with the number of genomes included, and in this way
 Annotations can be provided for each genome and interlinked at a higher level of semantic relationships, as is done in major genome annotation catalogs like Ensembl genomes \cite{kersey2015ensembl}.
 This expedient approach provides almost all the benefits of the kind of pangenomic models I present in this thesis, excepting that it cannot represent base-level sequence relationships within the semantic model without significant effort.
 Whenever a researcher uses BLAST or BLAT to search a large database of sequence they are interrogating this ``unfolded'' pangenome.
-This pattern could be thought of as the default in bioinformatics, and it is the starting place for many DNA based analyses.
+This pattern could be thought of as the default in bioinformatics, and it is the starting place for many DNA-based analyses.
 
 In terms of methods specifically designed to align large sequence read sets against an unfolded pangenome, few are currently under development.
 Of note, the CHIC aligner provides an initial implementation of such an idea \cite{valenzuela2017chic}

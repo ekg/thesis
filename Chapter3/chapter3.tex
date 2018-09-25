@@ -266,14 +266,14 @@ The alignment algorithm will attempt more alignments for each band where there i
 
 For a species such as human, with only 0.1\% nucleotide divergence on average between individual genome sequences, over 90\% of 100-bp reads will derive from sequence exactly matching the reference.
 Therefore, new mappers should perform at least as well for linear reference mapping as the current standard, which we take to be {\tt bwa mem} with default parameters.
-We show that vg does this, and then that vg maps more informatively around divergent sites.
+We show that {\tt vg} does this, and then that {\tt vg} maps more informatively around divergent sites.
 
 \subsection{1000GP graph construction and indexing}
 %*3p 3h*
 
 The final phase of the 1000 Genomes Project (1000GP) produced a data set of $\sim$80 million variants in 2,504 humans \cite{1000g2015}.
-We made a series of vg graphs containing all variants or those above minor allele frequency thresholds of 0.1\%, 1\%, or 10\%, as well as a graph corresponding to the standard GRCh37 linear reference sequence without any variation.
-The full vg graph uses 3.92 GB when serialized to disk, and contains 3.181 Gbp of sequence, which is exactly equivalent to the length of the input reference plus the length of the novel alleles in the VCF file.
+We made a series of {\tt vg} graphs containing all variants or those above minor allele frequency thresholds of 0.1\%, 1\%, or 10\%, as well as a graph corresponding to the standard GRCh37 linear reference sequence without any variation.
+The full {\tt vg} graph uses 3.92 GB when serialized to disk, and contains 3.181 Gbp of sequence, which is exactly equivalent to the length of the input reference plus the length of the novel alleles in the VCF file.
 Complete file sizes including indices range from 25 GB to 63 GB, with details including build and mapping times given in table \ref{table:1000GP}.
 
 \begin{table}[h]
@@ -288,7 +288,7 @@ GRCh37 & 0 & 1:09:54 & 1.76 & 23:30:41 & 25.11 & 33:34 & 28:33 \\
 1000GP AF0.1 & 6.8 & 1:23:04 & 1.97 & 26:06:38 & 27.79 & 32:35 & 28:43 \\
 \hline
 \end{tabular}
-\caption[1000GP variation graphs]{Numbers of variants, file sizes in gigabytes (GB) and build and search times in hours:minutes:seconds for various human vg graphs and associated indexes. Reference sets are the linear reference GRCh37, the full 1000 Genomes Project set 1000GP AF0, and subsets of 1000GP AF0 including only variants with allele frequency above thresholds 0.001 (0.1\%), 0.01 (1\%) and 0.1 (10\%) respectively.  The number of variants in millions for each of these data sets is shown.  Search times are for 10 million 150+150bp read pairs simulated from NA24385.
+\caption[1000GP variation graphs]{Numbers of variants, file sizes in gigabytes (GB) and build and search times in hours:minutes:seconds for various human {\tt vg} graphs and associated indexes. Reference sets are the linear reference GRCh37, the full 1000 Genomes Project set 1000GP AF0, and subsets of 1000GP AF0 including only variants with allele frequency above thresholds 0.001 (0.1\%), 0.01 (1\%) and 0.1 (10\%) respectively.  The number of variants in millions for each of these data sets is shown.  Search times are for 10 million 150+150bp read pairs simulated from NA24385.
     Reprinted from \cite{garrison2018variation}.
 }
 \label{table:1000GP}
@@ -306,13 +306,13 @@ As expected, this difference increased as the allele frequency threshold was low
 
 For reads that were simulated from segments containing non-reference alleles ($\sim$10\% of reads), which are the reads relevant to variant calling, {\tt vg} mapping to the 1000GP graph (red) gave better performance than either {\tt vg} (green) or {\tt bwa mem} (blue) mapping to the linear reference (right panels of Figure \ref{fig:HG002_1000GP_sim}), because many variants present in NA24385 are already represented in the 1000GP graph.
 This is particularly clear for single-end mapping, since many paired-end reads are rescued by the mate read mapping.
-Overall, vg performed at least as well as bwa mem, even on reference-derived reads, and substantially better on reads containing non-reference variants.
+Overall, {\tt vg} performed at least as well as {\tt bwa mem}, even on reference-derived reads, and substantially better on reads containing non-reference variants.
 
 \begin{figure}[htbp!] 
 \centering    
 \includegraphics[width=1.0\textwidth]{Chapter3/Figs/human-10M-results-7358a67_merge_panel_labeled.pdf}
 \caption[Simulated reads from HG002 versus various human pangenome graphs.]{
-  ROC curves parameterized by mapping quality for 10M read pairs simulated from NA24385 as mapped by bwa mem, vg to various 1000GP pangenome references, and vg with a linear reference, using single end (se) or paired end (pe) mapping.
+  ROC curves parameterized by mapping quality for 10M read pairs simulated from NA24385 as mapped by {\tt bwa mem}, {\tt vg} to various 1000GP pangenome references, and {\tt vg} with a linear reference, using single end (se) or paired end (pe) mapping.
   Allele frequency thresholds are given to the left of each row.
   Within each panel, the left subpanel is based on all reads, middle on reads simulated from segments with no genetic variants from the linear reference, and the right on reads simulated from segments containing variants.
   Reprinted from \cite{garrison2018variation}.}
@@ -321,15 +321,15 @@ Overall, vg performed at least as well as bwa mem, even on reference-derived rea
 
 \subsection{Aligning and analyzing a real genome}
 
-We also mapped a real human genome read set with $\sim$50× coverage of Illumina 150-bp paired-end reads from the NA24385 sample to the 1000GP graph. vg produced mappings for 98.7\% of the reads, 88.7\%
+We also mapped a real human genome read set with $\sim$50× coverage of Illumina 150-bp paired-end reads from the NA24385 sample to the 1000GP graph. {\tt vg} produced mappings for 98.7\% of the reads, 88.7\%
 with reported mapping quality score 30 on the Phred scale, and 76.8\% with perfect, full-length sequence identity to the reported path on the graph.
-For comparison, we also used vg to map these reads to the linear reference.
+For comparison, we also used {\tt vg} to map these reads to the linear reference.
 Similar proportions of reads mapped (98.7\%) and with reported quality score 30 (88.8\%), but considerably fewer with perfect identity (67.6\%).
 Markedly different mappings were found for 1.0\% of reads (0.9\% mapping to widely separated positions on the two graphs, and 0.1\% mapping to one graph but not the other).
 The reads mapping to widely separated positions were strongly enriched for repetitive DNA. For example, the linear reference mappings for 27.5\% of these read pairs overlapped various types of satellite DNA identified by RepeatMasker, compared to 3.0\% of all read pairs.
 
 To illustrate the consequences of mapping to a reference graph rather than a linear reference, we stratified the sites independently called as heterozygous in NA24385 by deletion or insertion length (0 for single-nucleotide variants) and by whether the site was present in 1000GP, and measured the fraction of reads mapped to the alternate allele for each category.
-The results show that mapping with vg to the population graph when the variant was present in 1000GP (95.4\% of sites) gave nearly balanced coverage of alternate and reference alleles independent of variant size, whereas mapping to the linear reference either with {\tt vg} or {\tt bwa mem} led to a progressively increasing bias with increasing deletion and (especially) insertion length (Figure \ref{fig:HG002_indels}), so that for insertions around 30 bp, a majority of insertions containing reads were missing (there were over twice as many reference reads as alternate reads).
+The results show that mapping with {\tt vg} to the population graph when the variant was present in 1000GP (95.4\% of sites) gave nearly balanced coverage of alternate and reference alleles independent of variant size, whereas mapping to the linear reference either with {\tt vg} or {\tt bwa mem} led to a progressively increasing bias with increasing deletion and (especially) insertion length (Figure \ref{fig:HG002_indels}), so that for insertions around 30 bp, a majority of insertions containing reads were missing (there were over twice as many reference reads as alternate reads).
 
 \begin{figure}[htbp!] 
 \centering    
@@ -370,9 +370,9 @@ rpoplin-dv42 & 99.9587 & 99.9447 & 99.9728 & 98.9802 & 98.7882 & 99.1728 \\
 \label{table:PFDA}
 \end{table}
 
-We also explored integration of vg with the recently published GraphTyper \cite{eggertsson2017graphtyper} method, which calls genotypes by remapping reads to a local, partially ordered variation graph built from a VCF file, relying on initial global assignment to a region of the genome by mapping with bwa to a linear reference.
-Therefore, although GraphTyper also scales to the whole human genome because it is essentially a local method, its functionality is complementary to that of vg, which maps to a global variation graph and does not directly call genotypes.
-In experiments where we used vg rather than bwa as the primary mapper for GraphTyper, true positives increased marginally (0.02\% for single-nucleotide polymorphisms (SNPs) and 0.06\% for indels) while false positives increased for SNPs by 0.15\% and decreased for indels by 0.03\%.
+We also explored integration of {\tt vg} with the recently published GraphTyper \cite{eggertsson2017graphtyper} method, which calls genotypes by remapping reads to a local, partially ordered variation graph built from a VCF file, relying on initial global assignment to a region of the genome by mapping with bwa to a linear reference.
+Therefore, although GraphTyper also scales to the whole human genome because it is essentially a local method, its functionality is complementary to that of {\tt vg}, which maps to a global variation graph and does not directly call genotypes.
+In experiments where we used {\tt vg} rather than bwa as the primary mapper for GraphTyper, true positives increased marginally (0.02\% for single-nucleotide polymorphisms (SNPs) and 0.06\% for indels) while false positives increased for SNPs by 0.15\% and decreased for indels by 0.03\%.
 We note, however, that GraphTyper was developed by its authors for {\tt bwa mem} mapping.
 
 \subsection{A graph of structural variation in humans}
@@ -742,7 +742,7 @@ As seen in figure \ref{fig:ecoli_pangenome}, the assembly graph features a giant
 Other fragments could represent plasmids or other contaminating elements.
 The normalized graph contains 10,456,557bp of sequence, in 429,377 nodes and 455,892 edges.
 The facts that the average node length is over 24bp and that there are only 1.06 edges per node suggest that despite its tangled appearance, it is mostly composed of linear components.
-The assembly and indexing of the graph was completed in less than an hour, and yielded 6.3MB {\tt vg} graph, a 37MB {\tt xg} index, and a 47MB {\tt GCSA2} index.
+It took less than an hour to assemble and index the graph, yielding a 6.3MB {\tt vg} graph, a 37MB {\tt xg} index, and a 47MB {\tt GCSA2} index.
 
 \subsection{Evaluating the core and accessory pangenome}
 
@@ -829,7 +829,7 @@ Indexing yielded a 119MB {\tt xg} index and 158MB {\tt GCSA2} index.
 \end{figure}
 
 As expected given the small genome size of most viruses, the graph contains many small components (figure \ref{fig:viral_metagenome_bandage}).
-The graph also contains a few large components, and many of the medium sized components are circular, which is expected given the nature of many DNA viruses.
+The graph also contains a few large components, and many of the medium-sized components are circular, which is expected given the nature of many DNA viruses.
 Some components are topologically complex, which can be seen in figure \ref{fig:viral_metagenome_bandage} as ``hairball'' like structures.
 When using $k=31$, indexing and alignment against the graph were impossible without a high-degree filter which removed nodes in such regions, however in the case of $k=51$ it is possible to index with only standard pruning of the DBG.
 

@@ -100,7 +100,7 @@ We do so by projecting the $p_t$ through $\Phi_\beta$, and finally adding any $\
 As path to path relationships can provide descriptions of allelic diversity, they form the basis for a graph-relative genotype encoding.
 To represent the exact genotype of a particular sample with ploidy $\nu$ at a given locus $\iota$ we can simply collect the multiset of alleles $\pi_\iota = ( p_1 \ldots p_\nu)$.
 We could alternatively build a probabilistic model $\varpi$ of an unphased genotype by using a set of $\mu$ alleles $\{ p_1 \ldots p_\mu\}$.
-To do so we associate likelihoods $\gamma_\xi$ for each possible genotype $\pi_{\iota_\xi}$ that could be sampled from the alleles such that $\varpi = \gamma_1 \ldots \gamma_{\frac{\mu!}{\nu!(\mu-\nu)!} }$.
+To do so, we associate likelihoods $\gamma_\xi$ for each possible genotype $\pi_{\iota_\xi}$ that could be sampled from the alleles such that $\varpi = \gamma_1 \ldots \gamma_{\frac{\mu!}{\nu!(\mu-\nu)!} }$.
 In practice, we develop our $\gamma_\xi$ out of quality information from the reads and a sampling model related to $\nu$ \cite{garrison2012haplotype,li2011statistical}.
 Existing genotyping models can be applied to drive genotyping using read sets aligned to the graph, and the output of the genotyper is defined fully in the space of the graph.
 
@@ -506,7 +506,7 @@ Construction employs this model in a manner similar to RopeBWT2 \cite{li2014fast
 This process includes the new paths in the dynamic GBWT by rebuilding each node record affected by the extension.
 When constructed, the GBWT may be encoded in a compacted but immutable form that uses less memory.
 By breaking the construction process apart for each chromosome and finally merging the compressed GBWTs, it is possible to build the GBWT for the entire 1000GP haplotype set in around 30 hours.
-The resulting GBWT requires $\approx 15$GB, with around half allocated to the GBWT structure itself and half to haplotype identifiers.
+The resulting GBWT requires $\approx 15$ GB, with around half allocated to the GBWT structure itself and half to haplotype identifiers.
 The index consumes less than 0.1 bit per node in the stored paths, and we should expect this to improve when we build the GBWT for larger haplotype panels.
 
 \subsection{Generic disk backed indexes}
@@ -607,7 +607,7 @@ Although the exact algorithm is different, in spirit our implementation is simil
 \subsection{Unfolding}
 
 Every node has an implicit default orientation so that it is possible to determine edges that cause an inversion, i.e. those which connect between a forward and a reverse complement node orientation. 
-When \emph{unfolding} the graph we use a breadth first search starting at every inverting edge in the graph to explore the reverse complemented portions of the graph that we can reach within length $k$ from the inverting edge.
+When \emph{unfolding} the graph, we use a breadth first search starting at every inverting edge in the graph to explore the reverse complemented portions of the graph that we can reach within length $k$ from the inverting edge.
 We then copy this subgraph, take its reverse complement, and replace the inverting edges connecting it to the forward strand of the graph with non-inverting ones.
 
 \subsection{DAGification}
