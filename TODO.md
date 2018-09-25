@@ -1,6 +1,5 @@
 # todo for completion of thesis
 
-- fix related publications
 - automated grammar check (again)
 - spell check (again)
 - final read through
