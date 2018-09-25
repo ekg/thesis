@@ -436,7 +436,7 @@ By default, {\tt vg} runs GCSA2 with initial $k=16$ and $m=4$, yielding a final 
 Because it is based on a DBG, GCSA2 limits the maximum length query for which no false-positive results will be returned to the order $k$ of the DBG.
 
 To appreciate the costs of indexing a human genome sized graph\footnote{Precise sizes are given later in the discussion of results.}, the order-256 GCSA2 index of the 1000GP variation graph may be constructed using less than 500GB of scratch space, to and from which are written approximately 3TB during construction, all while requiring less than 50GB of RAM.
-This puts GCSA2 indexing's resource requirements well within the specifications of standard commodity compute servers.
+This puts GCSA2's indexing resource requirements well within the specifications of standard commodity compute servers.
 The resulting index occupies between five and ten times the input graph's serialized size, no more than 50GB for a human genome.
 
 \subsection{Haplotype indexes}
@@ -529,8 +529,8 @@ The coverage map loses information about the edge traversals and the paths taken
 But in benefit, this simple model is efficient to use.
 The complexity of computing the coverage map is linear in the number of the input alignment set, and it requires $O(\sum_{\forall{n_i\in N}}|n_i|)$ space to store once built.
 
-I developed an compact coverage index by maping the sequence space of the graph into a vector and recording coverage across it for a GAM read set.
-During construction, a succinct format is employed to store the coverages in a single byte as long as they are below 255, and in a secondary hash table if they reach 256.
+I developed an compact coverage index by mapping the sequence space of the graph into a vector and recording coverage across it for a GAM read set.
+During construction, a succinct format is employed to store each base's coverage in a single byte as long as it is below 255, and in a secondary hash table if it reaches or exceeds 255.
 Finally, a compressed integer vector is generated, which can be queried by graph position computed from the XG index of the graph.
 I extended this concept with a succinct ``pileup'' format \cite{li2009sequence} generated from the edits against the graph.
 In this model edits in mappings which don't match the reference were serialized into a byte alphabet using Protobuf, such that each non-reference edit $e_j$ at position $b_i$ was recorded as a string $\$b_i e_j$, with the idea that by building a CSA/FM-index from these I could obtain the set of edits at each graph position through pattern matching.
@@ -542,7 +542,7 @@ To align sequences to a VG, we use the graph and sequences indexes described in 
 A Markovian chaining model is built from the MEMs which respects their relative positions in the graph and the read, favoring collinear mappings of MEMs, and Viterbi is used to extract likely mappings based on the MEMs.
 We then align the sequence locally to the graph at each of the high scoring chains using various sensitive alignment algorithms that use various kinds of dynamic programming.
 
-To detect structural variation and align long reads without incuring quadratically-scaling computational penalties, we apply a kind of banding and a second layer of chaining.
+To detect structural variation and align long reads without incurring quadratically-scaling computational penalties, we apply a kind of banding and a second layer of chaining.
 In \emph{chunked alignment}, large sequences are broken up into overlapping segments, each of which is aligned individually in any order or orientation.
 This subdivision provides a kind of banding to the alignment algorithm, preventing the evaluation of the full DP matrix, but more importantly it also allows alignments that are generated to represent any kind of variation.
 Each chunk is aligned independently.
@@ -626,7 +626,7 @@ Next we k-DAGify the component progressively copying the base component and, for
 
 We use dynamic programming to track the minimum distance back through the graph to a root node outside the component at each step.
 When this reaches our target $k$, we stop unrolling, and add the expanded component back into the graph by reconnecting it with its original neighborhood.
-For each copy of a node in the DAG-ified component we copy all its inbound and outbound edges where the other end of the edge lies outside the strongly connected component.
+For each copy of a node in the DAGified component we copy all its inbound and outbound edges where the other end of the edge lies outside the strongly connected component.
 The resulting graph is acyclic and supports queries up to length $k$ on the original graph using the translation that we maintain between the new graph and the source one.
 %Figure \ref{fig:kdagify} 
 %Supplementary Figure 4 provides a visual description of the process.
@@ -794,7 +794,7 @@ In this model we put weights on transitions between alignments that relate to th
 We take the Viterbi path through the model to be the best alignment.
 Then, to obtain multiple alignments, we mask out this path, re-score, and take the Viterbi path to get the 2nd-, 3rd-, and ultimately $N$th-best alignment.
 After they have been extracted from the model, alignments are ``patched'' using local alignment of unaligned regions anchored in the graph near the end of previous mapped regions, so that sub-alignments which may have been misaligned due to repeats may be locally aligned correctly.
-Although this sounds complex, in a very high fraction of cases neighbouring alignments overlap exactly in the overlap region of size w/8, and chaining is trivial.
+Although this sounds complex, in a very high fraction of cases neighboring alignments overlap exactly in the overlap region of size w/8, and chaining is trivial.
 This model allows {\tt vg} to map noisy reads of arbitrary length, and is used as a core component in the long read progressive assembler {\tt vg msga}.
 
 
@@ -837,7 +837,7 @@ Next we marginalize over bases from the posterior distribution to obtain a quali
 {\tt vg} works backwards from integer scoring functions to the probabilistic alignment parameters in this equation. After doing so, the match scores are given by
 
 \begin{align}
-    \tilde s_{x,y}(\epsilon) &= \frac{1}{\lambda} \log\left(\frac{(1 - \epsilon)q_x q_y \exp \lambda s_{x,y} + \frac{\epsilon}{3}\sum_{b \neq x}q_b q_y \exp \lambda s_{b,y}}{q_y\left((1 - \epsilon)q_x + \frac{\epsilon}{3}\sum_{b \neq x}q_b \right)} \right).
+    \tilde s_{x,y}(\epsilon) &= \frac{1}{\lambda} \log\left(\frac{(1 - \epsilon)q_x q_y e^{\lambda s_{x,y}} + \frac{\epsilon}{3}\sum_{b \neq x}q_b q_y e^{\lambda s_{b,y}}}{q_y\left((1 - \epsilon)q_x + \frac{\epsilon}{3}\sum_{b \neq x}q_b \right)} \right).
 \end{align}
 
 Here, $\lambda$ is a scale factor that can be computed from the scoring parameters, and the background frequencies $q_x$ are estimated by their frequency in the reference graph. Since base quality scores are already discretized, the adjusted scores can be precomputed and cached for all reasonable values of $\epsilon$. 
@@ -854,11 +854,11 @@ Thus, assuming a uniform prior over alignments, we can use Bayes' Rule to motiva
 \begin{split}
     Q(\hat A|X,Y) &= -10\log_{10}(1 - P(\hat A|X,Y)) \\
     &= -10 \log_{10}\left(1 - \frac{P(X,Y|\hat A)}{\sum_{A}P(X,Y|A)} \right) \\
-    &= -10 \log_{10}\left(1 - \frac{\exp \lambda S(\hat A|X,Y)}{\sum_{A}\exp \lambda S(A|X,Y)} \right) \label{basicqualityscore}
+    &= -10 \log_{10}\left(1 - \frac{e^{\lambda S(\hat A|X,Y)}}{\sum_{A}e^{\lambda S(A|X,Y)}} \right) \label{basicqualityscore}
 \end{split}
 \end{align}
 
-Using the close approximation of the LogSumExp function by element-wise maximum, there is a fast approximation to this formula that does not involve transcendental functions.
+Using the close approximation of the \emph{LogSumExp} function by element-wise maximum, there is a fast approximation to this formula that does not involve transcendental functions.
 
 \begin{align}
     Q(\hat A|X,Y) &\approx \frac{10\lambda}{\log 10}\left( S(\hat A | X,Y) - \max_{A \neq \hat A}S(A| X,Y)\right)
@@ -879,7 +879,7 @@ Here I describe several such techniques designed specifically for variation grap
 The simplest leverage standard utilities for graph drawing, and the most performant of these are hierarchical models that benefit from linear ordering which is often available in reference-ordered variation graphs.
 Force-directed layouts techniques developed for assembly graph interpretation allow us to interrogate larger-scale graphs.
 While it may be topologically complex, any graph is composed of sets which can be ordered linearly.
-By exploiting a linear sort of the graph I provide a linear-time layout algorithm that will scale to arbitrary data scales, allowing the visualization of both paths and read coverages against any graph.
+By exploiting a linear sort of the graph I provide a linear-time layout algorithm that will scale to arbitrary data scales, allowing the visualization of both paths and read coverage against any graph.
 
 \subsection{Hierarchical layout}
 %*0.5p 0.5h*
@@ -1157,7 +1157,7 @@ Such models can be used to infer population structure and phylogeny, as well as 
 If the variation graph used as a reference contains all sequences relevant to our analysis, then a matrix of per-base coverage of the graph by sample will provide highly representative information to downstream analyses.
 Exceptions include structural variation that does not result in coverage changes, such as balanced events like inversions.
 Also, some local patterns of variation between successive small variation will not be distinguishable.
-If we were to annotate edge coverages, this method would produce a result equivalent in information content to a Markov model.
+If we were to annotate edges with their coverage, this method would produce a result equivalent in information content to a Markov model.
 It is thus clear that any coverage based index will be lossy relative to the full read set.
 However, the lossiness reduces the information cost of storing and processing these coverage maps.
 As I described in section \ref{sec:coverage_index}, in {\tt vg} I developed an efficient method to accumulate coverage information of this kind across the graph.

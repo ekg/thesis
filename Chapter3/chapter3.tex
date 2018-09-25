@@ -178,7 +178,7 @@ Three of the graphs are effectively linear or DAG-like, except for their mitocho
 SGD\_2010 and S288c represent two assemblies of the reference genome, the former from the SGD genome sequencing project, and the latter is a \emph{de novo} assembly from \cite{yue2017contrasting}.
 The difference in quality between the two approaches will be made apparent in the subsequent section.
 As described in section \ref{sec:SGRP2_graph}, the SGRP2 graph adds SNP variation from the population survey in \cite{bergstrom2014high} to build a pangenome reference.
-The SGD\_2010 reference contains the mitochondria and 6kb plasmid sequence, while the S288c assembly excludes them due to the sequencing protocol, where size selection in the library preparation stage removed these short sequences, so to enable direct comparison in later tests these were added to the S288c graph.
+The SGD\_2010 reference contains the mitochondria and 6 kbp plasmid sequence, while the S288c assembly excludes them due to the sequencing protocol, where size selection in the library preparation stage removed these short sequences, so to enable direct comparison in later tests these were added to the S288c graph.
 
 The remaining four graphs are different forms of assembly graph.
 Using the Illumina data published in \cite{yue2017contrasting}, I build two assemblies with minia3, using a $k$-mer size of 51 and a high abundance threshold (50) to limit the resulting graph complexity.
@@ -222,7 +222,7 @@ At the same time, the node count of the {\tt vg msga} graph is higher, which per
 \label{sec:yeast_long_read}
 
 In this section I evaluate the graphs I constructed in section \ref{sec:constructing_yeast_graphs} and simultaneously demonstrate the ability of {\tt vg} to align long reads to graphs of any type.
-For each of the seven graphs I aligned a set of 43,337 Pacific Biosciences SK1 reads (mean length 4.7 kb) from \cite{yue2017contrasting} to the graph.
+For each of the seven graphs I aligned a set of 43,337 Pacific Biosciences SK1 reads (mean length 4.7 kbp) from \cite{yue2017contrasting} to the graph.
 We can then compare the alignment identity for each read across the various graphs.
 I do so using the same dot plot technique used to demonstrate alignment quality improvement using the Illumina data from the NCYC strains.
 In figure \ref{fig:pacbio_yeast} I present a number of pairwise comparisons based on this read set.
@@ -431,7 +431,7 @@ This adds ambiguity to the mapping and apparently causes problems when attemptin
 
 There are only a few truly \emph{de novo} human genome assemblies which achieve near-complete chromosomes, and so a reference-guided variant detection approach has prevailed for the discovery of novel structural variation \cite{fan2017hysa}.
 Using {\tt vg msga}, I explored if it would be possible to use the HGSVC reference-guided assemblies directly in progressive alignment.
-It was possible to produce the progressive alignment of the six haplotypes for chr20 on system I used at the Sanger for most experiments, which has 256GB of RAM and 32 vCPUs.
+It was possible to produce the progressive alignment of the six haplotypes for chr20 on system I used at the Sanger for most experiments, which has 256 GB of RAM and 32 vCPUs.
 However, doing so took more than week of wall clock time, suggesting that this approach is untenable in its current form.
 I was not able to complete the progressive alignment of the six haplotypes of chromosome 2.
 Optimization may improve the performance of {\tt vg msga}, but the linear nature of the approach suggests that aligning more than a handful of sequences will never be feasible.
@@ -460,7 +460,7 @@ Unlike {\tt vg msga}, it is fully dependent on an input alignment set, and is no
 As an exposition of the differing solutions to this problem offered by these two methods, I built the MHC graph from the 9 haplotypes overlapping the MHC in GRCh38\footnote{These were collected for use in the GA4GH-DWG by the human genome variation map (HGVM) project \cite{blow2015decoding}.}.
 To build the {\tt seqwish} graph, I used \cite{li2018minimap2} to generate an all versus all alignment\footnote{{\tt minimap2 MHC.fa MHC.fa -c -X -x asm20 -t 32 >MHC.paf}}, and induce the graph from this\footnote{{\tt seqwish -s MHC.fa -a MHC.paf -b MHC.seqwish >MHC.gfa}}.
 With {\tt vg msga} I supplied suitable parameters to encourage greater colliniearity in the alignment, but otherwise used defaults\footnote{{\tt vg msga -f MHC.fa -w 512 -J 16384 -b ref -D >MHC.vg}}.
-{\tt seqwish} used very little memory, never more than around a gigabyte, but wrote 12GB of intermediate files to disk during graph induction.
+{\tt seqwish} used very little memory, never more than around a gigabyte, but wrote 12 GB of intermediate files to disk during graph induction.
 {\tt vg msga} used several times this much RAM at peak, indicating that it will be difficult to scale its application beyond small genomic regions.
 Both processes took around 2 hours to complete on the 256GB/32vCPU server I used for most of the experiments in this thesis.
 
@@ -734,7 +734,7 @@ This approach is similar to colored de Bruijn graphs \cite{iqbal2013}, but it al
 
 In line with early work on bacterial pangenomics \cite{medini2005microbial}, I used a handful of genomes to demonstrate the utility of pangenomic approaches in \emph{E. coli}.
 I collected Illumina data from 10 strains published in \cite{earle2016identifying}\footnote{SRA accessions SRR3050857, SRR3050919, SRR3050929, SRR3050978, SRR3050990, SRR3050992, SRR3050994, SRR3051002, SRR3051049, and SRR3051079.}.
-These data total 2.3GB of compressed FASTQ in 2x151bp paired end format.
+These data total 2.3 GB of compressed FASTQ in 2x151bp paired end format.
 I built a compressed DBG using {\tt minia} with $k=51$ and an abundance minimum of 10, which was selected due to the very high genomic coverage offered by this data, although I did not observe large changes in assembly structure when varying it.
 I then processed the resulting graph with {\tt vg} to decompress long nodes into nodes with a maximum length of 32bp, then sort it pseudotopologically and compact its node identifier space.
 These steps are required for efficient mapping given the absence of any annotated reference paths to provide distance estimates.
@@ -747,7 +747,7 @@ The assembly and indexing of the graph was completed in less than an hour, and y
 \subsection{Evaluating the core and accessory pangenome}
 
 The generation of the compressed DBG loses the read-level relationships to the graph, but these may be obtained trivially with {\tt vg} by aligning the read set back to the assembly graph.
-Doing so required around 5 minutes per sample, yielding 3.3GB of GAM files in around an hour.
+Doing so required around 5 minutes per sample, yielding 3.3 GB of GAM files in around an hour.
 To obtain coverage counts per sample across the graph I then applied the {\tt vg pack} utility to project the alignment GAMs into coverage maps for each sample, which I collated for processing in R.
 
 
@@ -755,7 +755,7 @@ To obtain coverage counts per sample across the graph I then applied the {\tt vg
   \centering
   \begin{subfigure}[t]{1.0\textwidth}
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/ecoli_10strain_cov_col_pos_4400000_100k.png}
-    \caption{Per-strain coverage across 100kb of the \emph{E. coli} pangenome}
+    \caption{Per-strain coverage across 100 kbp of the \emph{E. coli} pangenome}
     \label{subfig:ecoli_cov_100k}
   \end{subfigure}
   \begin{subfigure}[t]{0.49\textwidth}
@@ -850,7 +850,7 @@ Although both methods mapped $\sim$96\% of the reads, {\tt vg} had an average id
 
 As a counterpoint to the viral metagenomic sample used in the previous section, here I present a similar analysis based on a predominantly bacterial human gut microbiome obtained from a stool sample\footnote{Sample described at \url{https://portal.hmpdacc.org/cases/3674d95cd0d27e1de94ddf4d2e0398c4}, with data from \url{http://downloads.hmpdacc.org/data/Illumina/PHASEII/stool/SRS105153.tar.bz2}.} as part of the Human Microbiome Project (HMP) \cite{turnbaugh2007human,peterson2009nih}.
 
-As with other assembly graph based analyses, I applied {\tt minia} with $k=51$ and a minimum abundance filter of 3 to the 29GB of compressed FASTQs from this sample.
+As with other assembly graph based analyses, I applied {\tt minia} with $k=51$ and a minimum abundance filter of 3 to the 29 GB of compressed FASTQs from this sample.
 The resulting assembly graph is shown in figure \ref{fig:human_gut_microbiome_bandage}.
 It contains 144,829,925bp of sequence in 4,788,652 nodes and 4,665,919 edges, and as with other DBG assemblies I have discussed is locally linear.
 Building and indexing the graph took around an hour on the 32vCPU/256GB server used in other experiments, and yielded a 74MB {\tt vg} graph with a 403MB {\tt xg} index and 606MB {\tt GCSA2} index, which was built with pruning with a 3 edge crossing limit in $k=16$.
