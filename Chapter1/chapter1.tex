@@ -692,7 +692,7 @@ We can then contract $G_a$ into the base graph $G_s$, adding a node for each con
 Each column of an MSA matrix or each base in a variation graph would correspond to a particular connected component in $G_a$.
 It is worth noting that the equivalence is not exact unless we generalize the alignment graph to represent alignments in both the forward or reverse complement orientations, which has been explored in the A-Bruijn model \cite{raphael2004novel}.
 
-The Enredo graph model $G_e = (V, E)$, used by the Benedict Paten's Enredo/Pecan multiple genome aligner \cite{paten2008enredo}, generalizes the alignment graph model to be bidirectional by representing each genome segment in the graph with two nodes, a head and tail.
+The Enredo graph model $G_e = (V, E)$, used by Benedict Paten's Enredo/Pecan multiple genome aligner \cite{paten2008enredo}, generalizes the alignment graph model to be bidirectional by representing each genome segment in the graph with two nodes, a head and tail.
 The graph maintains two kinds of edges, $E_s$ which represent genome segments and are equivalent to nodes in $G_s$, and $E_a$ which represent breakpoints of adjacencies between segments.
 To obtain a graph like $G_s$ from the Enredo graph, the MSA resolver Pecan is applied to sets of homologous $E_s$ connecting the same head and tail nodes.
 
