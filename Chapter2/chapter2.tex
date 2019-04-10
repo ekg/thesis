@@ -25,6 +25,29 @@ Understanding variation graphs requires techniques to visualize them, and I will
 Working with variation graph references necessitates a number of graph-modifying operations, including augmentation, sorting, pruning, and bubble simplification.
 Finally, I will discuss how variation graphs can provide normalized basis spaces for the analysis of pangenomes, such as through various projections of alignment sets and the graph including coverage maps, ultrabubble decomposition, and haplotype matching.
 
+\begin{figure}[htbp!]
+  \includegraphics[width=\textwidth]{Chapter2/Figs/example_vg_construction.pdf}
+  \caption[The basic elements of a variation graph]{
+    A step in the progressive construction of a variation graph from homologous fragments of four haplotypes in the GRCh38 alternate allele set for the HLA gene DQB1-3119.
+    (A) shows variation graph constructed by progressive alignment of three sequences labeled \emph{a}, \emph{b}, and \emph{c}.
+    The graph topology is shown in at the top of the panel, with nodes represented by black bars, labeled by their node IDs (white numbers), and with edge connections between nodes shown by arcs above.
+    Paths are indicated in the colored bars below, with a identifying name to the left.
+    This graph is partially ordered, without cycles, and so the sequences of paths may be enumerated by concatenating the node sequences above the filled portions of each of the path rows.
+    A fourth sequence \emph{z} has been aligned to the graph, and is shown in a checkerboard magenta pattern.
+    It contains a single SNP relative to the graph, which is shown by the black {\tt T} matching the fifth position of the first node.
+    The JSON presented in (B) describes the full node set of the graph in (A), while (C) lists the edges.
+    (D) shows the path \emph{a} embedded in the graph in full. Other paths are not provided, but their overall format is the same.
+    (E) describes the alignment of \emph{z} against graph (A). Only the beginning of the path of \emph{z} against (A) is given.
+    The first mapping in the path describes a SNP between the matching subsequence in \emph{z} and $n_1$.
+    Note the second edit in the mapping, which specifically describes the SNP as a replacement of a subsequence in $n_1$ by {\tt T}.
+    Graph (F) is the result of the application of the $edit$ operation to graph (A) and alignment \emph{z}.
+    The node IDs have been reassigned.
+    The inclusion of the SNP increases the node count of the graph by 3.
+    Path $[n_1]$ in graph (A) maps to $[n_1,n_2,n_4]$ in (F).
+  }
+  \label{fig:vg_illustrative_example}
+\end{figure}
+
 %\section{An extensible graphical model of many sequences}
 \section{A generic graph embedding for genomics}
 
@@ -49,8 +72,10 @@ Edges can be identified with the ordered pairs of oriented nodes that they link,
 Edges also can be traversed in either the forward or the reverse direction, with the reverse traversal defined as $\overline{e_{ij}} = (\overline{n_j},\overline{n_i})$.
 VGs can contain ordinary cycles (in which $n_i$ is reachable from $n_i$), reversing cycles (in which $n_i$ is reachable from $\overline{n_i}$), and non-cyclic instances of reversal (in which both $n_i$ and $\overline{n_i}$ are reachable from $n_j$).
 
-\subsection{Paths with edits}
+The bidirectional sequence graph underlying the variation graph model is illustrated in panels A, B, and C of figure \ref{fig:vg_illustrative_example}.
 
+\subsection{Paths with edits}
+% TODO fixme this needs an explanation of what's different between paths in the graph and those in alignments
 We implement paths as an edit string with respect to the concatenation of node subsequences along a directed walk through the graph.
 We do not require the alignment described by the edit string to start at the beginning of the sequence of the initial node, nor to terminate at the end of the sequence of the terminal node.
 To allow the path model to support differences from the graph, each path is composed of a series of node mappings $p_i = m_1 \ldots m_{|p_i|}$ which are semantically identical to the alignment format used by standard aligners.
@@ -63,6 +88,8 @@ We encode matches when $f_i = t_i \land r_i = \emptyset$, single mismatches when
 As paths are described by a series of mappings with independent positions, they can represent all kinds of structural variation relative to the graph.
 When mapping positions are always at the start of a node, the edit set for the path contains only matches, and the edges traversed by the path are all present in the graph\footnote{Note that paths may contain disjoint mappings that are not connected by edges in the graph, which allows them to represent structural variations.}, we say that the path is \emph{embedded}.
 The paths from which we construct the variation graph are fully embedded, and in practice paths that contain differences occur only in the alignment of new sequences into the graph.
+
+The example variation graph in figure \ref{fig:vg_illustrative_example} panel A contains several paths, while panel D explicitly describes a portion of one of the paths using an equivalent model to the one described here.
 
 \subsection{Alignments}
 \label{sec:alignments}
@@ -79,6 +106,8 @@ I follow this same model in developing an alignment format for read alignments t
 An aligned set of sequences $Q$, $A = a_1 \ldots a_{|Q|}$, represents a sequencing experiment.
 Each aligned read connects a sequence, an (optional) quality string, a path through the graph including possible edits, and an optional set of $D_i$ annotations: $a_i = (s_i, q_i, p_i, k_1\ldots k_{D_i})$.
 In principle the read sequence can be reconstructed from the path, but retaining the sequence information makes the alignment object lossless with respect to the input FASTQ and provides redundancy which can help in data processing.
+
+Panels A and E of figure \ref{fig:vg_illustrative_example} demonstrate how an alignment to a variation graph can encode putative variation, in this particular case encoding a SNP.
 
 \subsection{Translations}
 \label{sec:translation}
@@ -117,6 +146,10 @@ One way to accomplish this is to first take the set of unique mappings represent
 Then, walking through each alignment we add in unique novel sequences and their linkages to the preexisting nodes or new breakpoints to the graph.
 This process will disrupt the identifier space of the nodes and edges of the graph, but it naturally yields a translation that can be used as described in section \ref{sec:translation}.
 Both alignments and genotypes are based on paths, so this mechanism can be used to extend the graph based on any sequence level differences observed through alignment or variant calling.
+
+Figure \ref{fig:vg_illustrative_example} provides an example to provide a concrete intuition about the $edit$ function.
+Editing the graph in panel A with the alignment of sequence \emph{z} yields the graph in panel F.
+The corresponding translation is described in the figure legend.
 
 \section{Variation graph construction}
 
