@@ -408,9 +408,174 @@ In the context of read alignment, such losses may be undesirable as long as ther
 \subsection{Graph sequence indexes}
 \label{sec:graph_sequence_indexes}
 %*1p 2h*
-Indexing the sequence space of a variation graph can be achieved using the same $k$-mer based techniques frequently used in pairwise alignment.
-In the early stages of this project, I implemented a $k$-mer based index using a disk-backed system (see section \ref{sec:generic_disk_backed_indexes}).
-An efficiently-built in-memory index of $k$-mers, perhaps sampled and possibly $w,k$-minimizers \cite{marccais2018asymptotically,li2018minimap2}, appears to be a reasonable basis for a sequence to graph aligner, but I did not explore this beyond these initial experiments.
+
+As I presented in section \ref{sec:sequence_alignment}, sequence alignment is driven by sequence indexes that allow efficient queries of subsequences in a given corpus (for instance a reference genome, or a set of reads).
+Two main varieties have proved useful.
+In $k$-mer indexes, short subsequences of length $k$ are recorded in a hash table or equivalent data structure that allows efficient lookup.
+The keys in this table are the $k$-mers, whel the values are typically a list of strand-oriented positions in the target set of sequences.
+BWT-based indexes emulate the suffix tree of their input text in small space, and allow $O(l)$ time queries for sequences of length $l$, irrespective of the size of the target corpus.
+Implementations of the popular FM-index \cite{fmindex2000,fmindex2005} and the functionally equivalent compressed suffix array (CSA) \cite{grossi2005compressed} compress the BWT using encodings that allow fast decompression or direct operation on the compressed data (such run-length compression, or that of Raman, Raman, and Rao \cite{raman2002succinct}, and augment the BWT with positional information that allows the index to be used for substring matching.
+
+Indexing the sequence space of variation graphs requires a generalization of the principles behind these indexing techniques.
+Junctions allow for the representation of alternative sequences, with an exponential size relative to the number of furcations in the graph.
+This introduces problems of representation and scale which have required substantial work to resolve.
+In {\tt vg}, I was ultimately able to use and encourage the development of a practical implementation of a succinct data structure akin the the CSA, but generalized to operate in any kind of bidirectional sequence graph, the GCSA2.
+This this model was developed within the context of {\tt vg}, and is the first sequence index specifically designed to work on variation graphs.
+Here, I will provide a description of related data structures from which this model draws inspiration, as well as a careful summary of the GCSA2 and the features which make it ideal as the core sequence index to drive for a short read to variation graph mapper.
+Due to space, I will not fully elaborate this model, as it is not among my contributions.
+Readers are encouraged to examine the cited works if they seek a complete description of this and related data structures.
+
+\subsubsection{Graph $k$-mer indexes}
+
+It is straightforward to construct a $k$-mer index of a variation graph.
+We simply enumerate the $k$-length walks through the sequence space of the graph.
+Problematically, the $k$-mer space of a graph can grow exponentially where variant bubbles cluster within the given length $k$.
+To mitigate this issue, we can short-circuit the $k$-mers enumeration when a given number of edges are crossed within $k$ characters.
+Another way to mitigate the limitations posed by the exponential number of $k$-mers in the graph is to build the index on disk, rather than using main memory.
+In the early stages of the {\tt vg} project, I implemented a $k$-mer based index using a disk-backed system (see section \ref{sec:generic_disk_backed_indexes}).
+By sorting the $k$-mers, the index could be efficiently compressed, but still the graph for the human 1000 Genomes Project required over 200GB of memory, and was unusably slow unless cached in main memory.
+This work formed the basis for the first prototypes of the {\tt vg} mapper, which was found to be impractical due to the memory and time requirements of the method.
+
+\subsubsection{The FM-index and Compressed Suffix Array (CSA)}
+\label{sec:fmidx_csa}
+
+As introduced in section \ref{sec:compressed_full_text_indexes}, compressed full text self indexes like the CSA and equivalent FM-index provide functionality similar to that of the suffix tree (as in Figure \ref{fig:suffix_tree}) but in compressed space.
+The functionality of these indexes is the basis for the indexing techniques applied in {\tt vg} to the alignment of reads to variation graphs.
+Here, I will first illustrate the construction of a full text index based on the Burrows Wheeler transform (BWT) and suffix array (SA), and show how it can be used to locate occurrences of a pattern in the source text.
+This discussion will form the basis for an elaboration of the generalizations that lead to a similar kind of index built over a variation graph.
+
+\begin{figure}[htbp!]
+  \includegraphics[width=\textwidth]{Chapter2/Figs/mississippi_suffix_tree.pdf}
+  \caption[An example of a suffix tree]{
+    A suffix tree built from the suffixes of the string {\tt mississippi}.
+    Suffixes begin at the root, shown at the top.
+    Leaves are labeled by their suffix, which is written in terms of the 0-based starting position of the suffix in the source text.
+    A red arrow shows a search for the string ``iss'' on the tree.
+    The leaves of the tree below the ultimate point reached by this search give the positions of the matched pattern in the source text, in this case 1 and 4.
+    Rendered with \url{https://github.com/mpetri/draw-suffix-tree}.
+  }
+  \label{fig:suffix_tree}
+\end{figure}
+
+To construct the BWT from a given string $T$, we first append a marker character that is outside the alphabet (e.g. {\tt \$}) to the text.
+We take all rotations of this string, and lexicographically order them to form a matrix, which is sometimes referred to as the Burrows Wheeler matrix (BWM).
+The first column of this matrix is $F$, and lists the characters in the source text in lexicographic order.
+We can compactly represent it as a vector of counts $C$ of characters that are lexicographically smaller than a given one, indexed by the characters as encoded in a compact set of integers.
+The last column of the BWM is the Burrows Wheeler transform (BWT) of the source text.
+The order in which the rotations (or equivalently, suffixes) appear in the sort is the suffix array (SA) of the text
+Assume a function $rank_{BWT}(c, i)$ which returns the number of characters equal to $c$ in the prefix of $BWT[0\ldots i]$.
+The function $LF(i) = C[c] + rank_{BWT}(c, i) - 1$ reconstructs the mapping between the same character in the BWT and $F$, thus provides a way to unwind the permutation generated by the sort and reconstruct the source text.
+These construction steps are illustrated in Figure \ref{fig:bwt_construction}.
+
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=0.65\textwidth]{Chapter2/Figs/mississippi_bwt_construction.pdf}
+  \caption[Building the BWT and suffix array]{
+    A BWT and suffix array built from the string {\tt mississippi}.
+    The Burrows Wheeler Matrix (BWM) shows all rotations of the string (appended with terminal marker {\tt \$}) in lexicographical order.
+    $SA$ provides the suffix array, which lists the suffixes relative to the original string in their sorted order in the BWM.
+    The first column of the BWM corresponds to vector $F$, which contains a series of runs of single characters in their lexicographic order, and is compactly represented in $C$.
+    The last column of the BWM corresponds to the $BWT$.
+    The function $LF(i)$ is shown for each position in the $BWT$, and lines drawn between $F$ and $BWT$ show the characters in the system that have the same identity in the source text.
+    Produced using \url{https://github.com/ekg/drawbwt}.
+  }
+  \label{fig:bwt_construction}
+\end{figure}
+
+We can use $LF$ mapping in an iterative way to execute search on the BWT.
+Algorithm \ref{alg:bwt_find} defines the function $find(P)$, which returns the suffix array interval in which suffixes are prefixed by $P$, should it exist, and an empty interval if $P$ is not a substring of $T$.
+We begin our search by looking at the SA interval prefixed by the last character in our pattern, which is trivially obtained from array $C$.
+The body of the loop constitutes one step of backward searching.
+Searching works by maintaining the invariant that the prefix of the suffixes in the SA interval defined by $[sp, ep]$ is that given by the set of characters that we have considered in reverse order from the query string $P$.
+
+\begin{algorithm}
+  \caption[BWT find]{
+  Backward searching on the BWT
+  }
+  \label{alg:bwt_find}
+  \begin{algorithmic}
+    \Function{find}{P}
+    \State $c \gets P[|P|-1]$ \Comment{Current character in our search}
+    \State $sp \gets C[c]$ \Comment{Beginning of our SA interval}
+    \State $ep \gets C[c+1]-1$ \Comment{End of our SA interval}
+      \For{$i \in [|P|-2 \ldots 0]$} \Comment{Step backwards through the string}
+        \State $c \gets P[i]$ \Comment{Update our character}
+        \State $sp \gets C[c] + rank_{BWT}(c, sp - 1)$ \Comment{Update $sp$ dependent on $c$}
+        \State $ep \gets C[c] + rank_{BWT}(c, ep) - 1$ \Comment{Do the same for $ep$}
+        \If{$sp > ep$} 
+          \Return{$\emptyset$}  \Comment{We do not find $P$ in our text}
+        \EndIf
+      \EndFor \\
+      \Return{$[sp, ep]$} \Comment{Return the SA interval prefixed by $P$}
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=0.8\textwidth]{Chapter2/Figs/mississippi_iss_search.pdf}
+  \caption[Backward search in the BWT and suffix array]{
+    Using backward search to find all occurrences of {\tt iss} in {\tt mississippi}, using the BWT and suffix array constructed in Figure \ref{fig:bwt_construction}.
+    The index structure is shown in each of the three required steps, which progress from top to bottom.
+    At each step, we consider a character, beginning from the end of the string we are searching.
+    We apply $LF$ mapping to find the new SA interval corresponding to the backwards extension of our query pattern.
+    The subsequence matched up to the current step is shown in red in the sorted suffixes (in gray) represented by $F$, $BWT$, and $SA$.
+    We do not store these sorted suffixes, as they are given by the $BWT$ and $SA$.
+    Nor do we store $F$, as the $C$ array is sufficient to reconstruct it.
+    Rendered with \url{https://github.com/ekg/drawbwt}.
+  }
+  \label{fig:bwt_search}
+\end{figure}
+
+The addition of the longest common prefix (LCP) array on the sorted suffixes allows the CSA to emulate all algorithms on suffix trees \cite{abouelhoda2004replacing}.
+This augmented data structure provides a compact encoding of the full suffix tree topology.
+In {\tt vg}, an equivalent generalization is used to enable the determination of maximum exact matches between query $P$ and the sequences of a graph.
+
+
+\subsubsection{BWT-based tree and graph sequence indexes}
+
+In contrast to $k$-mer based indexes, generalizations of the CSA to graphs have required substantial conceptual developement to produce.
+But, they have yielded compact, efficient data structures that require similar space to their linear counterparts while supporting a wide array of query patterns.
+
+Most generalizations of succinct self indexes from strings to graphs draw on the XBW transform \cite{ferragina2005structuring}, which provides a compressed self index of trees based on a generalization of the FM-index \cite{ferragina2009compressing}.
+In the XBW transform, rather than considering all suffixes of a linear sequence in the construction of the BWT, we sort all concatenated paths from the root to leaves of each node in the tree and use this as the basis for the BWT in a manner analagous to the use of sorted suffixes for a linear sequences.
+To record the topology of the tree and support its navigation relative to the resulting BWT, auxiliary bitvectors record which edges connect to leaf nodes (or equivalently, an expanded alphabet as originally presented in \cite{ferragina2005structuring}), and which are the last edge among their siblings: ${\cal F}$.
+Rank and select queries on these bitvectors allow the generalization of the \emph{LF-mapping} (last-first) permutation and its inverse $\Psi$ to work on the tree.
+The lexicographic ranks of the standard versions of these functions are mapped into the appropriate BWT ranges using rank and select queries on ${\cal F}$.
+
+Succinct deBruijn graphs extend the XBW model to support DBGs by recording both in and out degree in two auxilary systems (either a bitvector and an extended alphabet, or two bitvectors) \cite{bowe2012succinct}.\footnote{See \url{https://alexbowe.com/succinct-debruijn-graphs/} for a high-level overview of Bowe's initial model for succinct DBGs, which explains in detail how the various graph traversal and query operations are implemented.}
+A succinct DBG can be constructed by first taking all node, edge pairs (where edges are labeled by the last character in the subsequent $k$-mer node) and sorting them into a Burrows Wheeler Matrix (BWM) like structure.
+As in the FM-index, the BWT is given by the last column in the BWM, and a count vector $C$ provides a compressed representation of its first column, which contains lexicographically sorted runs of characters.
+The graph topology is recorded in two bitvectors that mark sibling nodes which are not the last sibling with 0s for both ingoing and outgoing edges \cite{muggli2017succinct}.
+In order for the index be lossless, we must connect special sential nodes with marker characters not in the alphabet (e.g. \$ and \#) to the heads and tails of the DBG before generating this transform \cite{muggli2017succinct}.
+Otherwise, we cannot determine where the head and tail nodes start or end.
+
+
+\subsubsection{The Generalized Compressed Suffix Array}
+
+In section \ref{sec:pangenomic_sequence_indexes}, I discuss a variety of indexing models that support indexing reference genomes and variants.
+Many schemes are possible, but the first to provide a conceptually complete solution to the problem of establishing a sequence index for a structure similar to a variation graph is Sir\'{e}n's Generalized Compressed Suffix Array (GCSA) \cite{siren2014indexing}.
+This structure allows for queries of arbitrary length within a directed, acyclic variation graph (equivalently, a finite language model or MSA) in much the same way as the FM-index or CSA do for linear sequences.
+However, it is impractical because to construct it we must enumerate all suffixes of the graph.
+This requires exponential space with respect to the number of variants in the graph, and renders it unusable for arbitrary inputs.
+
+To build the GCSA, we first construct a sequence labeled DAG (which Sir\'{e}n describes as a MSA) from the reference and a set of genetic variants.
+As in the succinct DBG, we attach marker nodes to the graph for its head and tail.
+The MSA is converted into a reverse deterministic automaton via a standard procedure for determinizing finite state automata.
+This results in a structure where there is no more than one of each character in the alphabet among the predecessors of each node.
+Recall (section \ref{sec:compressed_full_text_indexes}) that backward searching using the BWT requires that positions in the text containing a given character $c$ are sorted in the same order as text positions preceded by character $c$.
+Thus, to provide equivalent functionality for an automaton, we must ensure that each node in the automaton will be stably sorted when we enumerate and sort its suffixes.
+This implies a transformation of the automaton that ensures that each prefix of a path through the graph is the only way to generate a suffix with the particular prefix.
+Sir\'{e}n implements this prefix-sorting transform in an algorithm that $k$-prefix-sorts the graph for a given $k$.
+The process is iterated for $k' = 2k$ until $k'$ is greater than the length of the longest path in the automaton.
+At this point, it is possible to enumerate and sort the suffixes of the given automaton, build the corresponding BWT, and augment the data structure with an additional bitvector $M$ that records the number of outgoing edges at each node in the automaton.
+Backward searching in this structure uses a similar principle to the XBW and succinct DBG models, with select queries on $M$ used to expand the search interval as search progresses through furcations in the graph.
+
+\subsubsection{GCSA2}
+
+
+
 Our research focus on the replication of results of the short read mapper {\tt bwa mem}, which seeds alignments with maximal exact matches (MEMs), encouraged a similar approach for {\tt vg}.
 MEMs are found using a suffix tree related data structure, which provides access to a wide range of efficient sequence matching and inference algorithms, and a strong basis for a sensitive read aligner.
 

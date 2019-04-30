@@ -318,31 +318,18 @@ Due to the high quality of the reference sequence, low error rate of the short (
 Much like BLAST and BLAT, the first wave of aligners capable of indexing the human reference genome and aligning short reads to it utilized exact $k$-mer matching via hash tables followed by local alignment \cite{li2008soap,lee2014mosaik,li2008mapping}.
 Substantial improvements would be yielded by the development of aligners based on contemporary developments in compressed data structures.
 
+\subsubsection{Compressed full text indexes}
+\label{sec:compressed_full_text_indexes}
+
 The suffix tree \cite{weiner1973linear} encodes all suffixes of a sequence $S$ in the structure of a tree such that the suffixes may be enumerated by a depth first search (DFS) of the tree.
 This structure can be used to determine if a given sequence $q = c_{1}c_{2}\ldots c_{|q|}$ is present in $S$ in $O(|q|)$ time.
 Search begins at the root, progressing across the topology (edge or node) of the tree which is labeled with the next character until no further matches may be found.
 By labeling the tree with the sequence positions corresponding to each node, the search may also yield the positions of the exact matches detected within $S$.
 Suffix trees may be built in linear time and space relative to their input \cite{ukkonen1995line}, and support diverse algorithms for string comparison \cite{apostolico1985myriad}, such as whole genome alignment \cite{delcher1999alignment}, but they require relatively large amounts of memory per input base.
-They were superseded by equivalent data structures with better memory bounds such as the suffix array (which represents the tree in a linear array of suffix sort ranks) \cite{manber1993suffix}, and its compressible sibling the Burrows-Wheeler Transform (BWT) \cite{burrows1994block}.
-
-By augmenting the BWT to enable the exact matching via emulation of the suffix tree, Paolo Ferragina and Giovanni Manzini developed the FM-index \cite{ferragina2000opportunistic,ferragina2004alphabet}.
-Given a string $S$, the FM-index may be built using a series of transformations and auxiliary data structures that induce the suffix tree by constructing the BWT.
-First, we add marker characters for the start and end with lexicographic order less and greater than the rest of the characters in the alphabet, e.g. $\#S\$$.
-Conceptually, we take all rotations of the sequence and sort them, yielding matrix $M$, which is sometimes called the Burrows-Wheeler Matrix (BWM), but in fact this is done in a space-efficient manner without the enumeration of the rotations.
-This sort has many similarities to the suffix tree, and for instance it can be seen that a lexicographically-ordered DFS through the suffix tree would enumerate the prefixes of the rotations of the sequence preceding the terminal character $\#$ in the same order as they are sorted.
-The suffix array $SA$ is given by the vector of the suffix ranks in the sorted order they occur in $M$, and is related to the ordering of characters in the first column $F$, while the BWT is given as the last column, $L$.
-If the input text has repetitive patterns, then these will tend to result in runs in the BWT that may be compressed using various schemes.
-To emulate traversal of the suffix tree, it is sufficient to construct a function $LF(i)$ which maps between indexes $L[i] = F[j]$ which represent the same character.
-This is done by the augmentation of the data structure with array $C$ such that $C[c]$ returns the number of characters in the text that are lexicographically smaller than $c$, and a function $rank(c,k)$ that yields the number of instances of $c$ in the prefix $L[1 \ldots k]$.
-Now, $LF(i)$ may be defined as $C[L[i]] + rank(L[i], i)$.
-By allowing the traversal of equivalencies between the suffix array and the BWT, $LF$ mapping enables ``backward search''.
-Because rotations of $S$ have been ordered in $M$, a given pattern will occur as the prefix of a particular contiguous range of $M$.
-We can find all occurrences of a given pattern by maintaining a range in the suffix array within which a given pattern occurs, beginning at $s$ and ending at $e$, which we initially set as $s=0$ and $e=|L|-1$.
-To search for a pattern, we obtain $s' = C[c] + rank(s,c) + 1$ and $e' = C[c] + rank(e,c)$, walking backwards through the characters $c$ in our query $q$.
-Our search terminates when we complete our query or $e' - s' \leq 0$, which indicates that the previous step in the search did not match our target $S$.
-The various matches of $q$ in $S$ may now be obtained by the positions in $SA[s \ldots e]$.
-The addition of the longest common prefix (LCP) array on the sorted suffixes can be used to emulate all algorithms on suffix trees in this context \cite{abouelhoda2004replacing}, and in turn this enables $O(|q|)$ search of queries against $S$.
-Of particular relevance to this work, when completing a phase of backward search we could use the LCP to traverse the suffix links in the suffix tree and continue with the next (partially overlapping) maximal exact match.
+They were superseded by equivalent data structures with better memory bounds such as the suffix array, which represents the lexicographically ordered suffixes as a vector of numbers \cite{manber1993suffix}, and its compressible sibling the Burrows-Wheeler Transform (BWT) \cite{burrows1994block}.
+Compressed suffix arrays (CSA) (equivalently, the ``fast, minute'' FM-index) are data structures which combine a compressed representation of the BWT with auxiliary data structures that support rank and select operations on it \cite{ferragina2000opportunistic,ferragina2004alphabet,grossi2005compressed}.
+To support suffix array operations in this compressed context, including pattern matching and positional queries, standard implementations include additional auxiliary information, in particular a sampled subset of the entries in the suffix array.
+See section \ref{sec:fmidx_csa} for a detailed review of the important features of these data structures as they relate to string matching.
 
 The FM-index is used in modern short-read aligners such as BWA \cite{li2009fast} and BOWTIE \cite{langmead2009ultrafast}, which used backtracking LF alignment to directly align sequences to the suffix array encoded in the FM-index.
 This backtracking search is fast, but has problems detecting indels (as these require exponentially more backtracks to infer) and performs less well with increasing read length.
@@ -823,7 +810,7 @@ Short read alignment can be used to map the full reads back to these haplotypes 
 The authors demonstrate that this method can be applied to the human MHC, where high sequence diversity frustrates methods optimized for typical regions of the human genome.
 
 \subsubsection{Succinct pangenomic sequence indexes}
-
+\label{sec:pangenomic_sequence_indexes}
 %Given a sequence DAG 
 % write the DAG into the index provided a number of structural limitations
 % problems with nesting (yes could be corrected) and cost of large alphabet WT based FM-index
