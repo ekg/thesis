@@ -483,7 +483,7 @@ These construction steps are illustrated in Figure \ref{fig:bwt_construction}.
 \end{figure}
 
 We can use $LF$ mapping in an iterative way to execute search on the BWT.
-Algorithm \ref{alg:bwt_find} defines the function $find(P)$, which returns the suffix array interval in which suffixes are prefixed by $P$, should it exist, and an empty interval if $P$ is not a substring of $T$.
+Algorithm \ref{alg:bwt_find} defines the function $find(P)$, which returns the suffix array interval (or lexicographic range) in which suffixes are prefixed by $P$, should it exist, and an empty interval if $P$ is not a substring of $T$.
 We begin our search by looking at the SA interval prefixed by the last character in our pattern, which is trivially obtained from array $C$.
 The body of the loop constitutes one step of backward searching.
 Searching works by maintaining the invariant that the prefix of the suffixes in the SA interval defined by $[sp, ep]$ is that given by the set of characters that we have considered in reverse order from the query string $P$.
@@ -569,8 +569,9 @@ Thus, to provide equivalent functionality for an automaton, we must ensure that 
 This implies a transformation of the automaton that ensures that each prefix of a path through the graph is the only way to generate a suffix with the particular prefix.
 Sir\'{e}n implements this prefix-sorting transform in an algorithm that $k$-prefix-sorts the graph for a given $k$.
 The process is iterated for $k' = 2k$ until $k'$ is greater than the length of the longest path in the automaton.
-At this point, it is possible to enumerate and sort the suffixes of the given automaton, build the corresponding BWT, and augment the data structure with an additional bitvector $M$ that records the number of outgoing edges at each node in the automaton.
-Backward searching in this structure uses a similar principle to the XBW and succinct DBG models, with select queries on $M$ used to expand the search interval as search progresses through furcations in the graph.
+At this point, it is possible to enumerate and sort the suffixes of the given automaton, build the corresponding BWT, and augment the data structure with bitvector ${\cal F}$, which allows a single node to have multiple predecessors, and bitvector ${\cal M}$, which records the number of successors or outgoing edges from each nodes in the automaton.
+Backward searching in this structure ($LF$) uses a similar principle to the XBW and succinct DBG models.
+We first use bitvector ${\cal F}$ to convert lexicographic ranks to a BWT range, and then we use ${\cal M}$ to convert the edge range to lexicographic ranks.
 
 \subsubsection{GCSA2}
 
