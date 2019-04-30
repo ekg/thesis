@@ -540,9 +540,24 @@ But, they have yielded compact, efficient data structures that require similar s
 
 Most generalizations of succinct self indexes from strings to graphs draw on the XBW transform \cite{ferragina2005structuring}, which provides a compressed self index of trees based on a generalization of the FM-index \cite{ferragina2009compressing}.
 In the XBW transform, rather than considering all suffixes of a linear sequence in the construction of the BWT, we sort all concatenated paths from the root to leaves of each node in the tree and use this as the basis for the BWT in a manner analagous to the use of sorted suffixes for a linear sequences.
-To record the topology of the tree and support its navigation relative to the resulting BWT, auxiliary bitvectors record which edges connect to leaf nodes (or equivalently, an expanded alphabet as originally presented in \cite{ferragina2005structuring}), and which are the last edge among their siblings: ${\cal F}$.
+To record the topology of the tree and support its navigation relative to the resulting BWT, auxiliary bitvectors record which edges connect to leaf nodes $e$ (or equivalently, an expanded alphabet as originally presented in \cite{ferragina2005structuring}), and which are the last edge among their siblings: ${\cal F}$.
 Rank and select queries on these bitvectors allow the generalization of the \emph{LF-mapping} (last-first) permutation and its inverse $\Psi$ to work on the tree.
 The lexicographic ranks of the standard versions of these functions are mapped into the appropriate BWT ranges using rank and select queries on ${\cal F}$.
+
+
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=0.6\textwidth]{Chapter2/Figs/xbw_viz.pdf}
+  \caption[The XBW transform]{
+    The XBW transform and the $LF$ function computed for the given graph.
+    Nodes are stored in $W$, while bitvector $e$ marks the leaf nodes (whose LF mapping is $\emptyset$), and bitvector ${\cal F}$ marks the last nodes in each set of siblings.
+    Siblings are sorted together in the set of sorted paths by construction.
+    Paths are not stored, but are shown here for clarity.
+    From public talk by Alex Bowe, posted at \url{https://pdfs.semanticscholar.org/e42a/daab2806d5c0d715cb812c3a10aa26a2c75a.pdf}.
+  }
+  \label{fig:xbw}
+\end{figure}
+
 
 Succinct deBruijn graphs extend the XBW model to support DBGs by recording both in and out degree in two auxilary systems (either a bitvector and an extended alphabet, or two bitvectors) \cite{bowe2012succinct}.\footnote{See \url{https://alexbowe.com/succinct-debruijn-graphs/} for a high-level overview of Bowe's initial model for succinct DBGs, which explains in detail how the various graph traversal and query operations are implemented.}
 A succinct DBG can be constructed by first taking all node, edge pairs (where edges are labeled by the last character in the subsequent $k$-mer node) and sorting them into a Burrows Wheeler Matrix (BWM) like structure.
@@ -564,7 +579,7 @@ To build the GCSA, we first construct a sequence labeled DAG (which Sir\'{e}n de
 As in the succinct DBG, we attach marker nodes to the graph for its head and tail.
 The MSA is converted into a reverse deterministic automaton via a standard procedure for determinizing finite state automata.
 This results in a structure where there is no more than one of each character in the alphabet among the predecessors of each node.
-Recall (section \ref{sec:compressed_full_text_indexes}) that backward searching using the BWT requires that positions in the text containing a given character $c$ are sorted in the same order as text positions preceded by character $c$.
+Recall (section \ref{sec:fmidx_csa}) that backward searching using the BWT requires that positions in the text containing a given character $c$ are sorted in the same order as text positions preceded by character $c$.
 Thus, to provide equivalent functionality for an automaton, we must ensure that each node in the automaton will be stably sorted when we enumerate and sort its suffixes.
 This implies a transformation of the automaton that ensures that each prefix of a path through the graph is the only way to generate a suffix with the particular prefix.
 Sir\'{e}n implements this prefix-sorting transform in an algorithm that $k$-prefix-sorts the graph for a given $k$.
@@ -574,6 +589,9 @@ Backward searching in this structure ($LF$) uses a similar principle to the XBW 
 We first use bitvector ${\cal F}$ to convert lexicographic ranks to a BWT range, and then we use ${\cal M}$ to convert the edge range to lexicographic ranks.
 
 \subsubsection{GCSA2}
+
+Sir\'{e}n's update to GCSA, GCSA2, is specifically designed for application to arbitrary variation graphs.
+
 
 
 
