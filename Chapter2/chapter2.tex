@@ -653,6 +653,7 @@ However, it does incur exponential costs in construction of the index, as it mus
 
 To construct the GCSA2 index from variation graph $G$, we transform it into a de Bruijn graph whose nodes are the full set of $k$-length walks through the $G$ (as in figure \ref{fig:seq_graph_to_dbg}).
 Before doing so, to ensure that all elements of the graph are included in $k$-length paths, we add head and tail nodes labeled $\#$ and $\$$ to the variation graph prior to this transformation.
+To maintain the lexicographic ordering invariance required for searching in the GCSA2, we add a special edge connecting these nodes prior to generating our $k$-mer set.\footnote{This can be seen in the LF mapping drawn between $BWT$ and $OUT$ in figure \ref{fig:gcsa2_search}, where a line connects $\$$ with $\#$.}
 To allow larger query lengths without direct in-memory enumeration of the full length paths in the source variation graph, GCSA2 uses a series of disk backed steps to double the DBG $k$ until it reaches the desired length.
 In practice, it uses four rounds of doubling, beginning with $k=16$, and progressing through $2k$, $4k$, $8k$, and $16k = 256$.
 At each step, the DBG is pruned to remove redundancy and reduce memory usage (compare the graph in figure \ref{fig:gcsa2_search} to the DBG in \ref{fig:seq_graph_to_dbg}).
@@ -740,6 +741,28 @@ While functional, we found this to be untenable for large graphs and haplotype s
 Overheads associated with the dynamic data structures it uses were significant, but the most-difficult issue was the serial nature of the progressive construction algorithm, which gives the algorithm $O(m)$ runtime.
 Consequently, all our large-scale experiments were carried out using a partially ordered construction algorithm that worked using a VCF file as input.
 
+
+\begin{figure}[htbp!]
+  \includegraphics[width=\textwidth]{Chapter2/Figs/gbwt-example.pdf}
+  \caption[The Graph Burrows Wheeler Transform]{
+    Top: A graph with three paths, each represented as a colored line walking above a series of nodes, where $N={n_1\ldots n_7}$.
+    Bottom: GBWT of the paths.
+    To build the GBWT we first append a marker node, $n_\$$, to the head of the graph.
+    Each node in the GBWT is represented by a record, shown as a white box.
+    At the top of each record we find the node identifier, which is implicitly stored in the actual GBWT.
+    Each record consists of a local alphabet described in a header and a body consisting of the subset of the full GBWT applying to the given node.
+    The alphabet $\Sigma_i$ maps nodes which paths crossing this node reach in their next step into a more compact alphabet.
+    It is encoded as a mapping between next node identifier $i$, the local character used to represent that node $\in [0 \ldots |\Sigma_i|)$, and the number of instances of $i$ in the BWTs of all nodes which are lexicographically smaller than the current one.
+    For instance, at $n_6$ we find $\Sigma_6 = \{ 0: (7, 2) \}$, because $n_7$ is referred to by the orange and green path crossing the edge $n_5 \to n_7$.
+    This arrangement encodes the full BWT in per-node local records.
+    We see each path represented as it passes through the BWT record for each node.
+    At each node, the sort order of the paths implicitly represented in the BWT reflects the lexicographic sort of their prefixes.
+    For instance, at $n_4$, we see $n_{BWT} = [1, 0]$, because the prefix of the purple path before $n_4$ is encoded as $[0,0,0]$, which is lexicographically lower than the prefix of the orange path, $[0,1,0]$.
+    Reprinted from \cite{siren2018haplotype}.
+  }
+  \label{fig:gbwt-example}
+\end{figure}
+
 The \emph{graph Burrows-Wheeler transform} (GBWT) \cite{siren2018haplotype} simplifies the data model used by gPBWT so that it is independent of {\tt vg}.
 The GBWT can be understood as the FM-index of a transformation of the graph's paths $p_1\ldots p_m \cup \overline{p_1}\ldots \overline{p_m}$ into the text $T = \$( p1 = n_i\ldots n_j) \ldots \$ (\overline{p_m} = \overline{n_j} \ldots \overline{n_i}) $ wherein the paths are rewritten as a series of characters representing node traversals in a large alphabet and delimited by a marker $\$$.
 This approach is challenging due to the large size of $T$ for moderately-sized haplotype sets embedded in variation graphs, e.g. $|T| \approx 10^{12}$ for the 1000GP \cite{siren2018haplotype}.
@@ -758,15 +781,6 @@ Most nodes are not traversed more than once by each path, so the $BWT_{n_i}$ rem
 Due to relatedness among individuals in many species, it is sensible to assume that haplotypes will be highly repetitive, which allows for efficient RLE encoding of $BWT_{n_i}$.
 The graph is sorted, and its identifier space has been compacted, which allows us to store the same information for the entire range of node identifiers in bounded memory with respect to $|N|$.
 The graph tends to be locally ordered in most places, which decreases the complexity of construction.
-
-\begin{figure}[htbp!]
-  \includegraphics[width=\textwidth]{Chapter2/Figs/gbwt-example.pdf}
-  \caption[The Graph Burrows Wheeler Transform]{
-    Left: A graph with three paths. Right: GBWT of the paths.
-    Reprinted from \cite{siren2018haplotype}.
-  }
-  \label{fig:gbwt-example}
-\end{figure}
 
 A \emph{dynamic GBWT} implementation presents the node records through an index over the range of $[min(i : n_i \in N), max(i : n_i \in N)]$, for each linking to its header, body, incoming edges, and haplotype identifiers.
 Construction employs this model in a manner similar to RopeBWT2 \cite{li2014fast}, where batches of paths are insert into the index in a single step following the BCR construction algorithm \cite{bauer2013lightweight}.
