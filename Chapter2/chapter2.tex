@@ -434,7 +434,7 @@ To mitigate this issue, we can short-circuit the $k$-mers enumeration when a giv
 Another way to mitigate the limitations posed by the exponential number of $k$-mers in the graph is to build the index on disk, rather than using main memory.
 In the early stages of the {\tt vg} project, I implemented a $k$-mer based index using a disk-backed system (see section \ref{sec:generic_disk_backed_indexes}).
 By sorting the $k$-mers, the index could be efficiently compressed, but still the graph for the human 1000 Genomes Project required over 200GB of memory, and was unusably slow unless cached in main memory.
-This work formed the basis for the first prototypes of the {\tt vg} mapper, which was found to be impractical due to the memory and time requirements of the method.
+This index formed the basis for the first prototypes of the {\tt vg} mapper, but is be impractical due to its time and memory requirements.
 
 \subsubsection{The FM-index and Compressed Suffix Array (CSA)}
 \label{sec:fmidx_csa}
@@ -514,10 +514,10 @@ Searching works by maintaining the invariant that the prefix of the suffixes in 
 
 \begin{figure}[htbp!]
   \centering
-  \includegraphics[width=0.8\textwidth]{Chapter2/Figs/mississippi_iss_search.pdf}
+  \includegraphics[width=0.65\textwidth]{Chapter2/Figs/mississippi_iss_search.pdf}
   \caption[Backward search in the BWT and suffix array]{
     Using backward search to find all occurrences of {\tt iss} in {\tt mississippi}, using the BWT and suffix array constructed in Figure \ref{fig:bwt_construction}.
-    The index structure is shown in each of the three required steps, which progress from top to bottom.
+    The index structure is shown in each of the three required steps (1$\to$3), which progress from top to bottom.
     At each step, we consider a character, beginning from the end of the string we are searching.
     We apply $LF$ mapping to find the new SA interval corresponding to the backwards extension of our query pattern.
     The subsequence matched up to the current step is shown in red in the sorted suffixes (in gray) represented by $F$, $BWT$, and $SA$.
@@ -539,7 +539,7 @@ In contrast to $k$-mer based indexes, generalizations of the CSA to graphs have 
 But, they have yielded compact, efficient data structures that require similar space to their linear counterparts while supporting a wide array of query patterns.
 
 Most generalizations of succinct self indexes from strings to graphs draw on the XBW transform \cite{ferragina2005structuring}, which provides a compressed self index of trees based on a generalization of the FM-index \cite{ferragina2009compressing}.
-In the XBW transform, rather than considering all suffixes of a linear sequence in the construction of the BWT, we sort all concatenated paths from the root to leaves of each node in the tree and use this as the basis for the BWT in a manner analagous to the use of sorted suffixes for a linear sequences.
+In the XBW transform (figure \ref{fig:xbw}), rather than considering all suffixes of a linear sequence in the construction of the BWT, we sort all concatenated paths from the root to leaves of each node in the tree and use this as the basis for the BWT in a manner analagous to the use of sorted suffixes for a linear sequences.
 To record the topology of the tree and support its navigation relative to the resulting BWT, auxiliary bitvectors record which edges connect to leaf nodes $e$ (or equivalently, an expanded alphabet as originally presented in \cite{ferragina2005structuring}), and which are the last edge among their siblings: ${\cal F}$.
 Rank and select queries on these bitvectors allow the generalization of the \emph{LF-mapping} (last-first) permutation and its inverse $\Psi$ to work on the tree.
 The lexicographic ranks of the standard versions of these functions are mapped into the appropriate BWT ranges using rank and select queries on ${\cal F}$.
@@ -559,12 +559,39 @@ The lexicographic ranks of the standard versions of these functions are mapped i
 \end{figure}
 
 
-Succinct deBruijn graphs extend the XBW model to support DBGs by recording both in and out degree in two auxilary systems (either a bitvector and an extended alphabet, or two bitvectors) \cite{bowe2012succinct}.\footnote{See \url{https://alexbowe.com/succinct-debruijn-graphs/} for a high-level overview of Bowe's initial model for succinct DBGs, which explains in detail how the various graph traversal and query operations are implemented.}
-A succinct DBG can be constructed by first taking all node, edge pairs (where edges are labeled by the last character in the subsequent $k$-mer node) and sorting them into a Burrows Wheeler Matrix (BWM) like structure.
-As in the FM-index, the BWT is given by the last column in the BWM, and a count vector $C$ provides a compressed representation of its first column, which contains lexicographically sorted runs of characters.
-The graph topology is recorded in two bitvectors that mark sibling nodes which are not the last sibling with 0s for both ingoing and outgoing edges \cite{muggli2017succinct}.
-In order for the index be lossless, we must connect special sential nodes with marker characters not in the alphabet (e.g. \$ and \#) to the heads and tails of the DBG before generating this transform \cite{muggli2017succinct}.
-Otherwise, we cannot determine where the head and tail nodes start or end.
+Succinct deBruijn graphs (SDBG) extend the XBW model to support DBGs by recording both in and out degree for each node \cite{bowe2012succinct,muggli2017succinct}.\footnote{See \url{https://alexbowe.com/succinct-debruijn-graphs/} for a high-level overview of Bowe's initial model for succinct DBGs, which explains in detail how the various graph traversal and query operations are implemented.}
+In {\tt vg}, we do not use the SDBG model directly, but it is important to describe here as the GCSA2 model draws heavily on its design.
+
+To construct the SDBG (illustrated in figure \ref{fig:sdbg}), we build two sorted lists of tuples representing the edge and $k$-mer space of the DBG $G = (N, E)$.
+First, we pad the graph with additional nodes labeled by a character lexicographically lower than the alphabet of the graph, so that each $k$-mer in $G$ is now reachable from a path at least $k-1$ long.
+This ensures that we can reconstruct the graph without loss.
+In $F$, we record the list of $G$'s edges sorted co-lexicographically by the reverse sequence of their \emph{ending} node and their label.
+In $L$, we record the list of $G$'s edges sorted co-lexicographically by the reverse sequence of their \emph{starting} node and their label.
+The edge-BWT (EBWT) is the sequence of edge labels as given in $L$.
+
+Navigation of the graph is provided by the mapping between $F$ and $L$ that is based on the relative stability of sorting of edges with the same label in the two lists.
+If an edge $e$ is in position $p$ in $L$, and $l(e)$ is a function that gives the character label of edge $e$, then its position in $F$ is given by $|{d : d \in E \land l(d) \prec l(e)}| + rank_{EBWT}(l(e), p) - 1$.
+Note that this function corresponds to $LF$ mapping on the BWT.
+A similar extension of this idea affords backward search of patterns in node labels in the SDBG.
+For full navigation, we must edge topology bitvectors $B_F$, which marks the last edge for each node in $F$, and $B_L$, which does the same for $L$.
+We can traverse the graph using these structures.
+Given a character $c$ and the co-lexicographic rank of a node, we can use $B_L$ to find the interval in $L$ containing its node's outgoing edges, then find the edge $e$ labeled $c$ in the $EBWT$, and finally use $B_F$ to find the co-lexicographic rank of $e$'s ending node, should it exist.
+
+\begin{figure}[htbp!]
+  \centering
+  \includegraphics[width=0.65\textwidth]{Chapter2/Figs/sdbg_construction.pdf}
+  \caption[Succinct de Bruijn graph construction]{
+    On the left, a de Bruijn graph with $k=3$, with edges labeled by the character transition that they imply.
+    Right, the construction of the succinct de Bruijn graph for the given graph.
+    $F$ indicates the co-lexicographically sorted set of edges keyed by the node that they enter.
+    $L$ indicates the co-lexicographically sorted set of edges keyed by the node that they leave.
+    $B_{F}$ marks if the edge in $F$ is co-lexicographically the last for its corresponding node, and $B_{L}$ marks the last edge for a given node in $L$.
+    The ``edge BWT'' or $EBWT$ is given as the set of edges ordered as in $L$.
+    The SDBG is given by $B_F$, $B_L$, and $EBWT$.
+    Example adapted from \cite{muggli2017succinct}.
+  }
+  \label{fig:sdbg}
+\end{figure}
 
 
 \subsubsection{The Generalized Compressed Suffix Array}
@@ -572,8 +599,6 @@ Otherwise, we cannot determine where the head and tail nodes start or end.
 In section \ref{sec:pangenomic_sequence_indexes}, I discuss a variety of indexing models that support indexing reference genomes and variants.
 Many schemes are possible, but the first to provide a conceptually complete solution to the problem of establishing a sequence index for a structure similar to a variation graph is Sir\'{e}n's Generalized Compressed Suffix Array (GCSA) \cite{siren2014indexing}.
 This structure allows for queries of arbitrary length within a directed, acyclic variation graph (equivalently, a finite language model or MSA) in much the same way as the FM-index or CSA do for linear sequences.
-However, it is impractical because to construct it we must enumerate all suffixes of the graph.
-This requires exponential space with respect to the number of variants in the graph, and renders it unusable for arbitrary inputs.
 
 To build the GCSA, we first construct a sequence labeled DAG (which Sir\'{e}n describes as a MSA) from the reference and a set of genetic variants.
 As in the succinct DBG, we attach marker nodes to the graph for its head and tail.
@@ -588,73 +613,98 @@ At this point, it is possible to enumerate and sort the suffixes of the given au
 Backward searching in this structure ($LF$) uses a similar principle to the XBW and succinct DBG models.
 We first use bitvector ${\cal F}$ to convert lexicographic ranks to a BWT range, and then we use ${\cal M}$ to convert the edge range to lexicographic ranks.
 
+%The GCSA is also an important basis for the GCSA2 model used in {\tt vg}, but for space reasons I will not provide an exhaustive description of it.
+%Although it provides full text queries over a sequence DAG, the GCSA is impractical because to construct it we must enumerate all suffixes of the graph.
+%This requires exponential space with respect to the number of variants in the graph, and renders it unusable for arbitrary inputs.
+
 \subsubsection{GCSA2}
 
-Sir\'{e}n's update to GCSA, GCSA2, is specifically designed for application to arbitrary variation graphs.
+Sir\'{e}n's update to GCSA, GCSA2, is specifically designed for application to arbitrary variation graphs \cite{siren2017indexing}.
+It is the first index to provide an emulation of the full range of suffix tree operations in the context of a graph.
+The crucial observation that drove the development of GCSA2 is that it is not necessary to enable full length queries of the graph for a graph path index to be useful.
+Shorter graph path queries are fully sufficient as the basis for sequence mapping to the graph, which is the primary application of a graph sequence index.
 
+GCSA2 brings together ideas from succinct DBGs and the GCSA model.
+At a high level, we can consider it to be a compact de Bruijn graph $k$-mer index of a variation graph.
+However, in implementation several transformations are required to maintain acceptable bounds on the space required by this model.
+The de Bruijn graph is \emph{pruned} by using strings smaller than $k$ characters as nodes so long as the shorter strings still uniquely identify the corresponding paths in the graph.
+GCSA2 transforms the pruned DBG into a BWT, using additional bitvectors $IN$ and $OUT$ analgous to $F$ and $L$ in SDBG to record the graph topology in a generalization of the FM-index.
+The full data structure includes extensions to allow suffix tree operations that are important for finding maximal exact matches during sequence search.
 
-
-
-Our research focus on the replication of results of the short read mapper {\tt bwa mem}, which seeds alignments with maximal exact matches (MEMs), encouraged a similar approach for {\tt vg}.
-MEMs are found using a suffix tree related data structure, which provides access to a wide range of efficient sequence matching and inference algorithms, and a strong basis for a sensitive read aligner.
-
-On seeing my early experiments, Jouni Sir\'{e}n, who had recently joined our lab, suggested that there might be a way to adjust his GCSA index model for partially ordered graphs to work on arbitrary graphs.
-He proposed a de Bruijn graph (DBG) transformation of the graph as input to the indexing process.
-The resulting indexing model is similar to both GCSA, in its encoding of the graph topology, and succinct DBGs \cite{bowe2012succinct}, which are also developed from BWTs based on a $k$-mer set.
-Sir\'{e}n's design allows for the use of much longer $k$-mers than are typically considered in DBGs, with the final DBG to be indexed having $k=256$.
-As few contemporary reads are likely to generate 256bp-long sequences with no mismatch from the reference\footnote{Illumina's reads rarely reach 256bp, and when they do they tend to have higher error rates in the later cycles. The 10-15\% error rate of PacBio and ONT sequencing mean that a 256bp exact match is extremely unlikely, although PacBio circular consensus reads (CCR) may approach this level of accuracy.}, this approach effectively allows us to find all the exact matches for a typical sequencing read.
-To be more precise, we find supermaximal exact matches (SMEMs) as defined in \cite{li2013aligning}.
-The addition of the longest common prefix (LCP) array alongside GCSA2's BWT effectively generalizes all essential operations on a suffix tree to the GCSA2, and enables us to find SMEMs and develop sensitive MEM-based seeding heuristics using the index.
-The design of GCSA2 is wholly Sir\'{e}n's work \cite{siren2017indexing}, and it forms one of the core components of the {\tt vg} mapper paper, which we coauthored.
-I present it here because the mapping algorithm I developed for {\tt vg} relies on it heavily.
-
-To reduce redundancy, GCSA2 uses a \emph{pruned DBG} whose nodes may have labels shorter than $k$ where these shorter strings still uniquely identify the beginning of their corresponding paths in the unpruned DBG.
+The GCSA2 model is more flexible with respect to the complexity of input graphs than GCSA.
+GCSA2 uses disk backed construction methods to allow the indexing process to scale to very large graphs.
+The $k$-mer length limitation of the index allows it to be applied to any variation graph, including those that have cycles or other regions of topological compexity, with the caveat that we cannot search for sequences of length greater than $k$ without the risk of finding false positives.
+Denser graphs may be indexed by limiting the maximum query length.
+The DBG transformation provides flexibility by decoupling the graph we are indexing from the index structure itself.
+For instance, edge pruning can be applied to the input graph to remove regions of local complexity, yet it is still possible to generate an index from such fragmented subgraphs because we can always generate a DBG by enumerating $k$-paths through a variation graph.
+Unlike competing graph indexing methods, such as BWBBLE and the vBWT (section \ref{sec:pangenomic_sequence_indexes}), GCSA2 avoids exponential costs during backwards search.
+However, it does incur exponential costs in construction of the index, as it must enumerate all $k$-paths in the graph.
 
 \begin{figure}[htbp!]
-  \includegraphics[width=\textwidth]{Chapter2/Figs/sequence_graph_to_DBG.pdf}
+  \centering
+  \includegraphics[width=0.8\textwidth]{Chapter2/Figs/sequence_graph_to_DBG.pdf}
   \caption[A sequence graph and its de Bruijn transformation]{
-    A sequence graph and its de Bruijn transformation.
+    A sequence graph (top) and its de Bruijn transformation (bottom) for $k=3$.
+    The highlighted path in the DBG is a false positive, as it consists of two disjoint paths in the input graph, and is shown to demonstrate the fact that the DBG is not a lossless representation of the input for any length greater than $k$.
     Reprinted from \cite{siren2017indexing}.
   }
   \label{fig:seq_graph_to_dbg}
 \end{figure}
 
+To construct the GCSA2 index from variation graph $G$, we transform it into a de Bruijn graph whose nodes are the full set of $k$-length walks through the $G$ (as in figure \ref{fig:seq_graph_to_dbg}).
+Before doing so, to ensure that all elements of the graph are included in $k$-length paths, we add head and tail nodes labeled $\#$ and $\$$ to the variation graph prior to this transformation.
+To allow larger query lengths without direct in-memory enumeration of the full length paths in the source variation graph, GCSA2 uses a series of disk backed steps to double the DBG $k$ until it reaches the desired length.
+In practice, it uses four rounds of doubling, beginning with $k=16$, and progressing through $2k$, $4k$, $8k$, and $16k = 256$.
+At each step, the DBG is pruned to remove redundancy and reduce memory usage (compare the graph in figure \ref{fig:gcsa2_search} to the DBG in \ref{fig:seq_graph_to_dbg}).
+The final FM-index-like model is encoded using succinct data structures from \href{https://github.com/simongog/sdsl-lite}{SDSL-lite} \cite{gbmp2014sea}, with succinct bitvectors used for rare characters like ${\tt N}$, $\$$, and $\#$.
 
-This pruned graph is then encoded in a generalization of the FM-index built on a BWT of the $k$-mers in the pruned DBG.
-The FM-index is extended to support search over the DBG by adding auxiliary bitvectors which record the indegree and outdegree of nodes in the pruned DBG.
-These are used in backwards search to adjust the suffix array ranges that are considered, expanding them when the indegree is greater than 1 and contracting them when the out degree is greater than 1, in effect encoding the graph structure into the index in a space efficient manner optimized for traversal.
-This technique is the same as that used in GCSA, although GCSA indexes a reverse deterministic automaton rather than a DBG.
-Impressively, GCSA2 uses around 1 bit per $k$-mer in indexes of the 1000GP pangenome graph for $k=128$, which is favorable with comparison to true DBG indexes.
+The final GCSA2 data structure model (illustrated in figure \ref{fig:gcsa2_search}) consists of: the $BWT$, which (as in SDBG) represents the edge space of the pruned DBG; $IN$, which marks which edge is the last among the inbound edges to a given node; $OUT$, which marks which edge is the last among the outgoing edges from a given node; and positional samples connecting the DBG nodes with positions in the input graph $G$.
+As in the SDBG and GCSA, the nodes of the pruned DBG are not stored, but given implicitly in the number of 1-marked bits in $IN$ and $OUT$.
+This can be seen in the relationship between the ``key'' vectors in figure \ref{fig:gcsa2_search} and the $BWT$ vector.
+A vector (not shown in figure \ref{fig:gcsa2_search}) $C$ records the lexicographic ranges of the starting characters in the node labels, serving the same purpose as the equivalent vector in the FM-index.
+For the index to be useful for graph path queries, we should be able to link lexicographic ranges within the BWT to positions in the original graph.
+To do so, we store a set of positional samples as: a vector $B_S$, which indicates those nodes for which we have positional samples; a unary encoding of the number of values stored for each node $B_V$; and the vector of positional samples themselves $V_S$.
+Positional samples are stored at the case of branches in the pruned DBG, or at some configurable frequency otherwise.
+In linear regions of the pruned DBG, it is possible to use graph DBG graph traversal operations to compute un-sampled positions, thus trading off time and space as is typically done in FM-index implementations on linear strings.
 
-As an FM-index like structure, GCSA2 supports queries for a pattern $X$ that yield the suffix array interval matching a given pattern: $find(X) = ( sp_{X}, ep_{X} )$, and $locate( sp_{X}, ep_{X} ) = \{ b_1 \ldots b_{count(sp_{X}, ep_{X})} \}$ which yields the positions in the input VG where the given patterns occur.
-The LCP array allows the index to support several operations that require a suffix tree, including $count(sp_i, ep_i)$, which returns the number of matches for a given suffix array range, and $parent(sp_i, ep_i) = (sp_j, ep_j)$, which allows us to traverse the suffix links embedded in the suffix tree and forms the basis of maximal exact match (MEM) inference using GCSA2.
+The GCSA2 encoding is highly efficienct on real data sets.
+When including the suffix tree extensions, GCSA2 uses around 1 bit per $k$-mer in indexes of the 1000GP pangenome graph for $k=128$, which is favorable with comparison to SDBG indexes \cite{siren2017indexing}.
+To appreciate the costs of indexing a human genome sized graph\footnote{Precise sizes are given later in the discussion of results.}, the order-256 GCSA2 index of the 1000GP variation graph may be constructed using less than 500GB of scratch space, to and from which are written approximately 3TB during construction, all while requiring less than 50GB of RAM.
+This puts GCSA2's indexing resource requirements well within the specifications of standard commodity compute servers.
+The resulting index occupies between five and ten times the input graph's serialized size, no more than 50GB for a human genome.
+Although it could appear to be a critical limitation, the limit on query length is not a problem in practice.
+Few contemporary reads are likely to generate 256bp-long sequences with no mismatch from the reference\footnote{Illumina's reads rarely reach 256bp, and when they do they tend to have higher error rates in the later cycles. The 10-15\% error rate of PacBio and ONT sequencing mean that a 256bp exact match is extremely unlikely, although PacBio circular consensus reads (CCR) may approach this level of accuracy.}, this approach effectively allows us to find all the exact matches for a typical sequencing read.
+
+
+
+
+%To be more precise, we find supermaximal exact matches (SMEMs) as defined in \cite{li2013aligning}.
+%The addition of the longest common prefix (LCP) array alongside GCSA2's BWT effectively generalizes all essential operations on a suffix tree to the GCSA2, and enables us to find SMEMs and develop sensitive MEM-based seeding heuristics using the index.
+
+
+
+%As an FM-index like structure, GCSA2 supports queries for a pattern $X$ that yield the suffix array interval matching a given pattern: $find(X) = ( sp_{X}, ep_{X} )$, and $locate( sp_{X}, ep_{X} ) = \{ b_1 \ldots b_{count(sp_{X}, ep_{X})} \}$ which yields the positions in the input VG where the given patterns occur.
+%The LCP array allows the index to support several operations that require a suffix tree, including $count(sp_i, ep_i)$, which returns the number of matches for a given suffix array range, and $parent(sp_i, ep_i) = (sp_j, ep_j)$, which allows us to traverse the suffix links embedded in the suffix tree and forms the basis of maximal exact match (MEM) inference using GCSA2.
 
 \begin{figure}[htbp!]
   \includegraphics[width=\textwidth]{Chapter2/Figs/DBG_to_GCSA.pdf}
   \caption[Searching in the {\tt GCSA2}]{
-    Left: An order-3 pruned de Bruijn graph 3-equivalent to the de Bruijn graph in figure \ref{fig:seq_graph_to_dbg}.
-    Right: GCSA for the graph.
-    Leftward arrows illustrate backward searching, with the red arrows showing it from {\tt T} to {\tt AT}.
-    Rightward arrows mark the samples belonging to each node, with the blue ones showing them for node {\tt CAT}.
+    Top: An order-3 pruned de Bruijn graph 3-equivalent to the de Bruijn graph in figure \ref{fig:seq_graph_to_dbg}.
+    Bottom: the GCSA2 for the given graph, including both stored elements ($IN$, $OUT$, $BWT$, $B_S$, $B_V$, and $V_S$) and the implicit node sequences shown as the vectors labeled ``key''.
+    Not shown, a vector $C$ encodes the number of nodes lexicographically smaller than a given character, supporting backward search and LF-mapping as in the normal FM-index.
+    Leftward red arrows illustrate backward searching, showing the steps taken from {\tt T} to {\tt AT}.
+    As in algorithm \ref{alg:bwt_find}, the range of nodes beginning with {\tt T} is found from two queries on $C$: $[sp, ep] = [C[T], C[T+1]-1] = [9,12]$.
+    The lexicographic range in $BWT$ corresponding to this interval is found by $[select_{IN}(1, sp-1)+1, select_{IN}(1, ep)] = [10,16]$.
+    We then apply LF-mapping (as in algorithm \ref{alg:bwt_find}) to find the range in $OUT$ corresponding to the pattern {\tt AT}.
+    Finally, rank queries on $OUT$ allow us to convert to a lexicographic range of nodes prefixed by the pattern {\tt AT}, although in this case the mapping is trivial: $[sp,ep] = [rank_{OUT}(1,2),rank_{OUT}(1,4)] = [2,4]$.
+    Rightward blue arrows mark the samples belonging to each node, with the blue ones showing them for node {\tt CAT}, which does not correspond to the given backward searching steps, but which would be found by another round of backward searching on {\tt C}.
     Reprinted from \cite{siren2017indexing}.
   }
   \label{fig:gcsa2_search}
 \end{figure}
 
-GCSA2 resolves a number of problems that limit the utility of other graph path indexing schemes.
-Indexing a pruned DBG allows GCSA2 to be applied to arbitrary bidirectional string graphs that include reversals and loops.
-It avoids exponential costs during backwards search.
-However, it does incur exponential costs in construction of the index.
-To mitigate the affects of these it may be constructed mostly in external memory, and furthermore construction may be broken into pieces by chromosome or some other subdivision of the graph.
-Its external memory construction algorithm uses a prefix doubling approach to transform an input DBG of order $k$ to a pruned one of order $2^mk$ through $m$ doubling steps.
-The high-order DBG need never be loaded into RAM but is induced from a lower-order DBG augmented with sufficient positional context on its nodes to support the disk-backed prefix doubling process.
-In order to further reduce the complexity of the final index, the DBG input to GCSA2 may be constructed from a VG in which complex regions have been masked or reduced in local complexity using prior information such as a haplotype panel.
-By default, {\tt vg} runs GCSA2 with initial $k=16$ and $m=4$, yielding a final DBG with $k=256$.
-Because it is based on a DBG, GCSA2 limits the maximum length query for which no false-positive results will be returned to the order $k$ of the DBG.
-
-To appreciate the costs of indexing a human genome sized graph\footnote{Precise sizes are given later in the discussion of results.}, the order-256 GCSA2 index of the 1000GP variation graph may be constructed using less than 500GB of scratch space, to and from which are written approximately 3TB during construction, all while requiring less than 50GB of RAM.
-This puts GCSA2's indexing resource requirements well within the specifications of standard commodity compute servers.
-The resulting index occupies between five and ten times the input graph's serialized size, no more than 50GB for a human genome.
+%GCSA2 resolves a number of problems that limit the utility of other graph path indexing schemes.
+%Indexing a pruned DBG allows GCSA2 to be applied to arbitrary bidirectional string graphs that include reversals and loops.
 
 \subsection{Haplotype indexes}
 %*1.5p 3h*
