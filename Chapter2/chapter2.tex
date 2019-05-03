@@ -718,9 +718,9 @@ This introduces significant issues during read mapping and genome inference.
 With increasing variant density the number of possible sequence paths of a given length grows exponentially, and this can lead to spurious mismapping (section \ref{sec:1000GP_sim}).
 The exponential growth of the path space of the graph has relevance for sequence indexing with GCSA2, and as described in \ref{sec:graph_sequence_indexes}, simplification of the graph in complex regions prior to GCSA2 indexing is required to build indexes in practice.
 A haplotype index allows the pruning operation to preserve known haplotypes, rather than defaulting to the reference genome in such cases.
-Efficient path indexes could be used for many operations in variant calling and phasing, and may have utility in assembly problems, for instance to losslessly record a read set embedded in a squish graph representing their mutual alignment (section \ref{sec:from_pairwise_alignments}).
+Efficient path indexes could be used for many operations in variant calling and phasing, and may have utility in assembly problems, for instance to losslessly record a read set embedded in a variation graph representing their mutual alignment (section \ref{sec:from_pairwise_alignments}).
 
-Haplotype sequences from the genomes of the same species often share extensive regions, which suggests that they may be very efficiently compressed.
+Haplotype sequences from the genomes of the same species often share extensive regions of homology, which suggests that they may be very efficiently compressed.
 This property was used to store large haplotype sets in the \emph{positional BWT} (PBWT) \cite{durbin2014efficient}.
 As input, the PBWT assumes a set of haplotype strings $S_1 \ldots S_m$ of the same length which describe a set of haplotypes relative to a set of variable loci.
 $S_j[i]$ records the allele in haplotype $j$ found at locus $i$.
@@ -731,7 +731,7 @@ The alphabet size of this FM-index is large, but the matrix like structure of th
 Applying run length encoding to the BWT allows extremely good compression of real haplotype sets.
 
 With the \emph{graph positional Burrows–Wheeler transform} (gPBWT) \cite{Novak2017gPBWT}, we extended this model to work on variation graphs.
-The basic model is the same as the generic PBWT except that instead of variant matrix positions we consider haplotype traversals of oriented nodes\footnote{These are described as ``sides'' in \cite{Novak2017gPBWT}.} $n_i$ or $\overline{n_i}$, and rather than a local alphabet of variant alleles we encode a local alphabet $\Sigma_{n_i} = \{ j \in N | e_{ij} \in E \}$ which describes the set of nodes $n_{\{j \in N | e_{ij} \in E \}}$ to which haplotypes go after the current node $n_i$.
+The basic model is the same as the generic PBWT except that instead of variant matrix positions we consider haplotype traversals of oriented nodes\footnote{These are described as ``sides'' in \cite{Novak2017gPBWT}.} $n_i$ or $\overline{n_i}$, and rather than a local alphabet of variant alleles we encode a local alphabet $\Sigma_{n_i} = \{ j \in N | e_{ij} \in E \}$ which describes the set of nodes $n_{\{j \in N | e_{ij} \in E \}}$ to which haplotypes continue immediately after the current node $n_i$.
 As in the generic PBWT we build an FM-index of $T_1 \ldots T_m$, encoded in what we call the $B_s$ arrays, which provide the local description of prefix sorted haplotypes (equivalently, threads) traversing each node $n_s$.
 To deal with the bidirectionality of paths in variation graphs, each haplotype must be encoded in its forward and reverse orientation.
 In \cite{Novak2017gPBWT} we demonstrated the expected sublinear scaling of the gPBWT by building an index for chr22 with increasing numbers of samples.
@@ -764,9 +764,11 @@ Consequently, all our large-scale experiments were carried out using a partially
 \end{figure}
 
 The \emph{graph Burrows-Wheeler transform} (GBWT) \cite{siren2018haplotype} simplifies the data model used by gPBWT so that it is independent of {\tt vg}.
-The GBWT can be understood as the FM-index of a transformation of the graph's paths $p_1\ldots p_m \cup \overline{p_1}\ldots \overline{p_m}$ into the text $T = \$( p1 = n_i\ldots n_j) \ldots \$ (\overline{p_m} = \overline{n_j} \ldots \overline{n_i}) $ wherein the paths are rewritten as a series of characters representing node traversals in a large alphabet and delimited by a marker $\$$.
+Conceptually, the GBWT can be understood as the FM-index of a transformation of the graph's paths $p_1\ldots p_m \cup \overline{p_1}\ldots \overline{p_m}$ into the text $T = \$( p1 = n_i\ldots n_j) \ldots \$ (\overline{p_m} = \overline{n_j} \ldots \overline{n_i}) $ wherein the paths are rewritten as a series of characters representing node traversals in a large alphabet and delimited by a marker $\$$.
 This approach is challenging due to the large size of $T$ for moderately-sized haplotype sets embedded in variation graphs, e.g. $|T| \approx 10^{12}$ for the 1000GP \cite{siren2018haplotype}.
-Serializing the path set during construction is not feasible, which suggests a dynamic version of the model is required.
+Literally implementing this model would require a large alphabet CSA with suboptimal performance bounds.
+Serializing the path set during construction is not feasible, which suggests a dynamic version of the model is required during large scale construction.
+Natural variation graphs have a number of properties, such as a manifold partial order, which ca be exploited to improve the memory usage of the GBWT.
 
 In the GBWT we break the full FM-index into per-node records, each of which encodes a header defining an alphabet $\Sigma_{n_i}$ of all the nodes that follow $n_i$ in any path, and a body $BWT_{n_i}$ which is the subset of the full BWT specifying which node follows $n_i$ in each path that passes through $n_i$, with the paths sorted in reverse sequence order up until $n_i$.
 Since paths that are similar before $n_i$ tend to be similar after it, this sequence of next node values run length compresses well.
@@ -774,6 +776,7 @@ Since paths that are similar before $n_i$ tend to be similar after it, this sequ
 The GBWT supports essential FM-index operations including: $find(X) \to [sp, ep]$ yielding the lexicographic range of suffixes starting with pattern $X$; $locate(sp, ep) \to$ paths occurring in $SA[sp, ep]$; and $extract(j) \to p_j$ which returns the $j$th path in the graph.
 By encoding all paths in both orientations, the GBWT can be treated as a kind of FMD-index for haplotypes, allowing bidirectional search.
 This means that the GBWT in turn supports MEM-based haplotype matching, which has potential uses in genotype imputation, phasing, association mapping, and other population genetic and evolutionary assays.
+Although supported, this particular modality has not yet been explored.
 
 The GBWT representation reflects a number of assumptions that tend to hold for most DNA sequence graphs.
 Nodes tend to have low degree, which means the local alphabet size $|\Sigma_{n_i}|$ is small, and we can afford to decompress a small local alphabet encoding efficiently.
@@ -785,8 +788,8 @@ The graph tends to be locally ordered in most places, which decreases the comple
 A \emph{dynamic GBWT} implementation presents the node records through an index over the range of $[min(i : n_i \in N), max(i : n_i \in N)]$, for each linking to its header, body, incoming edges, and haplotype identifiers.
 Construction employs this model in a manner similar to RopeBWT2 \cite{li2014fast}, where batches of paths are insert into the index in a single step following the BCR construction algorithm \cite{bauer2013lightweight}.
 This process includes the new paths in the dynamic GBWT by rebuilding each node record affected by the extension.
-When constructed, the GBWT may be encoded in a compacted but immutable form that uses less memory.
 By breaking the construction process apart for each chromosome and finally merging the compressed GBWTs, it is possible to build the GBWT for the entire 1000GP haplotype set in around 30 hours.
+When constructed, the GBWT may be encoded in a compacted but immutable form that uses less memory by representing the per-node model of the dynamic GBWT in a columnar model, for instance concatenating the node BWT vectors and header information for each node each into a single compressed integer vector.
 The resulting GBWT requires $\approx 15$ GB, with around half allocated to the GBWT structure itself and half to haplotype identifiers.
 The index consumes less than 0.1 bit per node in the stored paths, and we should expect this to improve when we build the GBWT for larger haplotype panels.
 
