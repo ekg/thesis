@@ -483,10 +483,10 @@ These construction steps are illustrated in Figure \ref{fig:bwt_construction}.
 \end{figure}
 
 We can use $LF$ mapping in an iterative way to execute search on the BWT.
-Algorithm \ref{alg:bwt_find} defines the function $find(P)$, which returns the suffix array interval (or lexicographic range) in which suffixes are prefixed by $P$, should it exist, and an empty interval if $P$ is not a substring of $T$.
+Algorithm \ref{alg:bwt_find} defines the function $find(Q)$, which returns the suffix array interval (or lexicographic range) in which suffixes are prefixed by $Q$, should it exist, and an empty interval if $Q$ is not a substring of $T$.
 We begin our search by looking at the SA interval prefixed by the last character in our pattern, which is trivially obtained from array $C$.
 The body of the loop constitutes one step of backward searching.
-Searching works by maintaining the invariant that the prefix of the suffixes in the SA interval defined by $[sp, ep]$ is that given by the set of characters that we have considered in reverse order from the query string $P$.
+Searching works by maintaining the invariant that the prefix of the suffixes in the SA interval defined by $[sp, ep]$ is that given by the set of characters that we have considered in reverse order from the query string $Q$.
 
 \begin{algorithm}
   \caption[BWT find]{
@@ -494,19 +494,19 @@ Searching works by maintaining the invariant that the prefix of the suffixes in 
   }
   \label{alg:bwt_find}
   \begin{algorithmic}
-    \Function{find}{P}
-    \State $c \gets P[|P|-1]$ \Comment{Current character in our search}
+    \Function{find}{Q}
+    \State $c \gets Q[|Q|-1]$ \Comment{Current character in our search}
     \State $sp \gets C[c]$ \Comment{Beginning of our SA interval}
     \State $ep \gets C[c+1]-1$ \Comment{End of our SA interval}
-      \For{$i \in [|P|-2 \ldots 0]$} \Comment{Step backwards through the string}
-        \State $c \gets P[i]$ \Comment{Update our character}
+      \For{$i \in [|Q|-2 \ldots 0]$} \Comment{Step backwards through the string}
+        \State $c \gets Q[i]$ \Comment{Update our character}
         \State $sp \gets C[c] + rank_{BWT}(c, sp - 1)$ \Comment{Update $sp$ dependent on $c$}
         \State $ep \gets C[c] + rank_{BWT}(c, ep) - 1$ \Comment{Do the same for $ep$}
         \If{$sp > ep$} 
-          \Return{$\emptyset$}  \Comment{We do not find $P$ in our text}
+          \Return{$\emptyset$}  \Comment{We do not find $Q$ in our text}
         \EndIf
       \EndFor \\
-      \Return{$[sp, ep]$} \Comment{Return the SA interval prefixed by $P$}
+      \Return{$[sp, ep]$} \Comment{Return the SA interval prefixed by $Q$}
     \EndFunction
   \end{algorithmic}
 \end{algorithm}
@@ -651,7 +651,7 @@ However, it does incur exponential costs in construction of the index, as it mus
   \label{fig:seq_graph_to_dbg}
 \end{figure}
 
-To construct the GCSA2 index from variation graph $G$, we transform it into a de Bruijn graph whose nodes are the full set of $k$-length walks through the $G$ (as in figure \ref{fig:seq_graph_to_dbg}).
+To construct the GCSA2 index from variation graph $G$, we transform it into a de Bruijn graph whose nodes are the full set of $k$-length walks through the $G$ (as in figure \ref{fig:seq_graph_to_dbg}) on both strands.
 Before doing so, to ensure that all elements of the graph are included in $k$-length paths, we add head and tail nodes labeled $\#$ and $\$$ to the variation graph prior to this transformation.
 To maintain the lexicographic ordering invariance required for searching in the GCSA2, we add a special edge connecting these nodes prior to generating our $k$-mer set.\footnote{This can be seen in the LF mapping drawn between $BWT$ and $OUT$ in figure \ref{fig:gcsa2_search}, where a line connects $\$$ with $\#$.}
 To allow larger query lengths without direct in-memory enumeration of the full length paths in the source variation graph, GCSA2 uses a series of disk backed steps to double the DBG $k$ until it reaches the desired length.
@@ -811,7 +811,7 @@ On the networked storage available in my institutional setting, the construction
 A coverage map, of the alignments to a VG is similar to the labeling required to implement ``colors'' on a DBG \cite{iqbal2012}.
 The coverage map loses information about the edge traversals and the paths taken through the graph, which could reduce the visibility of some kinds of variation within it.
 But in benefit, this simple model is efficient to use.
-The complexity of computing the coverage map is linear in the number of the input alignment set, and it requires $O(\sum_{\forall{n_i\in N}}|n_i|)$ space to store once built.
+The complexity of computing the coverage map is linear in the number of input alignments, and it requires $O(\sum_{\forall{n_i\in N}}|n_i|)$ space to store once built.
 
 I developed an compact coverage index by mapping the sequence space of the graph into a vector and recording coverage across it for a GAM read set.
 During construction, a succinct format is employed to store each base's coverage in a single byte as long as it is below 255, and in a secondary hash table if it reaches or exceeds 255.
@@ -823,7 +823,7 @@ However, I found it impossible to construct this for a large high-coverage seque
 \section{Sequence alignment to the graph}
 %*0.5p 0.5h*
 To align sequences to a VG, we use the graph and sequences indexes described in the previous section (\ref{sec:index_structures}) to derive MEMs between a query and the graph.
-A Markovian chaining model is built from the MEMs which respects their relative positions in the graph and the read, favoring collinear mappings of MEMs, and Viterbi is used to extract likely mappings based on the MEMs.
+A weighted DAG collinear chaining model is built from the MEMs which respects their relative positions in the graph and the read, favoring collinear mappings of MEMs, and a max-sum DP algorithm is applied to this alignment DAG to extract likely mappings based on the MEMs.
 We then align the sequence locally to the graph at each of the high scoring chains using various sensitive alignment algorithms that use various kinds of dynamic programming.
 
 To detect structural variation and align long reads without incurring quadratically-scaling computational penalties, we apply a kind of banding and a second layer of chaining.
@@ -851,15 +851,76 @@ Optionally, other alternative DP alignment algorithms implementing a banded glob
 \label{fig:alignment_to_cactus_yeast}
 \end{figure}
 
-\subsection{MEM finding}
+
+\begin{figure}[htbp!]
+\centering
+\includegraphics[width=0.8\textwidth]{Chapter2/Figs/mem-finding.pdf}
+\caption[Finding maximal exact matches (MEMs)]{
+  Maximal exact matches (MEMs) found by the application of algorithm \ref{alg:mem_find} to the given query sequence and a GCSA2 index built from the shown reference sequence.
+  MEMs are listed below the query sequence with colors that match their matching location in the reference sequence.
+  Note that one MEM is found on the reverse strand of the reference ({\tt ACC} matches {\tt GTT}).  
+}
+\label{fig:mem_finding}
+\end{figure}
+
+
+\subsection{MEM finding and alignment seeding}
 %*2p 2h*
-First, a set of super-maximal exact matches (SMEMs) of a query sequence are generated by traversing the suffix tree encoded in the GCSA2 index until the count of matching strings drops to 0, then backing off one step to find all longest exact matches. 
-A recursive series of ``reseed'' passes through the traversal can then identify distinct next-longest matches which are used both to improve sensitivity.
-These are not super-maximal, thus we tend to call these heuristically derived exact matches ``MEMs''.
-Then, chains of MEMs that are consistent with the query sequence are found using a Markov model in which the optimal alignment is likely to form a Viterbi path.
+A set of super-maximal exact matches (SMEMs) of a query sequence are generated by backward search in the GCSA2 index.
+When backward search breaks, we step back to the last matching interval and use the suffix tree extension of the index to obtain the parent node of this interval.
+The GCSA2's {\tt LCPArray} extension allows interrogation of the suffix tree structure, which in turn this allows us to remove the invariant sequence from the end of our previous matched range and continue search for the next maximal match.
+Algorithm \ref{alg:mem_find} provides a sketch of this process as it relates to the GCSA2 FM-index encoding and LCPArray.
+
+Not shown in this algorithm sketch are a series of ``reseeding'' passes where by long MEMs are used as the basis for further exact match finding, but with a maximum limit to the detected match size.
+When backward search yields an exact match of this size, we use the same suffix tree operation to reset our match range with the next possible match.
+This reseeding operation is required to obtain high sensitivity via MEM based alignment seed lookup.
+At sufficient frequency to frustrate our mapping sensitivity in real genomes, a long MEM can mask out shorter sub-matches that might be contained within it, and which correspond to the correct mapping location.
+The resulting MEMs are not super-maximal, thus we tend to call these heuristically derived exact matches ``MEMs'' for simplicity.
+
+%the suffix tree encoded in the GCSA2 index until the count of matching strings drops to 0, then backing off one step to find all longest exact matches.
+%A recursive series of ``reseed'' passes through the traversal can then identify distinct next-longest matches which are used both to improve sensitivity.
+
+We use MEMs to seed alignments in {\tt vg}.
+As indicated in algorithm \ref{alg:mem_find}, the GCSA2 index supports lookup of matches by position in the original graph.
+In conjunction with a distance estimator, these positions are used to build a collinear chaining model that allows us to estimate likely subgraphs matching our query (described subsequently in section \ref{sec:collinear_chaining}).
+Chains of MEMs that are consistent with a mapping between the query sequence and the graph are found using a weighted graphical model in which the optimal alignment is likely to form a max-sum path.
 For each candidate chain, we then locally align the read against the graph. 
 Scoring results from the local alignment are used to rank the candidate alignments.
-We then return the best alignment, or multiple candidates if multiple mappings are required.
+We then return the best alignment, or multiple candidates if multiple mappings are required, with calculation of mapping quality used to provide an estimate in our confidence in the best alignment (section \ref{sec:mapping_quality}).
+
+\begin{algorithm}
+  \caption[MEM finding]{
+    Finding maximal exact matches using the GCSA2 suffix tree extension
+  }
+  \label{alg:mem_find}
+  \begin{algorithmic}
+    \Function{FindMEMs}{Q} \Comment{Find the MEMs for the given query sequence $Q$}
+    \State $mems \gets \emptyset$ \Comment{The list of MEMs that we'll return}
+    \State $c \gets Q[|Q|-1]$ \Comment{Current character in our search}
+    \State $sp \gets C[c]$ \Comment{Beginning of our SA interval}
+    \State $ep \gets C[c+1]-1$ \Comment{End of our SA interval}
+    \State $mem.begin \gets |Q|-2$ \Comment{Build up a MEM structure to store our current match}
+    \State $mem.end \gets |Q|-1$ \Comment{Record the current matching interval}
+      \For{$i \in [|Q|-2 \ldots 0]$} \Comment{Step backwards through the string}
+        \State $last = [sp, ep]$ \Comment{Store the last range, in case search breaks}
+        \State $c \gets Q[i]$ \Comment{Update our character}
+        \State $sp \gets C[c] + rank_{BWT}(c, sp - 1)$ \Comment{Update $sp$ dependent on $c$}
+        \State $ep \gets C[c] + rank_{BWT}(c, ep) - 1$ \Comment{Do the same for $ep$}
+        \If{$sp > ep$} \Comment{The current extension has failed}
+          \State $mem.begin \gets i + 1$ \Comment{Remove the last (unmatched) character}
+          \State $mem.range \gets last$ \Comment{Set the range to the last matching range}
+          \State $mem.positions \gets GCSA2.locate(mem.range)$ \Comment{Get MEM positions}
+          \State $mems.append(mem)$ \Comment{Store the last MEM for return}
+          \State $p \gets LCP.parent(last)$ \Comment{Get the suffix tree node parent of the last range}
+          \State $mem.end \gets mem.begin + p.lcp()$ \Comment{Remove the common prefix}
+          \State $[sp, ep] \gets p.range()$ \Comment{Use the SA range of the suffix tree parent node}
+        \EndIf
+        \EndFor
+      \State $mems.append(mem)$ \Comment{Add the last MEM to the MEMs to return} \\
+      \Return{$mems$} \Comment{Return the MEMs we've found}
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
 
 \subsection{Distance estimation}
 \label{sec:distance_estimation}
@@ -873,20 +934,110 @@ We expect that in much of the graph $S_\textbf{bv}^{select_1}(id(b_j))+\mbox{off
 
 Nonlinearities in the graph will frustrate this metric, and to manage these we rely on the positional index provided by the \emph{positional paths} given in the XG index.
 In these, we can query the relative positions of nodes in the path in $O(1)$ time.
-Where both positions are not on the same path, we can use local exploration of the graph near our positions $b_i$ and $b_j$ to attempt to find anchoring nodes on the same path.
-In our clustering step we can consider the multiple coordinate systems to develop a global pseudoalignment.
+Where both positions are not on the same path, we use a bounded local exploration of the graph near our positions $b_i$ and $b_j$ to attempt to find anchoring nodes on the same path.
+In our clustering step (section \ref{sec:collinear_chaining}) we consider the multiple coordinate systems to develop a global pseudoalignment.
 
 \subsection{Collinear chaining}
 %*0.5p 0.5h*
 \label{sec:collinear_chaining}
 
-If the MEMs do not cover the full read length, then we attempt to link them together into chains by building a Markov model in which the best possible chains form high-scoring paths. 
-In this model the nodes correspond to the reference graph positions where MEMs in the read occur and the transitions between nodes correspond to a weight that is proportional to the indel size implied by the difference in distance between the positions of the MEMs in the read and their distances in the graph. 
-To allow us to consider different distances calculated from different positional paths, we record one node per positional path that each MEM touches.
-If we are aligning a read pair, the weight between MEMs on different fragments is proportional to the probability of that distance under a learned model of the fragment insert size distribution. 
-Once we establish this model, we take the Viterbi path through it as our first candidate alignment. 
-By masking out the states in this path and re-running the Viterbi algorithm on the model, we can extract a series of candidate alignments in descending order of goodness. 
+In most cases, single MEMs do not cover the full read length, so we need to combine information from multiple MEMs to determine a candidate mapping location.
+It is impractical to attempt a full DP based alignment at each MEM location, and instead, we apply a heuristic approach wherein a model is built with the available MEM seed information, their graph positions, their positions in the query sequence, and the scoring parameters used for local alignment.
+The \emph{MEM Chain Model} is a DAG, $G_\textsc{memchain} = (N, E)$, in which each node $n_i \in N$ derives from a MEM, and each edge $e_{ij} \in E$ to represent a possible transition between MEMs that we may find in an alignment.
+
+\begin{figure}[htbp!]
+\centering
+\includegraphics[width=1.0\textwidth]{Chapter2/Figs/memchain_dag.pdf}
+\caption[The MEM Chain Model]{
+  Establishing collinear chains of MEMs to drive sequence read mapping.
+  Above: a set of MEMs derived from a perfect read simulated from a 1 Mbp test region from the 1000GP graph of chr20, using a maximum MEM length of 40bp to generate multiple MEMs for exposition.
+  Below: the first evaluation of the MEM Chain Model for this set of MEMs.
+  The model is shown in full, with the scores established as described in the text.
+  Each node refers to a single MEM, its positions in the graph, and the score derived from the first pass of $\textsc{MaxSum}(G_\textsc{memchain})$.
+  A weight is applied to each node equal to the length of its sequence times the match score used in local alignment.
+  A score on each edge is computed as the gap open and extension score implied by the difference in distance between the MEMs in the read and in the graph positions, minus the overlap length of the MEMs in the read.
+  The maximum scoring chain (in red) is found by the application of a standard max-sum dynamic programming approach, as described in the text.
+}
+\label{fig:memchain_model}
+\end{figure}
+
+Each $n_i$ has a starting position in the query $mem\_pos(n_i)$ and a length $mem\_length(n_i)$.
+To estimate the alignment score that we would achieve by using this MEM in an alignment, we add a weight ${\cal W}_{n_i}$ to each node that scales this length by the match score used in local alignment $\omega_\textbf{match}$:
+
+\begin{equation}
+  {\cal W}_{n_i} = mem\_length(n_i) \omega_\textbf{match}
+\end{equation}
+
+Each $n_i$ also has an associated set of graph positions $graph\_pos(n_i) = \{ b_1 \ldots b_m \}$.
+Edges $e_{ij}$ in $G_\textsc{memchain}$ represent possible transitions between MEMs, and are weighted (${\cal W}_{e_{ij}}$) by the minimum estimated distance between the given graph positions for each MEM, times the gap open and extension costs, less the overlap between the MEMs in the read times the match score:
+
+\begin{equation}
+  dist_{e_{ij}} = \min_{dist(b,d)} \forall b \in graph\_pos(n_i), \forall d \in graph\_pos(n_j)
+\end{equation}
+
+\begin{equation}
+  cost_{e_{ij}} = \omega_\textbf{extend} dist_{e_{ij}} + \omega_\textbf{open} [dist_{e_{ij}} \ne 0]
+\end{equation}
+
+\begin{equation}
+  overlap_{e_{ij}} = (mem\_pos(n_i) + mem\_length(n_i)) - mem\_pos(n_j)
+\end{equation}
+
+\begin{equation}
+  {\cal W}_{e_{ij}} = cost_{e_{ij}} - overlap_{e_{ij}} \omega_\textbf{match}
+\end{equation}
+
+If we are establishing $G_\textsc{memchain}$ based on MEMs derived from a read pair, and $n_i$ and $n_j$ are in different fragments in the read pair, then we derive ${\cal W}_{e_{ij}}$ based on a weight related to the probability of $dist_{e_{ij}}$ under an observed fragment length distribution:
+
+\begin{equation}
+  {\cal W}_{e_{ij}}^{\textsc{paired}} = P(dist_{e_{ij}} | obs\_frag\_len)
+\end{equation}
+
+These node and edge weights relate to the alignment score that we would obtain by passing through a series of MEMs.
+We expect a positive score due to an exact match, so we apply a positive weight to each node as it represents a MEM.
+Transtions between MEMs may encode gaps or mismatches.
+We cannot estimate mismatch counts for the read from the set of MEMs obtained for our query, but we can use our position index and the function $dist(b,d)$ to estimate gap lengths.
+We take the score of a pseudoalignment ${\cal P} = n_i \ldots n_j$ in the model to be:
+
+\begin{equation}
+  {\cal S}_{\cal P} = \sum_{i = 0}^{|{\cal P}|-2} {\cal W}_{{\cal P}[i]} + {\cal W}_{e_{{\cal P}[i]{\cal P}[i+1]}}
+\end{equation}
+
+Given this definition, we expect the maximum sum walk ${\cal P}_\textsc{max} = n_i \ldots n_j$ through the graph to be likely to yield the series of MEMs and graph positions involved in the maximum scoring alignment.
+This pseudoalignment is approximate due to the incompleteness of our score estimate and the fact that our MEM set is not guaranteed to capture the optimal alignment.
+To obtain a precise score we must then locally align the query against the graph.
+
+To use $G_\textsc{memchain}$ to drive alignment, we need to be able to use it to derive a series of candidate alignment locations.
+We do so by applying a standard max-sum dynamic programming approach to $G_\textsc{memchain}$.
+In this process, we derive a score for each node, ${\cal S}_{n_i}$, as the sum of own weight, the maximum score of any previous node, and the weight of the edge connecting the maximum scoring inbound node and the current node.
+
+\begin{equation}
+  {\cal S}_{n_i} = {\cal W}_{n_i} + \max_{\forall e_{ji} \in E} \left( {\cal W}_{e_{ji}} + {\cal S}_{n_j} \right)
+\end{equation}
+
+To allow traceback of the maximum scoring path, we record the maximum inbound node for each node.
+
+\begin{equation}
+  {\cal T}_{n_i} = \operatorname*{argmax}_{n_j} \left( {\cal W}_{e_{ji}} + {\cal S}_{n_j} \right)
+\end{equation}
+
+
+At the end of the scoring phase, we find the highest scoring node.
+Walking back through the series of recorded traceback pointers yields the maximum scoring path under the model.
+To obtain a series of candidate alignments, after each pass of max-sum, we mask out the set of nodes and edges traversed by our last optimal path, run the scoring phase without these MEMs, and finally derive the next-best traceback.
+
+
 Although the exact algorithm is different, in spirit our implementation is similar to that developed in \cite{kuosmanen2018using}, which extends collinear chaining to DAGs by running a similar model over a minimal set of paths covering the graph.
+
+
+%In this model the nodes correspond to the reference graph positions where MEMs in the read occur and the transitions between nodes correspond to a weight that is proportional to the indel size implied by the difference in distance between the positions of the MEMs in the read and their distances in the graph. 
+%To allow us to consider different distances calculated from different positional paths, we record one node per positional path that each MEM touches.
+%If we are aligning a read pair, the weight between MEMs on different fragments is proportional to the probability of that distance under a learned model of the fragment insert size distribution. 
+%Once we establish this model, we take the Viterbi path through it as our first candidate alignment. 
+%By masking out the states in this path and re-running the Viterbi algorithm on the model, we can extract a series of candidate alignments in descending order of goodness. 
+
+
+
 
 \subsection{Unfolding}
 
@@ -948,6 +1099,7 @@ The resulting graph is acyclic and supports queries up to length $k$ on the orig
 \end{figure}
 
 \subsection{POA and GSSW}
+\label{sec:gssw}
 %*2p 2h*
 
 \emph{Graph striped Smith-Waterman} (GSSW)\footnote{\url{https://github.com/vgteam/gssw}} generalizes an implementation \cite{zhao2013ssw} of Farrar's SIMD-accelerated striped Smith Waterman (SSW) algorithm \cite{farrar2007striped} to enable string to graph alignment.
@@ -1127,6 +1279,7 @@ Next we marginalize over bases from the posterior distribution to obtain a quali
 Here, $\lambda$ is a scale factor that can be computed from the scoring parameters, and the background frequencies $q_x$ are estimated by their frequency in the reference graph. Since base quality scores are already discretized, the adjusted scores can be precomputed and cached for all reasonable values of $\epsilon$. 
 
 \subsection{Mapping qualities}
+\label{sec:mapping_quality}
 
 The algorithm for mapping qualities in {\tt vg} is also motivated by a probabilistic interpretation of alignment scores.
 The score of an alignment $A$ of two sequences $X$ and $Y$ is the sum of scores given in equation \ref{eqn:base_score}.
