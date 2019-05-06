@@ -620,7 +620,7 @@ We first use bitvector ${\cal F}$ to convert lexicographic ranks to a BWT range,
 \subsubsection{GCSA2}
 
 Sir\'{e}n's update to GCSA, GCSA2, is specifically designed for application to arbitrary variation graphs \cite{siren2017indexing}.
-It is the first index to provide an emulation of the full range of suffix tree operations in the context of a graph.
+It is the first index to provide an emulation of the full range of suffix tree operations in the context of a sequence graph.
 The crucial observation that drove the development of GCSA2 is that it is not necessary to enable full length queries of the graph for a graph path index to be useful.
 Shorter graph path queries are fully sufficient as the basis for sequence mapping to the graph, which is the primary application of a graph sequence index.
 
@@ -943,7 +943,7 @@ In our clustering step (section \ref{sec:collinear_chaining}) we consider the mu
 
 In most cases, single MEMs do not cover the full read length, so we need to combine information from multiple MEMs to determine a candidate mapping location.
 It is impractical to attempt a full DP based alignment at each MEM location, and instead, we apply a heuristic approach wherein a model is built with the available MEM seed information, their graph positions, their positions in the query sequence, and the scoring parameters used for local alignment.
-The \emph{MEM Chain Model} is a DAG, $G_\textsc{memchain} = (N, E)$, in which each node $n_i \in N$ derives from a MEM, and each edge $e_{ij} \in E$ to represent a possible transition between MEMs that we may find in an alignment.
+The \emph{MEM Chain Model} is a DAG, $G_\textsc{MemChain} = (N, E)$, in which each node $n_i \in N$ derives from a MEM, and each edge $e_{ij} \in E$ to represent a possible transition between MEMs that we may find in an alignment.
 
 \begin{figure}[htbp!]
 \centering
@@ -953,10 +953,10 @@ The \emph{MEM Chain Model} is a DAG, $G_\textsc{memchain} = (N, E)$, in which ea
   Above: a set of MEMs derived from a perfect read simulated from a 1 Mbp test region from the 1000GP graph of chr20, using a maximum MEM length of 40bp to generate multiple MEMs for exposition.
   Below: the first evaluation of the MEM Chain Model for this set of MEMs.
   The model is shown in full, with the scores established as described in the text.
-  Each node refers to a single MEM, its positions in the graph, and the score derived from the first pass of $\textsc{MaxSum}(G_\textsc{memchain})$.
+  Each node refers to a single MEM, its positions in the graph, and the score derived from the first pass of the max-sum algorithm.
   A weight is applied to each node equal to the length of its sequence times the match score used in local alignment.
   A score on each edge is computed as the gap open and extension score implied by the difference in distance between the MEMs in the read and in the graph positions, minus the overlap length of the MEMs in the read.
-  The maximum scoring chain (in red) is found by the application of a standard max-sum dynamic programming approach, as described in the text.
+  The maximum scoring chain is shown in red.
 }
 \label{fig:memchain_model}
 \end{figure}
@@ -969,7 +969,7 @@ To estimate the alignment score that we would achieve by using this MEM in an al
 \end{equation}
 
 Each $n_i$ also has an associated set of graph positions $graph\_pos(n_i) = \{ b_1 \ldots b_m \}$.
-Edges $e_{ij}$ in $G_\textsc{memchain}$ represent possible transitions between MEMs, and are weighted (${\cal W}_{e_{ij}}$) by the minimum estimated distance between the given graph positions for each MEM, times the gap open and extension costs, less the overlap between the MEMs in the read times the match score:
+Edges $e_{ij}$ in $G_\textsc{MemChain}$ represent possible transitions between MEMs, and are weighted (${\cal W}_{e_{ij}}$) by the minimum estimated distance between the given graph positions for each MEM, times the gap open and extension costs, less the overlap between the MEMs in the read times the match score:
 
 \begin{equation}
   dist_{e_{ij}} = \min_{dist(b,d)} \forall b \in graph\_pos(n_i), \forall d \in graph\_pos(n_j)
@@ -987,7 +987,7 @@ Edges $e_{ij}$ in $G_\textsc{memchain}$ represent possible transitions between M
   {\cal W}_{e_{ij}} = cost_{e_{ij}} - overlap_{e_{ij}} \omega_\textbf{match}
 \end{equation}
 
-If we are establishing $G_\textsc{memchain}$ based on MEMs derived from a read pair, and $n_i$ and $n_j$ are in different fragments in the read pair, then we derive ${\cal W}_{e_{ij}}$ based on a weight related to the probability of $dist_{e_{ij}}$ under an observed fragment length distribution:
+If we are establishing $G_\textsc{MemChain}$ based on MEMs derived from a read pair, and $n_i$ and $n_j$ are in different fragments in the read pair, then we derive ${\cal W}_{e_{ij}}$ based on a weight related to the probability of $dist_{e_{ij}}$ under an observed fragment length distribution:
 
 \begin{equation}
   {\cal W}_{e_{ij}}^{\textsc{paired}} = P(dist_{e_{ij}} | obs\_frag\_len)
@@ -1007,8 +1007,8 @@ Given this definition, we expect the maximum sum walk ${\cal P}_\textsc{max} = n
 This pseudoalignment is approximate due to the incompleteness of our score estimate and the fact that our MEM set is not guaranteed to capture the optimal alignment.
 To obtain a precise score we must then locally align the query against the graph.
 
-To use $G_\textsc{memchain}$ to drive alignment, we need to be able to use it to derive a series of candidate alignment locations.
-We do so by applying a standard max-sum dynamic programming approach to $G_\textsc{memchain}$.
+To use $G_\textsc{MemChain}$ to drive alignment, we need to be able to use it to derive a series of candidate alignment locations.
+We do so by applying a standard max-sum dynamic programming approach to $G_\textsc{MemChain}$.
 In this process, we derive a score for each node, ${\cal S}_{n_i}$, as the sum of own weight, the maximum score of any previous node, and the weight of the edge connecting the maximum scoring inbound node and the current node.
 
 \begin{equation}
@@ -1021,9 +1021,20 @@ To allow traceback of the maximum scoring path, we record the maximum inbound no
   {\cal T}_{n_i} = \operatorname*{argmax}_{n_j} \left( {\cal W}_{e_{ji}} + {\cal S}_{n_j} \right)
 \end{equation}
 
-
 At the end of the scoring phase, we find the highest scoring node.
+
+\begin{equation}
+  n_{max} = \max_{\forall n_i \in N} {\cal S}_{n_i}
+\end{equation}
+
 Walking back through the series of recorded traceback pointers yields the maximum scoring path under the model.
+We define the series of nodes in the max-sum path by $n_{max-i-1} = {\cal T}_{n_{max-i}}$.
+The resulting path is expressed in reverse order relative to our traceback.
+
+\begin{equation}
+  {\cal P}_\textsc{max} = n_{max-|{\cal P}_\textsc{max}|} \dots n_{max-1}, n_{max}
+\end{equation}
+
 To obtain a series of candidate alignments, after each pass of max-sum, we mask out the set of nodes and edges traversed by our last optimal path, run the scoring phase without these MEMs, and finally derive the next-best traceback.
 
 
@@ -1044,6 +1055,7 @@ Although the exact algorithm is different, in spirit our implementation is simil
 Every node has an implicit default orientation so that it is possible to determine edges that cause an inversion, i.e. those which connect between a forward and a reverse complement node orientation. 
 When \emph{unfolding} the graph, we use a breadth first search starting at every inverting edge in the graph to explore the reverse complemented portions of the graph that we can reach within length $k$ from the inverting edge.
 We then copy this subgraph, take its reverse complement, and replace the inverting edges connecting it to the forward strand of the graph with non-inverting ones.
+If $k$ is as long as the longest walk in the graph, then unfolding will render the forward and reverse complement of the original graph on the forward strand of the unfolded graph.
 
 \subsection{DAGification}
 \label{sec:DAGify}
@@ -1057,7 +1069,7 @@ If our query is shorter than this limit, $k \geq |Q|$, then we are guaranteed to
 We first detect all strongly connected components by using a recursion-free implementation of Tarjan's strongly connected components algorithm \cite{tarjan1972depth}.
 Then, we copy each strongly connected component and its internal edges into a new graph.
 We greedily break edges in this graph that introduce cycles.
-Next we k-DAGify the component progressively copying the base component and, for each edge between nodes in the component, connecting from the source node in the previous copy to the target node in the current copy.
+Next we $k$-DAGify the component progressively copying the base component and, for each edge between nodes in the component, connecting from the source node in the previous copy to the target node in the current copy.
 
 We use dynamic programming to track the minimum distance back through the graph to a root node outside the component at each step.
 When this reaches our target $k$, we stop unrolling, and add the expanded component back into the graph by reconnecting it with its original neighborhood.
@@ -1225,13 +1237,108 @@ Future work in this direction may yield a new VG alignment algorithm, but this l
 \label{sec:chunked_alignment}
 
 For long reads, where in the worst case the local dynamic programming can become prohibitively expensive, we break the reads into ``bands'' of a fixed width $w$ (default 256 base pairs) with overlap between successive bands of $w/8$.
-We align these bands independently, trim the overlaps from the alignments, and build a Markov model from them similar to that built for MEM chaining, only that here we consider sub alignments as nodes in the model rather than MEMs.
-In this model we put weights on transitions between alignments that relate to the estimated distance between the alignments in the graph versus their distance in the read, with the objective of making long co-linear chains be the highest-scoring walks through the Markov model.
-We take the Viterbi path through the model to be the best alignment.
-Then, to obtain multiple alignments, we mask out this path, re-score, and take the Viterbi path to get the 2nd-, 3rd-, and ultimately $N$th-best alignment.
+Chunking the alignment process allows us to directly detect complex structural variation within our alignment, and provides a kind of split read alignment model for {\tt vg}.
+We align these bands independently, trim the overlaps from the alignments, and build an alignment DAG model $G_\textsc{AlignChain} = (N, E)$ similar to that built for MEM chaining (as in \ref{sec:collinear_chaining}).
+The only significant difference between these two models is that in $G_\textsc{AlignChain}$, we consider sub alignments as nodes in the model rather than MEMs.
+
+In this model we put weights on transitions between alignments that relate to the estimated distance between the alignments in the graph versus their distance in the read, with the objective of making long co-linear chains be the highest-scoring walks through the chaining model.
+We take the max-sum path through the model to be the best alignment.
+Then, to obtain multiple alignments, we mask out this path, re-score, and take the next max-sum path to get the 2nd-, 3rd-, and ultimately $N$th-best alignment.
+
 After they have been extracted from the model, alignments are ``patched'' using local alignment of unaligned regions anchored in the graph near the end of previous mapped regions, so that sub-alignments which may have been misaligned due to repeats may be locally aligned correctly.
-Although this sounds complex, in a very high fraction of cases neighboring alignments overlap exactly in the overlap region of size w/8, and chaining is trivial.
 This model allows {\tt vg} to map noisy reads of arbitrary length, and is used as a core component in the long read progressive assembler {\tt vg msga}.
+
+Although the development of $G_\textsc{AlignChain}$ is very similar to $G_\textsc{MemChain}$, but a number of important differences distinguish the two models.
+For clarity, I will fully exposit the chunked alignment chaining model here, despite its strong similarity to the MEM chaining model.
+
+\begin{figure}[htbp!]
+\centering
+\includegraphics[width=1.0\textwidth]{Chapter2/Figs/alignchain_dag.pdf}
+\caption[The Alignment Chain Model]{
+  The first evaluation of the alignment chain model for a set of alignment bands derived from a simulated query mapped against a test 1Mbp 1000GP graph included in the {\tt vg} repository, using {\tt vg map} parameters {\tt -w 50 -O 25 -J 2} to simplify the model for exposition.
+  Each node refers to a single mapping of an alignment band, its sequence, weight, its band index among bands taken from the original query, a node id in the graph, and the score derived from the first pass of the max-sum algorithm.
+  %Each of the three bands has been aligned to three locations in the reference graph, resulting in three columns of nodes, with each column corresponding to a given band.
+  Edges are labeled with their derived weight ${\cal W}_{e_{ij}}$, which can be seen to be 0 for edges connecting bands whose end and start positions directly connect.
+  The maximum scoring chain is shown in red, and corresponds to the correct mapping location of the simulated query.
+}
+\label{fig:alignmentchain_model}
+\end{figure}
+
+
+As each subalignment is part of the full alignment that we'll derive by finding the max-sum path through the model, we apply use the alignment score to set the initial weight for the node:
+
+\begin{equation}
+  {\cal W}_{n_i} = alignment\_score(n_i)
+\end{equation}
+
+Each alignment node $n_i$ has a set of graph start and end positions $graph\_start\_pos(n_i) = \{ b_1 \ldots b_m \}$, $graph\_end\_pos(n_i) = \{ b_1 \ldots b_m \}$.
+We use these to provide weights for the edges in the alignment chain model.
+Edges $e_{ij}$ in $G_\textsc{AlignChain}$ represent possible transitions between sub-alignments, and are weighted (${\cal W}_{e_{ij}}$) by the minimum estimated distance between the given graph positions for each alignment end, times the gap open and extension costs.
+The alignment bands overlap during the alignment of each sub-alignment, but at the point when we establish the model, we have trimmed the overlaps butween successive sub-alignments and re-calculated the alignment score, so we do not need to consider them here.
+Unlike the MEM chaining model, which is driven entirely by approximate distances, when we obtain an estimated distance less than the length of the alignment chunk, we walk the graph using a depth first search in order to obtain a precise minimum value for the distance.
+
+\begin{equation}
+  dist_{e_{ij}} = \min_{dist(b,d)} \forall b \in graph\_end\_pos(n_i), \forall d \in graph\_start\_pos(n_j)
+\end{equation}
+
+The chunked alignment model allows us to align through inversions, which we score using a basic heuristic that they are twice as costly as a gap of the same length as the inverted sequence.
+The inversion distance estimate walks forward from the positions in $n_j$ and seeks $n_i$.
+In the case of a non-inversion, the resulting estimate will be $\infty$, as $n_i$ will never be reached by walking forward from $n_j$.
+
+\begin{equation}
+  dist\_inv_{e_{ij}} = dist_{e_{ji}}
+\end{equation}
+
+\begin{equation}
+  {\cal W}_{e_{ij}} = \max
+  \begin{cases}
+    \omega_\textbf{extend} dist_{e_{ij}} + \omega_\textbf{open} [dist_{e_{ij}} \ne 0] \\
+    2 \times \left( \omega_\textbf{extend} dist\_inv_{e_{ij}} + \omega_\textbf{open} [dist\_inv_{e_{ij}} \ne 0] \right)
+  \end{cases}
+\end{equation}
+
+These node and edge weights relate to the final alignment score that we would expect should we concatenate a particular series of sub-alignments.
+%We expect a positive score due to an exact match, so we apply a positive weight to each node as it represents a MEM.
+%Transtions between sub-alignments may encode gaps or mismatches.
+We cannot precisely estimate the final score of the read without the final patching step, but we can use our position index and the function $dist(b,d)$ to estimate gap lengths.
+We take the score of a concatenated alignment ${\cal P} = n_i \ldots n_j$ in the model to be:
+
+\begin{equation}
+  {\cal S}_{\cal P} = \sum_{i = 0}^{|{\cal P}|-2} {\cal W}_{{\cal P}[i]} + {\cal W}_{e_{{\cal P}[i]{\cal P}[i+1]}}
+\end{equation}
+
+Given this definition, we expect the maximum sum walk ${\cal P}_\textsc{max} = n_i \ldots n_j$ through the graph to be likely to yield the series of sub-alignments and graph positions involved in the maximum scoring alignment we would obtain should we have aligned the entire query in one step.
+This concatenated alignment is approximate due to the incompleteness of our score estimate and the fact that our alignment set is not guaranteed to capture the optimal alignment due to the arbitrariness of the banding pattern that we have applied.
+Incompleteness due to our partitioning of the alignment problem means that to obtain a precise score we must locally realign unaligned portions of the concatenated alignment.
+This alignment patching process resolves problems that can occur due to induced soft clips, fully unaligned bands, or structural variations such as inversions or small CNVs that frustrate the complete alignment of a particular band.
+
+As with the MEM chaining model, we derive partial alignments from $G_\textsc{AlignmentChain}$ by applying a standard max-sum dynamic programming algorithm to derive the maximum possible final alignment score at each node, and then, by working from the maximum scoring node, derive the maximum scoring path through the graph.
+The score for each node ${\cal S}_{n_i}$, combines the sum of own weight, the maximum score of any previous node it is connected to, and the weight of the edge connecting the maximum scoring inbound node and the current node:
+
+\begin{equation}
+  {\cal S}_{n_i} = {\cal W}_{n_i} + \max_{\forall e_{ji} \in E} \left( {\cal W}_{e_{ji}} + {\cal S}_{n_j} \right)
+\end{equation}
+
+To allow traceback of the maximum scoring path, we record the maximum inbound node for each node.
+
+\begin{equation}
+  {\cal T}_{n_i} = \operatorname*{argmax}_{n_j} \left( {\cal W}_{e_{ji}} + {\cal S}_{n_j} \right)
+\end{equation}
+
+At the end of the scoring phase, we find the highest scoring node.
+
+\begin{equation}
+  n_{max} = \max_{\forall n_i \in N} {\cal S}_{n_i}
+\end{equation}
+
+Walking back through the series of recorded traceback pointers yields the maximum scoring concatenated alignment under the alignment scoring and transition weight model we've applied.
+We define the series of nodes in the max-sum path by $n_{max-i-1} = {\cal T}_{n_{max-i}}$.
+The resulting path is expressed in reverse order relative to our traceback.
+
+\begin{equation}
+  {\cal P}_\textsc{max} = n_{max-|{\cal P}_\textsc{max}|} \dots n_{max-1}, n_{max}
+\end{equation}
+
 
 
 \subsection{Alignment surjection}
