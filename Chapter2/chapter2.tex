@@ -5,6 +5,8 @@
 
 \chapter{Variation graphs}
 
+\label{chapter:variation_graphs}
+
 \ifpdf
     \graphicspath{{Chapter2/Figs/Raster/}{Chapter2/Figs/PDF/}{Chapter2/Figs/}}
 \else
@@ -1226,7 +1228,6 @@ The result is an approach that is more sensitive than the antidiagonal banded al
   Evaluation of the \emph{dozeu} X-drop alignment algorithm for an example graph.
   Grey cells represent the part of the score matrix for which our X-drop parameter would allow evaluation if we were calculating the matrix one cell at a time.
   8-cell wide black rectangles that contain the full set of grey cells represent the region of the score matrix for which we calculate scores when using a SIMD-based accelerated version of the algorithm.
-  %Each corresponds to a SIMD vector value obtained through evaluation of the accelerated DP fill algorithm on a CPU supporting the required vectorized instructions.
   Traceback and per-cell scores are not shown.
   This figure is meant to illustrate the adaptive banding property of the X-drop algorithm and how that can be used in a SIMD-based acceleration of the algorithm.
   Adapted with permission from \url{https://github.com/ocxtal/dozeu}.

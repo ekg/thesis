@@ -42,14 +42,16 @@ Higher sequencing costs previously motivated the application of expensive comput
 The decades prior to the development of cheap sequencing saw the use of multiple sequence alignment algorithms with high computational complexity.
 Analyzing hundreds or thousands of sequences with such techniques is expensive but justifiable given the costs of acquiring them.
 
-However, such approaches became completely inconceivable as new sequencing technologies allowed the generation of tens and then hundreds of gigabytes of data in a single run.
+However, such approaches became too expensive as new sequencing technologies allowed the generation of tens and then hundreds of gigabytes of data in a single run.
 The new, low-cost techniques allowed joint analyses of thousands of genomes from a single species.
 Resequencing provided a practical means to complete these analyses.
-The alignment phase could be completed independently and in parallel, with each sample compared to the common reference genome, and only in a final phase of analysis might all the genome data be collected together for the inference of alleles at a given genetic locus.
-By enabling the analysis of genomes at a previously unthinkable scale, resequencing became the core genome inference pattern in genomics.
-The standardization of data formats promulgated in large genome sequencing projects supported the separation of different phases of analysis, yielding a rich ecosystem of interacting tools.
+By relating data to a common linear reference system, the alignment phase could be completed independently and in parallel, with each sample compared to the common reference genome.
+Only in a final phase of analysis might all the genome data be collected together for the inference of alleles at a given genetic locus.
+%This approach affords scalability to genomic analysis, and has become standard within the field wherever large numbers of samples must be considered.
+%By enabling the analysis of genomes at a previously unthinkable scale, resequencing became the core genome inference pattern in genomics.
+%The standardization of data formats promulgated in large genome sequencing projects supported the separation of different phases of analysis, yielding a rich ecosystem of interacting tools.
 
-In resequencing, the reference sequence shapes the observable space in a process that is often called \emph{reference bias}.
+In resequencing, the reference sequence shapes the observable space, resulting in an effect known as \emph{reference bias}.
 DNA sequencing reads that contain sequence which is divergent from or not present in the reference sequence are likely to be unmapped or mismapped.
 This results in lower coverage for non-reference alleles, in effect forcing new samples to appear more similar to the reference than they actually are.
 Divergence itself frustrates the genome inference process, as alignment may produce different descriptions of diverged sequences depending on the relative position of the read.
@@ -57,10 +59,8 @@ Alignment works best when the sequences we are aligning are similar to the refer
 Increasing divergence requires greater computational expenditure to overcome reference bias.
 
 We can avoid reference bias by working on pure assemblies generated only from the sequencing data in our experiment and unguided by any prior information.
-Doing so can be rigorous, but comes at a significant cost, especially when the assembly algorithm requires us to load all the sequencing data into memory simultaneously.
-We will require much higher coverage to obtain the same level of accuracy in our assembly as we will have when resequencing, and our read lengths will limit the length of contiguous sequences we can infer.
-Virtually all assembly algorithms lose information about their source reads through the process of assembly, and this information must be somehow reconstituted if we wish to apply downstream algorithms to the input data in the context of the output of the assembler.
-%No practical algorithm allows us to jointly consider all the samples in a large sequencing experiment in the context of an assembly generated from their reads.
+Doing so can be rigorous, but comes at a significant cost.
+Obtaining whole genome \emph{de novo} assemblies requires greater sequencing an computational costs than resequencing, putting this approach out of reach for many study designs.
 
 Genome assemblers frequently use a graphical transformation of their inputs that supports algorithm steps used to infer contigs implied by the reads.
 These data structures are typically bidirectional graphs in which nodes are labeled by sequences and edges represent observed linkages between sequences.
@@ -88,12 +88,17 @@ I call these bidirectional sequence graphs with paths \emph{variation graphs}.
 \label{fig:variation_graph_tubemap}.
 \end{figure}
 
-In this chapter I will provide background context for my work.
-I will cover the history of DNA sequencing methods, assembly algorithms, and the development of reference genomes and their use in resequencing.
-Finally, I will review similar data models that are used in genome inference.
-In the remainder of the work I describe data structures and algorithms that allow the use of variation graphs as a reference system for unbiased genome inference, and demonstrate the benefits of this approach with a series of experiments.
+This chapter provides historical justification for the need for an integrative model for sequence analysis like the variation graph.
+I contextualize my work within the history of DNA sequencing (\ref{sec:genome_inference}), assembly algorithms (\ref{sec:genome_assembly}), resequencing methods (\ref{sec:reference_genomes}), and pangenomic models (\ref{sec:pangenomes}).
+This deep introduction is meant to justify the need for an integrative model like the variation graph to serve as a coordinating system in a research setting characterized by increasing data scale and complexity.
+Readers who need no further introduction to these issues should continue to section \ref{sec:graphical_techinques}, which reviews recent work on algorithms based on data models similar to variation graphs.
+
+The remainder of the thesis builds on this foundation.
+In chapter \ref{chapter:variation_graphs}, I describe data structures and algorithms that allow the use of variation graphs as a reference system for unbiased genome inference.
+Finally, in chapter \ref{chapter:applications}, I demonstrate the benefits of this approach with a series of experimental case studies.
 
 \section{Genome inference}
+\label{sec:genome_inference}
 
 % What do we mean by genome inference
 % half page
@@ -242,6 +247,7 @@ A current development in assembly focuses on the design of a common interchange 
 This file format and the data model it implies is an essential link between the work that I present later in this thesis and the problem of genome inference.
 
 \section{Reference genomes}
+\label{sec:reference_genomes}
 
 Obtaining a single genome sequence \emph{de novo} is an arduous task, and remains a complex problem.
 The result is a valuable object which can be used to lower the cost of subsequent analyses and enable direct whole genome comparisons which provide a full perspective on the genetic relationship between multiple individuals or species.
@@ -262,6 +268,7 @@ Since early releases, the human reference genome has included alternative versio
 % history of reference sequences
 % use of the reference sequence in analysis
 \subsection{Resequencing}
+\label{sec:resequencing}
 
 Due to the high cost of obtaining error-free, full length genomes, standard practice will use the best genome assembly for a given organism as a \emph{reference genome} when analyzing the sequences of other organisms from the same species.
 To do so, the genomes of the other individuals do not need to be fully assembled, and instead shotgun sequencing libraries from these new individuals may be aligned back to the reference to find small differences between the genomes.
@@ -507,6 +514,7 @@ I term this combination of a bidirectional sequence graph and paths a \emph{vari
 In chapter 2 I will formalize the variation graph model and important auxiliary data structures that enable its modification and use in resequencing.
 
 \section{Graphical techniques in sequence analysis}
+\label{sec:graphical_techinques}
 
 Many genome analysis algorithms employ sequence graphs.
 I introduced the alignment algorithms described in \ref{sec:sequence_alignment} in terms of a matrix, but they may also be described as algorithms on graphs, although the nodes in these graphs correspond to matrix cells and thus alignment states rather than characters or sequences.
