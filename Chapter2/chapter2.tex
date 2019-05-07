@@ -1351,9 +1351,25 @@ The resulting path is expressed in reverse order relative to our traceback.
 
 
 \subsection{Alignment surjection}
+\label{sec:surjection}
 
 Alignments to graphs that include linear reference sequences as paths can be transformed into alignments against those paths.
-To be well-defined, this lossy transformation, \emph{surjection}, requires that the alignment path matches the reference path for some portion of its length.
+Alignment \emph{surjection} projects alignments to the full graph \emph{onto} the subgraph defined by a given set of paths in the graph.
+This transformation is used to convert graph based alignments to alignments to the linear reference, and is of great utility in the application of {\tt vg} in resequencing based analyses, where it supports a lossy translation between {\tt vg}'s native GAM format and BAM.
+
+In surjection, portions of the alignment that already map to the path specific graph subset are left unchanged.
+However, regions of the original alignment to parts of the graph that are not in the selected path subset are mapped onto the nearest suitable node, with additional edits to specify the differences between the alignment and the graph subset defined by the target paths.
+To produce a meaningful alignment, surjection requires that the alignment path matches the reference path for some portion of its length.
+Otherwise, the resulting alignment would be empty, or unaligned.
+
+The name ``surjection'' is meant to be illustrative, and is not mathematically precise in the sense that it only applies to the alignments in terms of the node space of their paths.
+When we consider only the set of nodes that are traversed by a given alignment and its surjection, it is given that the function is surjective, as the domain of the function is the full graph, while the codomain is the subset defined by a given set of paths, with each node corresponding to one or more nodes in the original graph.
+(For instance, a mapping to a non-reference allele would be projected onto the nearest neighboring node in a reference path.)
+This surjective property would be violated in the case of a graph that only consisted of nodes in the paths that we are projecting our alignments into, as in this case the projection would bijective or the identity.
+
+However, it is not clear that projecting the alignments into a graph subset defined by a given set of paths is surjective when we consider the full alignment data model.
+Information about the original alignment sequence is fully retained in the node mappings of the surjected alignment path, and this can be seen as violating the surjective property of the transformation.
+
 The simplest surjection technique extracts the reference path region matching an alignment and realigns the read against it.
 Doing so without global alignment will often result in soft clipping, such as where non-reference alleles in the graph have allowed full length alignment.
 This can be resolved to some extent by applying global alignment of the alignment query sequence against the reference.
