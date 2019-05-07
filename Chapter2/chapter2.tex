@@ -1074,9 +1074,7 @@ Next we $k$-DAGify the component progressively copying the base component and, f
 We use dynamic programming to track the minimum distance back through the graph to a root node outside the component at each step.
 When this reaches our target $k$, we stop unrolling, and add the expanded component back into the graph by reconnecting it with its original neighborhood.
 For each copy of a node in the DAGified component we copy all its inbound and outbound edges where the other end of the edge lies outside the strongly connected component.
-The resulting graph is acyclic and supports queries up to length $k$ on the original graph using the translation that we maintain between the new graph and the source one.
-%Figure \ref{fig:kdagify} 
-%Supplementary Figure 4 provides a visual description of the process.
+The resulting graph is acyclic and supports queries up to length $k$ on the original graph using a translation that we maintain between the new graph and the source one.
 
 \begin{figure}[htbp!] 
   \centering
@@ -1106,6 +1104,13 @@ The resulting graph is acyclic and supports queries up to length $k$ on the orig
   \end{subfigure}
   \caption[DAGification]{
     DAGification of a small graph, as seen in \ref{subfig:dagify_k0}, with the $k$ unrolling parameter given below each graph.
+    In \ref{subfig:dagify_k0} we see a strongly connected component (SCC) of nodes 2, 3, and 4, which is copied in subsequent steps.
+    Node ids in subsequent steps are not directly mapped to these original node ids.
+    The DAGification algorithm proceeds by greedily breaking the cycles in this component, then copying the component and adding edges from the subsequent copy to the previous for each directed edge within the component until the minimum distance through the unrolled series of SCC copies is at least $k$.
+    This minimum distance is tracked using a min-sum DP algorithm that is updated at each copy step by assigning a new minimum length for each node equal to the minimum of the previous minimum length among nodes in the previous SCC copy that it is connected to, plus their sequence label length.
+    In panels \ref{subfig:dagify_k10}, \ref{subfig:dagify_k17}, and \ref{subfig:dagify_k25}, we see the unrolled SCC forming a braid in the middle of the rendered graphs, whose length increases with the increase in $k$.
+    This algorithm is not optimal, as can be seen by the duplication of paths connecting in and out of the component.
+    However it is linear, and requires only $O(kc)$ time and space, with $c$ representing a constant factor related to the size of the SCCs in the original graph.
   }
 \label{fig:dagify}
 \end{figure}
@@ -1216,12 +1221,15 @@ The result is an approach that is more sensitive than the antidiagonal banded al
 
 \begin{figure}[htbp!] 
 \centering    
-\includegraphics[width=0.65\textwidth]{Chapter2/Figs/xdrop.png}
+\includegraphics[width=1.0\textwidth]{Chapter2/Figs/xdrop.pdf}
 \caption[The \emph{dozeu} X-drop alignment algorithm]{
-  The \emph{dozeu} X-drop alignment algorithm.
-  Black rectangles represent the evaluated region of the score matrix, which each box corresponding to a SIMD vector value.
+  Evaluation of the \emph{dozeu} X-drop alignment algorithm for an example graph.
   Grey cells represent the part of the score matrix for which our X-drop parameter would allow evaluation if we were calculating the matrix one cell at a time.
-  Reprinted with permission from \url{https://github.com/ocxtal/dozeu}.
+  8-cell wide black rectangles that contain the full set of grey cells represent the region of the score matrix for which we calculate scores when using a SIMD-based accelerated version of the algorithm.
+  %Each corresponds to a SIMD vector value obtained through evaluation of the accelerated DP fill algorithm on a CPU supporting the required vectorized instructions.
+  Traceback and per-cell scores are not shown.
+  This figure is meant to illustrate the adaptive banding property of the X-drop algorithm and how that can be used in a SIMD-based acceleration of the algorithm.
+  Adapted with permission from \url{https://github.com/ocxtal/dozeu}.
 }
 \label{fig:xdrop}
 \end{figure}
@@ -1461,7 +1469,12 @@ The resulting layout tends to look like a kind of multiple alignment matrix, as 
 \begin{figure}[htbp!] 
 \centering    
 \includegraphics[width=1.0\textwidth]{Chapter2/Figs/vg_view_dp_H-3136_dot.pdf}
-\caption[Hierarchical visualization with Graphviz's {\tt dot}]{The beginning of a variation graph built by progressive assembly of the GRCh38 haplotypes in HLA gene H-3136 visualized using {\tt dot}.}
+\caption[Hierarchical visualization with Graphviz's {\tt dot}]{The beginning of a variation graph built by progressive assembly of the GRCh38 haplotypes in HLA gene H-3136 visualized using {\tt dot}.
+  The graph topology of nodes and edges is represented above, with node ids and sequences labeled the rectangular nodes, and edges connecting the upper corners of nodes representing the edge topology relative to the forward strand of the graph.
+  Below, paths in the graph are represented in a matrix-like format, with each mapping in the path represented by a node id and a colored emoji, and subsequent steps connected by a colored line.
+  The emoji/color combination is determined by a hash function applied to the path name.
+  A hidden edge connecting each path mapping step and the correpsonding node in the graph topology is used to force the rendering to place them at the same horizontal position, increasingly legibility.
+}
 \label{fig:vg_view_dot}
 \end{figure}
 
@@ -1476,7 +1489,16 @@ This can still capture the overall structure of the graph as seen in figure \ref
 \begin{figure}[htbp!] 
 \centering    
 \includegraphics[width=1.0\textwidth]{Chapter2/Figs/vg_view_dpS_H-3136_neato.pdf}
-\caption[Force-directed layout with Graphviz's {\tt neato}]{A larger region of the same variation graph in figure \ref{fig:vg_view_dot} rendered using {\tt neato}.}
+\caption[Force-directed layout with Graphviz's {\tt neato}]{
+  A larger region of the same variation graph in figure \ref{fig:vg_view_dot} rendered using {\tt neato.}
+    Here, each path in the variation graph is represented by a colored path, with the node steps 
+    As in \ref{fig:vg_view_dot}, paths in the graph are represented as colored paths connecting node ids and emoji.
+    The same hash function is used to determine the color and emoji combination used to label each path.
+    Each mapping in each path corresponds to one such node id / emoji label, and it is connected to the previous and subsequent steps by a line of the same color.
+    A hidden edge connects each of these path steps to the node it corresponds to.
+    This link causes the force directed layout algorithm to draw each each path mapping node close to the node it refers to.
+    Note that the graphviz data input here rendered by {\tt neato} is the same as that given to {\tt dot} in \ref{fig:vg_view_dot}.
+}
 \label{fig:vg_view_neato}
 \end{figure}
 
@@ -1490,7 +1512,11 @@ Figure \ref{fig:vg_view_bandage} shows the properties of this technique using th
 \begin{figure}[htbp!] 
 \centering    
 \includegraphics[width=1.0\textwidth]{Chapter2/Figs/vg_view_H-3136_Bandage.pdf}
-\caption[Force-directed layout with Bandage]{The graph from figure \ref{fig:vg_view_neato} rendered using {\tt Bandage}.}
+\caption[Force-directed layout with Bandage]{
+  The graph from figure \ref{fig:vg_view_neato} rendered using {\tt Bandage}.
+  This rendering algorithm does not include the graph's paths.
+  Here, node colors have been randomly assigned, and serve to indicate where nodes start and end.
+}
 \label{fig:vg_view_bandage}
 \end{figure}
 
@@ -1513,7 +1539,16 @@ This technique is implemented as {\tt vg viz}, and an example rendering is given
 \begin{figure}[htbp!] 
 \centering    
 \includegraphics[width=1.0\textwidth]{Chapter2/Figs/vg_viz_H-3136.pdf}
-\caption[Linearized variation graph visualization]{The same variation graph in figure \ref{fig:vg_view_dot} rendered using {\tt vg viz}.}
+\caption[Linearized variation graph visualization]{
+  The same variation graph in figure \ref{fig:vg_view_dot} rendered using {\tt vg viz}.
+  Above, we see the graph topology in terms of nodes, their lengths, and the edges that link their ends.
+  Node sequence labels are shown below this topology, at the nodes they correspond to.
+  Below, each path in the graph occupies a single position on the vertical axis.
+  A hash function projects each path into a color, although the specific mapping is not the same as in figures \ref{fig:vg_view_dot} and \ref{fig:vg_view_neato}.
+  Each horizontal position corresponds to a unique graph position.
+  Where a path touches this graph position, we applied a colored bar at the given vertical axis position corresponding to the path.
+  This rendering thus represents paths as binary vectors over the sorted sequence space of the graph.
+}
 \label{fig:vg_viz}
 \end{figure}
 
