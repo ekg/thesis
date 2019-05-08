@@ -509,10 +509,19 @@ A different parameterization of the aligner might need to be used to reconstruct
   \label{fig:vg_msga_mhc}
 \end{figure}
 
-To appreciate the effect of repeat collapse on the resulting graph, I applied {\tt vg dotplot}, which generates dotplots from indexed variation graphs, to compare the in-graph alignments of the same pair of sequences in both the {\tt seqwish} and {\tt vg msga} graphs.
+To appreciate the effect of repeat collapse on the resulting graph, I applied {\tt vg dotplot}, which generates path-coincidence dotplots from indexed variation graphs, to compare the in-graph alignments of the same pair of sequences in both the {\tt seqwish} and {\tt vg msga} graphs.
 These results are presented in figure \ref{fig:mhc_dotplots}.
+
+{\tt vg dotplot} does not make a dotplot in the same manner as is done to represent pairwise alignments.
+Rather, it produces plots that represents the relationship between pairs of sequences as they are embedded in the variation graph.
+For a given pair of paths embedded in the graph, {\tt vg dotplot} renders a dot for each instance where both paths traverse the same graph position.
+The dot is shown at a position $(x,y)$ where $x$ corresponds to the position in one path, and $y$ in the other.
+In the case of a graph built from the pairwise alignment of two sequences, the resulting path-coincidence dotplot would be equivalent to a traditional dotplot made from the alignments.
+However, for progressive alignments, we cannot be guaranteed the same structure for any given pair, due to the order dependence of the inclusion of each sequence.
+
 It is clear (in \ref{subfig:seqwish_mhc_dotplot}) that the {\tt minimap2} based alignment process encorages the collapse of repeats, which results in the large off-diagonal blocks of graph positional matches between the sequences.
-In contrast, (panel \ref{subfig:vg_msga_mhc_dotplot}) shows that the sequences can naturally align through the graph in an approximately linear fashion, with little repeat collapse.
+{\tt minimap2} allows for the multiple mapping of parts of its query sequences, but no filtering was completed on the input alignments to reduce the impact of multimapping on the resulting graph.
+In contrast, figure \ref{subfig:vg_msga_mhc_dotplot} shows that a different alignment model allow the sequences to align through the graph in an approximately linear fashion, with little repeat collapse.
 This linearity is enforced by setting a high alignment chain model ``bandwidth'' parameter ({\tt -J 16384}) (described in section \ref{sec:chunked_alignment}), which limits the size of an insertion or deletion that can be tolerated in collinear chaining.
 With a primary alignment chunk size of 512 and overlap of 64, this yields an alignment chain model bandwidth of approximately 6Mb, which roughly covers the entire MHC for any input sequence.
 Setting a shorter bandwidth allows repeat collapse to occur in a manner similar to what occurs when inducing the graph from the {\tt minimap2} alignments.
@@ -530,7 +539,10 @@ Setting a shorter bandwidth allows repeat collapse to occur in a manner similar 
   \end{subfigure}
   \caption[Path-coincidence dotplots from variation graphs of the MHC in GRCh38.]{
     Comparing {\tt seqwish} and {\tt vg msga} variation graphs built for the MHC in GRCh38.
-    In both panels we see a dotplot between GI568335954 ($x$-axis) and GI568335994 ($y$-axis) as they are embedded in each graph, with \ref{subfig:seqwish_mhc_dotplot} showing the dotplot for {\tt seqwish} and \ref{subfig:vg_msga_mhc_dotplot} that for {\tt vg msga}.
+    In both panels we see a path-coincidence dotplot between GI568335954 ($x$-axis) and GI568335994 ($y$-axis) as they are embedded in each graph, with \ref{subfig:seqwish_mhc_dotplot} showing the plot for {\tt seqwish} and \ref{subfig:vg_msga_mhc_dotplot} that for {\tt vg msga}.
+    In these plots, we render a dot for each pair of path positions that coincide in the graph.
+    The repeated positions in the {\tt seqwish} plot, which appear as dark verticals banded regions in the plot, represent repeats that have triggered the collapse of multiple positions in each path onto the same graph position.
+    In contrast, the {\tt vg msga} plot shows a relatively linear relationship between the two sequences in the graph, with large indels and a few gaps, but no off-diagonal relationships that might suggest repeat collapse or structural variation.
   }
   \label{fig:mhc_dotplots}
 \end{figure}
@@ -657,15 +669,6 @@ This is not the case for those called alleles (N $\approx$ 300K) which are not i
   \label{fig:yamnaya_het_violins}
 \end{figure}
 
-We expect reference bias of the degree demonstrated in these experiments to affect population genetic inference.
-To evaluate this, we apply the ABBA BABA test of phylogenetic tree topology based on Patterson's $D$-statistic of population relationship \cite{green2010draft}.
-To do so, we used the Human Origins dataset distributed with \cite{lazaridis2014ancient}.
-For each sample we ran samtools pileup yielding $\sim$1.2 million SNPs.
-We converted the pileup results to plink format, selecting one allele at random from the confidently mapped reads spanning each site, as is standard in the field.
-This was done 5 times, generating 5 replicates of randomly selected alleles for each sample.
-We then filtered by genotyping rate, excluding poorly genotyped SNPs\footnote{We used the plink filter {\tt --geno 0.05}.}, resulting in 1,142,867 SNPs.
-Finally, we merged individual plink files with those for GRCh37 and Chimpanzee, converted plink to eigenstrat format using {\tt convertf} and calculated $D$-statistics using qpDstat \cite{patterson2012ancient} of the form $D(\text{vg}, \text{bwa}; \text{GRCh37}, \text{Chimp})$ to test for excess of shared alleles between {\tt vg} and {\tt bwa}-aligned samples with the reference.
-
 \begin{figure}[htbp!]
   \centering
   \begin{subfigure}[t]{0.49\textwidth}
@@ -686,6 +689,15 @@ Finally, we merged individual plink files with those for GRCh37 and Chimpanzee, 
   }
 \label{fig:aDNA_dstats}
 \end{figure}
+
+We expect reference bias of the degree demonstrated in these experiments to affect population genetic inference.
+To evaluate this, we apply the ABBA BABA test of phylogenetic tree topology based on Patterson's $D$-statistic of population relationship \cite{green2010draft}.
+To do so, we used the Human Origins dataset distributed with \cite{lazaridis2014ancient}.
+For each sample we ran samtools pileup yielding $\sim$1.2 million SNPs.
+We converted the pileup results to plink format, selecting one allele at random from the confidently mapped reads spanning each site, as is standard in the field.
+This was done 5 times, generating 5 replicates of randomly selected alleles for each sample.
+We then filtered by genotyping rate, excluding poorly genotyped SNPs\footnote{We used the plink filter {\tt --geno 0.05}.}, resulting in 1,142,867 SNPs.
+Finally, we merged individual plink files with those for GRCh37 and Chimpanzee, converted plink to eigenstrat format using {\tt convertf} and calculated $D$-statistics using qpDstat \cite{patterson2012ancient} of the form $D(\text{vg}, \text{bwa}; \text{GRCh37}, \text{Chimp})$ to test for excess of shared alleles between {\tt vg} and {\tt bwa}-aligned samples with the reference.
 
 Our results, summarized in figure \ref{fig:aDNA_dstats}, indicate an excess of allele sharing between the {\tt bwa}-aligned samples and GRCh37 relative to the {\tt vg}-aligned ones and GRCh37.
 All but a handful of replicates have negative $D$-statistics, which implies that alignment against GRCh37 makes the samples appear more like the reference (subfigure \ref{subfig:aDNA_dstats_absolute}).
@@ -826,7 +838,15 @@ Indexing yielded a 119MB {\tt xg} index and 158MB {\tt GCSA2} index.
   \centering
   \includegraphics[width=1.0\textwidth]{Chapter3/Figs/svalbard_metagenome_minia_k51_m3_contigs_gfa.png}
   \caption[An arctic freshwater viral metagenome]{
-    An arctic freshwater viral metagenome visualized with Bandage.
+    An arctic freshwater viral metagenome graph, built with {\tt minia} as described in the text.
+    As in other Bandage visualizations, colored splines in this figure represent contigs or nodes in the assembly graph, with edges represented by junctions connecting the ends of these splines.
+    The width of the nodes corresponds to the coverage measured by {\tt minia} during the assembly process.
+    Bandage renders graphs with many small contigs with a vertical order related to the size of each weakly connected component, so the nodes at the bottom are smaller than those at the top.
+    The presence of many small, often circular contigs in this figure demonstrates the viral origin of the DNA sample used to build the graph.
+    We should expect these to represent fully assembled viral genomes \cite{de2015biodiversity}.
+    The fact that no giant component emerges in this graph indicates that there is sufficient sequence divergence between the viral species to prevent collapse in the $k=51$ order de Bruijn graph.
+    The widely varying width of the nodes in the graph indicate that some viral species are vastly more abundant than others.
+    We can see that there are few very short contigs (at the bottom of the rendering) with high coverage, which may indicate that these represent partial assemblies, rare species, or contaminants from non-viral sources.
   }
   \label{fig:viral_metagenome_bandage}
 \end{figure}
@@ -845,6 +865,7 @@ Although both methods mapped $\sim$96\% of the reads, {\tt vg} had an average id
   \includegraphics[width=0.7\textwidth]{Chapter3/Figs/ERR414817_holdout_bwa_vs_vg_k51_m3.png}
   \caption[Comparing {\tt vg} and {\tt bwa} alignment to the viral metagenome]{
     Comparison of alignment score between {\tt vg map} and {\tt bwa mem} when aligning against the pangenome graph or assembled contig set of the graph.
+    The region of higher density seen below the diagonal in the upper right of the plot indicates an increase in alignment score when mapping against the full assembly graph (with {\tt vg map}) relative to mapping to the linearized contig set (with {\tt bwa mem}).
   }
   \label{fig:viral_metagenome_scatter}
 \end{figure}
