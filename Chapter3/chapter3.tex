@@ -32,7 +32,7 @@ I show that alignment against a pangenome graph ameliorates this issue.
 {\tt vg} can be applied to any kind of variation graph.
 To demonstrate the utility of this, I use de Bruijn assemblers to generate reference variation graphs from collections of raw sequencing reads in the absence of a prior reference.
 I recreate a classical pangenomic analysis of core and accessory pangenome by analyzing the coverage of alignments mapped to an assembly graph built from 10 \emph{Escheria coli} strains.
-To illustrate the application of vg to metagenomic data containing unknown source genomes, I show that {\tt vg} enables the full length alignment of reads to a complex assembly graph built from an arctic viral metagenome, and similarly improves alignment to an assembly graph built from a human gut microbiome.
+To illustrate the application of {\tt vg} to metagenomic data containing unknown source genomes, I show that {\tt vg} enables the full length alignment of reads to a complex assembly graph built from an arctic viral metagenome, and similarly improves alignment to an assembly graph built from a human gut microbiome.
 Finally, I demonstrate that the data models and indexes in {\tt vg} are capable of encoding splicing graphs, and that aligning to these splicing graphs allows the direct observation of the transcriptome.
 
 \section{Yeast}
@@ -101,15 +101,17 @@ A small fraction of reads (0.46\%) map better to the linear than to the pangenom
 \label{fig:NCYC_SGD_SGRP2}
 \end{figure}
 
-\subsection{Cactus progressive assembly}
+\subsection{Cactus yeast variation graph}
 %*0.5p 0.5h*
 \label{sec:yeast_cactus}
 
 Variation graphs are generic objects capable of representing any kind of alignment between genomes or assembly of read data from them.
-To test the ability of {\tt vg} to use graphs of complex topology, we constructed a whole genome alignment graph of \emph{de novo} assemblies produced from PacBio sequencing of seven strains of \emph{S. cerevisiae}.
-In this assembly each chromosome of each assembly in \cite{yue2017contrasting} was progressively aligned using the phylogenetic guide tree methodology implemented in Cactus \cite{Paten:2011fva}.
+To test the ability of {\tt vg} to use graphs of complex topology, we constructed a variation graph from the whole genome alignment of \emph{de novo} assemblies produced from PacBio sequencing of seven strains of \emph{S. cerevisiae}.
+To build this graph, each chromosome of each assembly in \cite{yue2017contrasting} was aligned using LASTZ \cite{harris2007improved} according to a phylogenetic guide tree.
+The resulting alignment set was reduced to a variation graph using the Cactus reference-free whole genome multiple alignment method \cite{Paten:2011fva}, which internally maintains a sequence graph equivalent to a VG.
+Its output was then converted to {\tt vg} format using the hal2vg utility\footnote{\url{https://github.com/ComparativeGenomicsToolkit/hal2vg}}.
 As illustrated in figure \ref{fig:cactus_yeast_zoom}, this graph encodes a complex global topology that captures the structural variation between the species also reported in \cite{yue2017contrasting} as well as a local DAG-like topology which we expect when homologous sequences are represented compactly in a graph.
-This illustrates the ability of vg to represent paths corresponding to both collinear (inset) and structurally rearranged (main figure) regions of genomic variation.
+This illustrates the ability of {\tt vg} to represent paths corresponding to both collinear (inset) and structurally rearranged (main figure) regions of genomic variation.
 
 \begin{figure}[htbp!]
   \centering
@@ -125,13 +127,13 @@ This illustrates the ability of vg to represent paths corresponding to both coll
 \end{figure}
 
 A simulation study based on the SK1 strain provides some insight into the capabilities of {\tt vg} and tradeoffs inherent in different graph designs.
-I compared four vg graphs: a linear reference graph from the standard S288c strain, a linear reference from the SK1 strain, a pangenome graph of all seven strains, and a ``drop SK1'' variation graph in which all sequence private to the strain SK1 was removed from the pangenome graph.
-The multiple genome graphs were constructed with the Cactus progressive aligner, which generates graphs that typically contain cycles and are not partially ordered, and then filtered down to the various subgraphs using path subsetting facilities in {\tt vg mod}.
+I compared four variation graphs: a linear reference graph from the standard S288c strain, a linear reference from the SK1 strain, a pangenome graph of all seven strains, and a ``drop SK1'' variation graph in which all sequence private to the strain SK1 was removed from the pangenome graph.
+The multiple genome graphs were based on that first constructed with Cactus, as described above, and then filtered down to the various subgraphs using path subsetting facilities in {\tt vg mod}.
 
 \begin{figure}[htbp!]
   \centering
   \includegraphics[width=1.0\textwidth]{Chapter3/Figs/e68fc338_test_sim_yeast_cactus-roc.pdf}
-  \caption[Cactus yeast simulation]{Mapping short reads with vg to yeast genome references.
+  \caption[Cactus yeast simulation]{Mapping short reads with {\tt vg} to yeast genome references.
     ROC curves obtained by mapping 100,000 simulated SK1 yeast strain 150-bp paired-end reads against a variety of references described in the text.
     Reprinted from \cite{garrison2018variation}.}
   \label{fig:cactus_yeast_sim}
@@ -169,7 +171,7 @@ Cactus & 31 & 13243056 & 1059173 & 1304205 & 580 \\
 \caption[\emph{S. cerevisiae} variation graphs]{
   A summary of seven different variation graphs constructed to represent variation in \emph{S. cerevisiae}.
   As described in section \ref{sec:SGRP2_graph}, the SGD\_2010 graph is built from the reference, while SGRP2 adds SNPs in the SGRP2 population survey.
-  The Illumina data from \cite{yue2017contrasting} was used to build the minia unitigs and minia contigs graphs, while the whole genome, chromosome-resolved PacBio assemblies from the same work were used to build the Cactus and {\tt vg msga} progressive assemblies.
+  The Illumina data from \cite{yue2017contrasting} was used to build the minia unitigs and minia contigs graphs, while the whole genome, chromosome-resolved PacBio assemblies from the same work were used to build the Cactus and {\tt vg msga} variation graphs.
   S288c is the \emph{de novo} assembly of the reference strain produced in \cite{yue2017contrasting}.
 }
 \label{table:yeast_graphs}
@@ -195,10 +197,10 @@ I conclude that further tuning of the parameters used during \emph{de novo} asse
 Finally, I used the whole genome \emph{de novo} assemblies of long read data from \cite{yue2017contrasting} to build whole genome alignment graphs using Cactus (as described in section \ref{sec:yeast_cactus}) and {\tt vg msga}.
 The multiple sequence to graph alignment (MSGA) process implemented in {\tt vg msga} is akin to the progressive POA method, but generalized to arbitrary graphs of any size.
 Rather than using a local alignment algorithm to expand the graph, the long read alignment algorithm described in section \ref{sec:chunked_alignment} allows the direct alignment of whole chromosomes to the graph.
-Where the Cactus progressive assembly uses a phylogenetic guide tree to structure its construction, {\tt vg msga} simply aligns the chromosomes in order from longest to shortest to the growing graph.
+Where the Cactus variation graph uses a phylogenetic guide tree to structure its construction, {\tt vg msga} simply aligns the chromosomes in order from longest to shortest to the growing graph.
 The long read alignment in {\tt vg} is structured to enforce long range synteny, and the resulting graph is substantially different in structure than that of Cactus.
 I find that {\tt vg msga} is less likely to collapse repeats than Cactus, at least in the configuration used for this assembly.
-We can see this in figure \ref{fig:yeast_bandage}, where the Cactus graph (\ref{subfig:cactus_yeast_bandage}) shows two dense repeat structures in its core connected by loops of unique sequence, while the {\tt vg msga} graph appears to have much longer loops, with collapsed repeats embedded in these loops.
+We can see this in figure \ref{fig:yeast_bandage}, where the Cactus variation graph (\ref{subfig:cactus_yeast_bandage}) shows two dense repeat structures in its core connected by loops of unique sequence, while the {\tt vg msga} graph appears to have much longer loops, with collapsed repeats embedded in these loops.
 This observation is supported by the length statistics in table \ref{table:yeast_graphs}, with {\tt vg msga} producing a graph that is 550,899bp longer than that of Cactus.
 At the same time, the node count of the {\tt vg msga} graph is higher, which perhaps reflects a different local alignment result.
 
@@ -206,11 +208,11 @@ At the same time, the node count of the {\tt vg msga} graph is higher, which per
   \centering
   \begin{subfigure}[t]{0.85\textwidth}
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/cactus_yeast.png}
-    \caption{Cactus assembly} \label{subfig:cactus_yeast_bandage}
+    \caption{Cactus variation graph} \label{subfig:cactus_yeast_bandage}
   \end{subfigure}
   \begin{subfigure}[t]{0.85\textwidth}
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/vg_msga_yeast.png}
-    \caption{{\tt vg msga} assembly} \label{subfig:msga_yeast_bandage}
+    \caption{{\tt vg msga} variation graph} \label{subfig:msga_yeast_bandage}
   \end{subfigure}
   \caption[Whole genome alignment graphs for \emph{S. cerevisiae}]{
     Whole genome alignment graphs for \emph{S. cerevisiae} visualized using Bandage.
@@ -255,8 +257,8 @@ The alignment algorithm will attempt more alignments for each band where there i
     (Bottom left) the minia contig graph vs. the S288c assembly.
     (Bottom middle) the minia unitig graph vs. the S288c assembly.
     \emph{Whole genome alignment graphs}:
-    (Top right) the Cactus alignment vs. the S288c assembly.
-    (Bottom right) the {\tt vg msga} alignment vs. the S288c assembly.
+    (Top right) the Cactus variation graph vs. the S288c assembly.
+    (Bottom right) the {\tt vg msga} variation graph vs. the S288c assembly.
   }
   \label{fig:pacbio_yeast}
 \end{figure}
@@ -501,8 +503,8 @@ A different parameterization of the aligner might need to be used to reconstruct
 
 \begin{figure}[htbp!]
   \includegraphics[width=1.0\textwidth]{Chapter3/Figs/MHC_vg-msga_v1_9_0-115-gc20e80f_gfa.png}
-  \caption[{\tt vg msga} assembly of the MHC in GRCh38.]{
-    {\tt vg msga} assembly of the MHC in GRCh38 as visualized by Bandage.
+  \caption[{\tt vg msga} progressive alignment of the MHC in GRCh38.]{
+    Variation graph of the MHC in GRCh38 constructed by progressive alignment with {\tt vg msga} and visualized by Bandage.
   }
   \label{fig:vg_msga_mhc}
 \end{figure}
@@ -526,8 +528,8 @@ Setting a shorter bandwidth allows repeat collapse to occur in a manner similar 
     \caption{{\tt vg msga}}
     \label{subfig:vg_msga_mhc_dotplot}
   \end{subfigure}
-  \caption[Dotplots from assemblies of the MHC in GRCh38.]{
-    Comparing {\tt seqwish} and {\tt vg msga} assemblies of the MHC in GRCh38.
+  \caption[Path-coincidence dotplots from variation graphs of the MHC in GRCh38.]{
+    Comparing {\tt seqwish} and {\tt vg msga} variation graphs built for the MHC in GRCh38.
     In both panels we see a dotplot between GI568335954 ($x$-axis) and GI568335994 ($y$-axis) as they are embedded in each graph, with \ref{subfig:seqwish_mhc_dotplot} showing the dotplot for {\tt seqwish} and \ref{subfig:vg_msga_mhc_dotplot} that for {\tt vg msga}.
   }
   \label{fig:mhc_dotplots}
@@ -538,7 +540,7 @@ Setting a shorter bandwidth allows repeat collapse to occur in a manner similar 
 
 The removal of mapping bias is important when working with functional genomics data such as ChIP-seq data, where allele-specific expression analysis can reveal genetic variation that affects function but is confounded by reference mapping bias \cite{mcdaniell2010heritable}, especially given that read lengths are typically shorter for these experiments.
 We compared mapping with {\tt bwa mem} and {\tt vg} for data set ENCFF000ATK from the ENCODE project \cite{encode2012integrated}, which contains 14.9 million 51-bp ChIP-seq reads for the H3K4me1 histone methylation mark from the NA12878 cell line.
-When mapping with bwa the ratio of reference to alternate allele matches at heterozygous sites was 1.20, whereas with vg to the 1000GP graph the ratio was 1.01, effectively eliminating reference bias.
+When mapping with bwa the ratio of reference to alternate allele matches at heterozygous sites was 1.20, whereas with {\tt vg} to the 1000GP graph the ratio was 1.01, effectively eliminating reference bias.
 
 \begin{figure}[htbp!] 
   \centering
