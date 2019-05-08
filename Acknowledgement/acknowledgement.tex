@@ -9,32 +9,45 @@
   
   Deniz introduced me to Gabor Marth, with whom I apprenticed in the art of bioinformatics.
   Gabor encouraged me to contribute extensively to the 1000 Genomes Project, whose objective captured my imagination and whose participants, in particular the members of the analysis group, taught me many lessons in the way of science.
-  I can thank Hyun Min Kang, Goncalo Abecasis, Adam Auton, Gerton Lunter, Mark DePristo, Ryan Poplin, Zamin Iqbal, and Heng Li, for always motivating me, and for helping me to understand and correct the many mistakes I made.
+  I can thank Hyun Min Kang, Goncalo Abecasis, Adam Auton, Laura Clarke, Gerton Lunter, Mark DePristo, Lisa Brooks, Ryan Poplin, Zamin Iqbal, and Heng Li, for always motivating me, and for helping me to understand and correct the many mistakes I made.
   Meanwhile, Mengyao Zhao and Wan-Ping Lee gave me my first look inside the alignment algorithms that are such an important part of this thesis.
 
   During those years I had the pleasure of living with Benjamin ``Mako'' Hill and Mika Matsuzaki, who showed me what it means to work as a scientist for the commons.
   Not only did I learn from them, but from the many thinkers, dreamers, and travelers who they brought into our life in Somerville.
   These include Hanna Wallach, who helped me to understand the theory and practice of the learning problems I first encountered in genomics, and Nicol\'{a}s Della Penna, who continues to shape my understanding of many aspects of the scientific artifice, in particular the fuzzy boundary between the social and the technical.
+  I thank my friends Nathan Trachimowicz and Barbara Eghan, with whom I passed so much time in those years, for not letting me lose touch with the beautiful natural and human world in which this work lives and from which it derives its purpose.
   
   This thesis would cover a considerably narrower set of topics if not for the efforts of the many people who have I have worked with to build the variation graph toolkit, {\tt vg}.
-  These include, but are not limited to,
-  Jouni Sir\'{e}n,
-  Benedict Paten,
-  Eric Dawson,
-  Shilpa Garg,
-  Adam Novak,
-  Charles Markello,
-  William Jones,
-  Hajime Suzuki,
-  Jordan Eizenga,
-  Mike Lin,
-  Glenn Hickey,
-  Jerven Bolleman,
-  and Toshiaki Katayama.
+  These include, but are not limited to:
+  Jouni Sir\'{e}n, from whom I learned about the world of succinct data structures and without whom {\tt vg} would never have achieved the level of quality that it has;
+  Benedict Paten, who applied his unique expertise on genome graphs to help guide the effort of the ever-growing group of project collaborators without a pause in his own stream of contributions;
+  Eric Dawson, whose ready conversation, energy and persistence buoyed me in the early days of {\tt vg}, and laid the foundation for future work on structural variant calling on graphs;
+  Shilpa Garg, who brought new ideas about assembly and diploid genome inference to our project while helping to establish the long read alignment algorithms in {\tt vg};
+  Adam Novak, who arrived first and transformed the heart of {\tt vg} from a weakly modeled toy project into a foundation suitable for the work of this wide ranging team, and who continues to carry it forward;
+  Charles Markello, whose precise work on building resequencing pipelines with {\tt vg} has ensured it is and will be widely usable;
+  William Jones, whose clear-minded experiments on alignment identity and score comparison form the basis for so many figures in this work;
+  Hajime Suzuki, whose work on alignment acceleration lies at the core of the next phase of graph based mappers;
+  Jordan Eizenga, with whom I explored the deep complexity of string to graph alignment algorithms;
+  Mike Lin, whose experience and tact guided me both in the {\tt vg} project and in extracurricular work for DNAnexus;
+  Glenn Hickey, who, in addition to caring for the project, took {\tt vg} full circle and built variant calling into the graph model;
+  Jerven Bolleman, who found a way to link {\tt vg} into the enormous world of semantic biological data;
+  and Toshiaki Katayama, who has explored our work and done so much to bring developers of graphical pangenomic techniques together.
+  These members of the ``vgteam'' have each shared so much more than I can describe here, and I am deeply greatful to have had the opportunity to work with them.
+  The work that I present here is fundamentally based on the productive collaboration that we have shared, and I could not have completed it without their watchful critique and steadfast exploration of their own research questions.
+
+  During my time as a student, I benefitted from many long conversations with my fellow Sanger PhD cohort over lunch and coffee at the Genome Campus.
+  In particular learned from the other students who I lived with: Ignacio V\'{a}zquez Garc\'{i}a, Martin Fabry, Manuela Carrasquilla, and Girish Nivarti.
+  We lived well, we ate well, and we grew together in these years through conversations that brought together our new knowledge and our distant dreams.
 
   Pedro Fernandes gave Tobias Marschall and me the chance to teach a course on pangenomics using {\tt vg}, which motivated many of the applications of variation graphs that I present here.
   Eppie Jones, Rui Martiniano, and Daniel Wegmann have guided and supported my work on ancient DNA.
   Remo Sanges and Mariella Ferrante gave me a lab to be part of and a fascinating project to explore in my time in Napoli.
+  My corrections for this thesis benefitted from Alex Bowe's excellent series of blog posts on succinct data structures, and I thank him for allowing me to exposit some of his examples here.
+
+  The final version of this thesis reflects a long and memorable conversation led by my examiners Aylwyn Scally and Gerton Lunter.
+  I thank them for their clear suggestions for its improvement, and will forever be greateful for the time they devoted to this sprawling work.
+  They focused my time on its roughest and most incomplete aspects.
+  I am proud of the result that their critique has encouraged me to achieve.
   
   Working with Richard Durbin has been a singular pleasure.
   Richard has an expansive vision for genomics, but he is always ready to dig into the details of a problem.
@@ -43,28 +56,17 @@
   I owe its former and current members thanks for their encouragement and imagination.
 
   Without my family, it is unlikely I would have ever begun the meandering trip that has led me to this thesis.
-  My parents helped me to be independent, and opened my mind to the world of ideas, which set me out on a wonderful trip.
-  Along the way, my brother and sister have kept me honest and careful of myself.
+  My parents, Mark Garrison and Diane Garrison, helped me to be independent, and opened my mind to the world of ideas, which set me out on a wonderful trip.
+  Along the way, my brother Nels and sister Astrid have kept me honest and careful of myself.
 
   Much of this trip has been alongside my partner Enza Colonna.
   Non so come dire quanto mi ha aiutato, o quanti passi ho fatto in questo viaggo secondo le idee che abbiamo condiviso.
-  I also am grateful to her parents, Donato e Concetta, under whose almond and olive trees I wrote many pages of this work.
-  Mi hanno liberato dai problemi di vita quotidiana, e con il loro aiuto ho potuto scrivere tutta la tesi in un solo mese.
+  I also am grateful to her parents, Donato Colonna e Concetta Tummolo, under whose almond and olive trees I wrote many pages of this work.
+  Mi hanno liberato dai problemi di vita quotidiana, e con il loro aiuto ho potuto scrivere la prima bozza della tesi in un solo mese.
   
   Our daughter, Exa, who always convinces me to play, made sure that I was never too tired to keep going.
   I look forward to sharing this with her.
 
-  % Sasha, George, 
-  % Gabor
-  % Mako, Mika
-  % Nikete
-  % vg team
-  % our group
-  % Richard - it was a ``singular'' pleasure to work with Richard !
-  % Exa
-  % Enza
-  % familia, parenti
-  % Parents
 
   % TODO: Alex Bowe, Nacho, Manuela, Girish,
   % ... who else
