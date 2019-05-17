@@ -555,13 +555,20 @@ Given low sequence divergence, the cost of each step will approximate $L^2$.
 The algorithm thus has a lower bound of approximately $O(L^{2}N\log{N})$, which the authors confirmed with experiments demonstrating subquadratic scaling in the number of input sequences.
 
 Despite its use of an algorithm that scales cubically with the number of input sequences, T-COFFEE's higher accuracy has resulted in it receiving ten times the citations of POA.
-The low rate of use meant that the POA concept was ``rediscovered'' by participants in the 1000GP who
-needed a computationally inexpensive method to align sequences to VCF-based pangenomes\footnote{Sequence to graph DAG alignment was one of Deniz Kural's main PhD projects. I worked with him in Gabor Marth's laboratory, and we applied his implementation of POA to generate accurate genotype likelihoods for indels and complex variation in the final phase of the 1000GP. We learned of the prior work later, when a reviewer pointed out that the algorithm was roughly equivalent to POA.}.
+The low rate of use meant that the POA concept was ``rediscovered'' by participants in the 1000GP who needed a computationally inexpensive method to align sequences to VCF-based pangenomes.\footnote{Sequence to graph DAG alignment was one of Deniz Kural's main PhD projects. I worked with him in Gabor Marth's laboratory, and we applied his implementation of POA to generate accurate genotype likelihoods for indels and complex variation in the final phase of the 1000GP. We learned of the prior work later, when a reviewer pointed out that the algorithm was roughly equivalent to POA.}
 
 Lee's POA model provides a simple pattern for thinking about pangenomes.
 However, POA MSAs are linear objects which cannot capture many natural kinds of genetic variation such as repeats or rearrangements without duplication of the rearranged sequences.
 Several methods have extended the MSA concept to unordered graphs, including the Threaded Blockset Aligner (TBA) \cite{blanchette2004aligning}, which models the MSA graph as a set of partially ordered MSAs linked by unordered larger scale connections, and the A-Bruijn Aligner (ABA), which models the MSA using a de Bruijn graph and represents a solution to problems in MSA using techniques that later become important to short read assembly \cite{raphael2004novel}.
 Variation graphs generalize these models without the limitations of order (as in POA and TBA) or $k$-mer based graph structures (as in ABA).
+
+The POA model also inspired the development of a graphical model that supports the comparison of various editions or versions of the same text in the field of textual criticism, the \emph{variant} graph \cite{schmidt2009data,haentjens2014computer}.
+The variant graph can be understood as a POA DAG built from a collection of texts, whose nodes are labeled by the input texts that traverse them.
+\emph{Variant} graphs are very similar to the \emph{variation} graphs that I present in this thesis, but while variant graphs are specialized for linear written texts, variation graphs aim to model DNA and genomic variation.
+Although they have similar structure, these two models are in fact an unusual instance of interdisciplinary convergent naming.\footnote{I developed the term ``variation graph'' without knowledge of this prior work. I first become aware of it in the week before the initial submission of this thesis, when Daniel Bruder brought textual variant graphs to my attention. In practice, some researchers use both terms to refer to the model I present in this thesis.}
+Variant graphs are used mostly to reduce the effort required to collate and manually review different versions of texts.
+Recent work has focused on their visualization, resulting in techniques that are very similar to those developed for variation graphs which I present later in this thesis \cite{janicke2015traviz}.
+
 
 \subsection{Assembly graphs}
 
