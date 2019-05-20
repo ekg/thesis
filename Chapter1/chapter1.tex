@@ -338,8 +338,8 @@ Compressed suffix arrays (CSA) (equivalently, the ``fast, minute'' FM-index) are
 To support suffix array operations in this compressed context, including pattern matching and positional queries, standard implementations include additional auxiliary information, in particular a sampled subset of the entries in the suffix array.
 See section \ref{sec:fmidx_csa} for a detailed review of the important features of these data structures as they relate to string matching.
 
-The FM-index is used in modern short-read aligners such as BWA \cite{li2009fast} and BOWTIE \cite{langmead2009ultrafast}, which used backtracking LF alignment to directly align sequences to the suffix array encoded in the FM-index.
-This backtracking search is fast, but has problems detecting indels (as these require exponentially more backtracks to infer) and performs less well with increasing read length.
+The FM-index is used in modern short-read aligners such as BWA \cite{li2009fast} and BOWTIE \cite{langmead2009ultrafast}, which apply a backtracking search algorithm to directly align sequences to the suffix array encoded in the FM-index.
+This approach is fast, but has problems detecting indels (as these require exponentially more backtracks to infer) and performs less well with increasing read length.
 In response, the authors merged initial exact matching with a final DP step to yield ``long read'' capable aligners like BWA-SW \cite{li2010fast} and BOWTIE2 \cite{langmead2012fast}.
 Further refinements of this concept yielded BWA MEM \cite{li2013aligning}, which uses a heuristic algorithm to determine ``supermaximal exact matches'' (SMEMs) and reseed ``sub matches'' within them using a bidirectional FM-index (the FMD index).
 Due to its relative robustness to error and variation, the MEM concept has ultimately prevailed and as of the time of this writing BWA MEM can be seen as the industry standard method for aligning short reads to the genome.
