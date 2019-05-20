@@ -31,14 +31,14 @@ Finally, I will discuss how variation graphs can provide normalized basis spaces
   \includegraphics[width=\textwidth]{Chapter2/Figs/example_vg_construction.pdf}
   \caption[The basic elements of a variation graph]{
     A step in the progressive construction of a variation graph from homologous fragments of four haplotypes in the GRCh38 alternate allele set for the HLA gene DQB1-3119.
-    (A) shows variation graph constructed by progressive alignment of three sequences labeled \emph{a}, \emph{b}, and \emph{c}.
-    The graph topology is shown in at the top of the panel, with nodes represented by black bars, labeled by their node IDs (white numbers), and with edge connections between nodes shown by arcs above.
+    (A) shows the variation graph constructed by progressive alignment of three sequences labeled \emph{a}, \emph{b}, and \emph{c}.
+    The graph topology is shown at the top of the panel, with nodes represented by black bars, labeled by their node IDs (white numbers), and with edge connections between nodes shown by arcs above.
     Paths are indicated in the colored bars below, with a identifying name to the left.
     This graph is partially ordered, without cycles, and so the sequences of paths may be enumerated by concatenating the node sequences above the filled portions of each of the path rows.
     A fourth sequence \emph{z} has been aligned to the graph, and is shown in a checkerboard magenta pattern.
     It contains a single SNP relative to the graph, which is shown by the black {\tt T} matching the fifth position of the first node.
     The JSON presented in (B) describes the full node set of the graph in (A), while (C) lists the edges.
-    (D) shows the path \emph{a} embedded in the graph in full. Other paths are not provided, but their overall format is the same.
+    (D) shows the path \emph{a} embedded in the graph in full. Other paths are not shown, but are recorded similarly.
     (E) describes the alignment of \emph{z} against graph (A). Only the beginning of the path of \emph{z} against (A) is given.
     The first mapping in the path describes a SNP between the matching subsequence in \emph{z} and $n_1$.
     Note the second edit in the mapping, which specifically describes the SNP as a replacement of a subsequence in $n_1$ by {\tt T}.
@@ -414,16 +414,16 @@ In the context of read alignment, such losses may be undesirable as long as ther
 As I presented in section \ref{sec:sequence_alignment}, sequence alignment is driven by sequence indexes that allow efficient queries of subsequences in a given corpus (for instance a reference genome, or a set of reads).
 Two main varieties have proved useful.
 In $k$-mer indexes, short subsequences of length $k$ are recorded in a hash table or equivalent data structure that allows efficient lookup.
-The keys in this table are the $k$-mers, whel the values are typically a list of strand-oriented positions in the target set of sequences.
+The keys in this table are the $k$-mers, while the values are typically a list of strand-oriented positions in the target set of sequences.
 BWT-based indexes emulate the suffix tree of their input text in small space, and allow $O(l)$ time queries for sequences of length $l$, irrespective of the size of the target corpus.
-Implementations of the popular FM-index \cite{fmindex2000,fmindex2005} and the functionally equivalent compressed suffix array (CSA) \cite{grossi2005compressed} compress the BWT using encodings that allow fast decompression or direct operation on the compressed data (such run-length compression, or that of Raman, Raman, and Rao \cite{raman2002succinct}, and augment the BWT with positional information that allows the index to be used for substring matching.
+Implementations of the popular FM-index \cite{fmindex2000,fmindex2005} and the functionally equivalent compressed suffix array (CSA) \cite{grossi2005compressed} compress the BWT using encodings that allow fast decompression or direct operation on the compressed data (compressed for example with with run-length compression, or that of Raman, Raman, and Rao \cite{raman2002succinct}), and augment the BWT with positional information that allows the index to be used for substring matching.
 
 Indexing the sequence space of variation graphs requires a generalization of the principles behind these indexing techniques.
 Junctions allow for the representation of alternative sequences, with an exponential size relative to the number of furcations in the graph.
 This introduces problems of representation and scale which have required substantial work to resolve.
-In {\tt vg}, I was ultimately able to use and encourage the development of a practical implementation of a succinct data structure akin the the CSA, but generalized to operate in any kind of bidirectional sequence graph, the GCSA2.
-This this model was developed within the context of {\tt vg}, and is the first sequence index specifically designed to work on variation graphs.
-Here, I will provide a description of related data structures from which this model draws inspiration, as well as a careful summary of the GCSA2 and the features which make it ideal as the core sequence index to drive for a short read to variation graph mapper.
+In {\tt vg}, I was ultimately able to use and encourage the development and use of a practical implementation of a succinct data structure akin the the CSA, but generalized to operate in any kind of bidirectional sequence graph, the GCSA2.
+This model was developed within the context of {\tt vg}, and is the first sequence index specifically designed to work on variation graphs.
+Here, I will provide a description of related data structures from which this model draws inspiration, as well as a careful summary of the GCSA2 and the features which make it ideal as the core sequence index to drive a short read to variation graph mapper.
 Due to space, I will not fully elaborate this model, as it is not among my contributions.
 Readers are encouraged to examine the cited works if they seek a complete description of this and related data structures.
 
@@ -436,7 +436,7 @@ To mitigate this issue, we can short-circuit the $k$-mers enumeration when a giv
 Another way to mitigate the limitations posed by the exponential number of $k$-mers in the graph is to build the index on disk, rather than using main memory.
 In the early stages of the {\tt vg} project, I implemented a $k$-mer based index using a disk-backed system (see section \ref{sec:generic_disk_backed_indexes}).
 By sorting the $k$-mers, the index could be efficiently compressed, but still the graph for the human 1000 Genomes Project required over 200GB of memory, and was unusably slow unless cached in main memory.
-This index formed the basis for the first prototypes of the {\tt vg} mapper, but is be impractical due to its time and memory requirements.
+This index formed the basis for the first prototypes of the {\tt vg} mapper, but is impractical due to its time and memory requirements.
 
 \subsubsection{The FM-index and Compressed Suffix Array (CSA)}
 \label{sec:fmidx_csa}
