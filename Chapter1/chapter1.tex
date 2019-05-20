@@ -42,16 +42,18 @@ Higher sequencing costs previously motivated the application of expensive comput
 The decades prior to the development of cheap sequencing saw the use of multiple sequence alignment algorithms with high computational complexity.
 Analyzing hundreds or thousands of sequences with such techniques is expensive but justifiable given the costs of acquiring them.
 
-However, such approaches became too expensive as new sequencing technologies allowed the generation of tens and then hundreds of gigabytes of data in a single run.
+However, such approaches became \DIFdelbegin \DIFdel{completely inconceivable }\DIFdelend \DIFaddbegin \DIFadd{too expensive }\DIFaddend as new sequencing technologies allowed the generation of tens and then hundreds of gigabytes of data in a single run.
 The new, low-cost techniques allowed joint analyses of thousands of genomes from a single species.
 Resequencing provided a practical means to complete these analyses.
-By relating data to a common linear reference system, the alignment phase could be completed independently and in parallel, with each sample compared to the common reference genome.
-Only in a final phase of analysis might all the genome data be collected together for the inference of alleles at a given genetic locus.
-%This approach affords scalability to genomic analysis, and has become standard within the field wherever large numbers of samples must be considered.
-%By enabling the analysis of genomes at a previously unthinkable scale, resequencing became the core genome inference pattern in genomics.
-%The standardization of data formats promulgated in large genome sequencing projects supported the separation of different phases of analysis, yielding a rich ecosystem of interacting tools.
+\DIFdelbegin \DIFdel{The }\DIFdelend \DIFaddbegin \DIFadd{By relating data to a common linear reference system, the }\DIFaddend alignment phase could be completed independently and in parallel, with each sample compared to the common reference genome\DIFdelbegin \DIFdel{, and only }\DIFdelend \DIFaddbegin \DIFadd{.
+Only }\DIFaddend in a final phase of analysis might all the genome data be collected together for the inference of alleles at a given genetic locus.
+\DIFdelbegin \DIFdel{By enabling the analysis of genomes at a previously unthinkable scale, resequencing became the core genome inference pattern in genomics.
+The standardization of data formats promulgated in large genome sequencing projects supported the separation of different phases of analysis, yielding a rich ecosystem of interacting tools.
+}\DIFdelend %DIF > This approach affords scalability to genomic analysis, and has become standard within the field wherever large numbers of samples must be considered.
+%DIF > By enabling the analysis of genomes at a previously unthinkable scale, resequencing became the core genome inference pattern in genomics.
+%DIF > The standardization of data formats promulgated in large genome sequencing projects supported the separation of different phases of analysis, yielding a rich ecosystem of interacting tools.
 
-In resequencing, the reference sequence shapes the observable space, resulting in an effect known as \emph{reference bias}.
+In resequencing, the reference sequence shapes the observable space\DIFdelbegin \DIFdel{in a process that is often called }\DIFdelend \DIFaddbegin \DIFadd{, resulting in an effect known as }\DIFaddend \emph{reference bias}.
 DNA sequencing reads that contain sequence which is divergent from or not present in the reference sequence are likely to be unmapped or mismapped.
 This results in lower coverage for non-reference alleles, in effect forcing new samples to appear more similar to the reference than they actually are.
 Divergence itself frustrates the genome inference process, as alignment may produce different descriptions of diverged sequences depending on the relative position of the read.
@@ -59,8 +61,13 @@ Alignment works best when the sequences we are aligning are similar to the refer
 Increasing divergence requires greater computational expenditure to overcome reference bias.
 
 We can avoid reference bias by working on pure assemblies generated only from the sequencing data in our experiment and unguided by any prior information.
-Doing so can be rigorous, but comes at a significant cost.
-Obtaining whole genome \emph{de novo} assemblies requires greater sequencing and computational costs than resequencing, putting this approach out of reach for many study designs.
+Doing so can be rigorous, but comes at a significant cost\DIFdelbegin \DIFdel{, especially when the assembly algorithm requires us to load all the sequencing data into memory simultaneously.
+We will require much higher coverage to obtain the same level of accuracy in our assembly as we will have when resequencing, and our read lengths will limit the length of contiguous sequences we can infer.
+Virtually all assembly algorithms lose information about their source reads through the process of assembly, and this information must be somehow reconstituted if we wish to apply downstream algorithms to the input data in the context of the output of the assembler.
+%DIF < No practical algorithm allows us to jointly consider all the samples in a large sequencing experiment in the context of an assembly generated from their reads.
+}\DIFdelend \DIFaddbegin \DIFadd{.
+Obtaining whole genome }\emph{\DIFadd{de novo}} \DIFadd{assemblies requires greater sequencing and computational costs than resequencing, putting this approach out of reach for many study designs.
+}\DIFaddend 
 
 Genome assemblers frequently use a graphical transformation of their inputs that supports algorithm steps used to infer contigs implied by the reads.
 These data structures are typically bidirectional graphs in which nodes are labeled by sequences and edges represent observed linkages between sequences.
@@ -88,17 +95,22 @@ I call these bidirectional sequence graphs with paths \emph{variation graphs}.
 \label{fig:variation_graph_tubemap}.
 \end{figure}
 
-This chapter provides historical justification for the need for an integrative model for sequence analysis like the variation graph.
-I contextualize my work within the history of DNA sequencing (\ref{sec:genome_inference}), assembly algorithms (\ref{sec:genome_assembly}), resequencing methods (\ref{sec:reference_genomes}), and pangenomic models (\ref{sec:pangenomes}).
+\DIFdelbegin \DIFdel{In this chapter I will provide background context for my work.
+I will cover }\DIFdelend \DIFaddbegin \DIFadd{This chapter provides historical justification for the need for an integrative model for sequence analysis like the variation graph.
+I contextualize my work within }\DIFaddend the history of DNA sequencing \DIFdelbegin \DIFdel{methods}\DIFdelend \DIFaddbegin \DIFadd{(\ref{sec:genome_inference})}\DIFaddend , assembly algorithms \DIFdelbegin \DIFdel{, and the development of reference genomes and their use in resequencing.
+Finally, I will review similar data models that are used in genome inference.
+In the }\DIFdelend \DIFaddbegin \DIFadd{(\ref{sec:genome_assembly}), resequencing methods (\ref{sec:reference_genomes}), and pangenomic models (\ref{sec:pangenomes}).
 This deep introduction is meant to justify the need for an integrative model like the variation graph to serve as a coordinating system in a research setting characterized by increasing data scale and complexity.
 Readers who need no further introduction to these issues should continue to section \ref{sec:graphical_techinques}, which reviews recent work on algorithms based on data models similar to variation graphs.
+}
 
-The remainder of the thesis builds on this foundation.
-In chapter \ref{chapter:variation_graphs}, I describe data structures and algorithms that allow the use of variation graphs as a reference system for unbiased genome inference.
-Finally, in chapter \ref{chapter:applications}, I demonstrate the benefits of this approach with a series of experimental case studies.
+\DIFadd{The }\DIFaddend remainder of the \DIFdelbegin \DIFdel{work }\DIFdelend \DIFaddbegin \DIFadd{thesis builds on this foundation.
+In chapter \ref{chapter:variation_graphs}, }\DIFaddend I describe data structures and algorithms that allow the use of variation graphs as a reference system for unbiased genome inference\DIFdelbegin \DIFdel{, and }\DIFdelend \DIFaddbegin \DIFadd{.
+Finally, in chapter \ref{chapter:applications}, I }\DIFaddend demonstrate the benefits of this approach with a series of \DIFdelbegin \DIFdel{experiments}\DIFdelend \DIFaddbegin \DIFadd{experimental case studies}\DIFaddend .
 
 \section{Genome inference}
-\label{sec:genome_inference}
+\DIFaddbegin \label{sec:genome_inference}
+\DIFaddend 
 
 % What do we mean by genome inference
 % half page
@@ -247,7 +259,8 @@ A current development in assembly focuses on the design of a common interchange 
 This file format and the data model it implies is an essential link between the work that I present later in this thesis and the problem of genome inference.
 
 \section{Reference genomes}
-\label{sec:reference_genomes}
+\DIFaddbegin \label{sec:reference_genomes}
+\DIFaddend 
 
 Obtaining a single genome sequence \emph{de novo} is an arduous task, and remains a complex problem.
 The result is a valuable object which can be used to lower the cost of subsequent analyses and enable direct whole genome comparisons which provide a full perspective on the genetic relationship between multiple individuals or species.
@@ -268,7 +281,8 @@ Since early releases, the human reference genome has included alternative versio
 % history of reference sequences
 % use of the reference sequence in analysis
 \subsection{Resequencing}
-\label{sec:resequencing}
+\DIFaddbegin \label{sec:resequencing}
+\DIFaddend 
 
 Due to the high cost of obtaining error-free, full length genomes, standard practice will use the best genome assembly for a given organism as a \emph{reference genome} when analyzing the sequences of other organisms from the same species.
 To do so, the genomes of the other individuals do not need to be fully assembled, and instead shotgun sequencing libraries from these new individuals may be aligned back to the reference to find small differences between the genomes.
@@ -325,21 +339,47 @@ Due to the high quality of the reference sequence, low error rate of the short (
 Much like BLAST and BLAT, the first wave of aligners capable of indexing the human reference genome and aligning short reads to it utilized exact $k$-mer matching via hash tables followed by local alignment \cite{li2008soap,lee2014mosaik,li2008mapping}.
 Substantial improvements would be yielded by the development of aligners based on contemporary developments in compressed data structures.
 
-\subsubsection{Compressed full text indexes}
+\DIFaddbegin \subsubsection{\DIFadd{Compressed full text indexes}}
 \label{sec:compressed_full_text_indexes}
 
-The suffix tree \cite{weiner1973linear} encodes all suffixes of a sequence $S$ in the structure of a tree such that the suffixes may be enumerated by a depth first search (DFS) of the tree.
+\DIFaddend The suffix tree \cite{weiner1973linear} encodes all suffixes of a sequence $S$ in the structure of a tree such that the suffixes may be enumerated by a depth first search (DFS) of the tree.
 This structure can be used to determine if a given sequence $q = c_{1}c_{2}\ldots c_{|q|}$ is present in $S$ in $O(|q|)$ time.
 Search begins at the root, progressing across the topology (edge or node) of the tree which is labeled with the next character until no further matches may be found.
 By labeling the tree with the sequence positions corresponding to each node, the search may also yield the positions of the exact matches detected within $S$.
 Suffix trees may be built in linear time and space relative to their input \cite{ukkonen1995line}, and support diverse algorithms for string comparison \cite{apostolico1985myriad}, such as whole genome alignment \cite{delcher1999alignment}, but they require relatively large amounts of memory per input base.
-They were superseded by equivalent data structures with better memory bounds such as the suffix array, which represents the lexicographically ordered suffixes as a vector of numbers \cite{manber1993suffix}, and its compressible sibling the Burrows-Wheeler Transform (BWT) \cite{burrows1994block}.
-Compressed suffix arrays (CSA) (equivalently, the ``fast, minute'' FM-index) are data structures which combine a compressed representation of the BWT with auxiliary data structures that support rank and select operations on it \cite{ferragina2000opportunistic,ferragina2004alphabet,grossi2005compressed}.
-To support suffix array operations in this compressed context, including pattern matching and positional queries, standard implementations include additional auxiliary information, in particular a sampled subset of the entries in the suffix array.
-See section \ref{sec:fmidx_csa} for a detailed review of the important features of these data structures as they relate to string matching.
+They were superseded by equivalent data structures with better memory bounds such as the suffix array\DIFdelbegin \DIFdel{(}\DIFdelend \DIFaddbegin \DIFadd{, }\DIFaddend which represents the \DIFdelbegin \DIFdel{tree in a linear array of suffix sort ranks) }\DIFdelend \DIFaddbegin \DIFadd{lexicographically ordered suffixes as a vector of numbers }\DIFaddend \cite{manber1993suffix}, and its compressible sibling the Burrows-Wheeler Transform (BWT) \cite{burrows1994block}.
+\DIFdelbegin %DIFDELCMD < 
 
-The FM-index is used in modern short-read aligners such as BWA \cite{li2009fast} and BOWTIE \cite{langmead2009ultrafast}, which apply a backtracking search algorithm to directly align sequences to the suffix array encoded in the FM-index.
-This approach is fast, but has problems detecting indels (as these require exponentially more backtracks to infer) and performs less well with increasing read length.
+%DIFDELCMD < %%%
+\DIFdel{By augmenting the BWT to enable the exact matching via emulation of the suffix tree, Paolo Ferragina and Giovanni Manzini developed the FM-index \mbox{%DIFAUXCMD
+\cite{ferragina2000opportunistic,ferragina2004alphabet}}\hspace{0pt}%DIFAUXCMD
+.
+Given a string $S$, }\DIFdelend \DIFaddbegin \DIFadd{Compressed suffix arrays (CSA) (equivalently, }\DIFaddend the \DIFaddbegin \DIFadd{``fast, minute'' }\DIFaddend FM-index\DIFdelbegin \DIFdel{may be built using a series of transformations and auxiliary data structures that induce the suffix tree by constructing the BWT.
+First, we add marker characters for the start and end with lexicographic order less and greater than the rest of the characters in the alphabet, e.g. $\#S\$$.
+Conceptually, we take all rotations of the sequence and sort them, yielding matrix $M$, which is sometimes called the Burrows-Wheeler Matrix (BWM), but in fact this is done in a space-efficient manner without the enumeration of the rotations.
+This sort has many similarities to the suffix tree, and for instance it can be seen that a lexicographically-ordered DFS through the suffix tree would enumerate the prefixes of the rotations of the sequence preceding the terminal character $\#$ in the same order as they are sorted.
+The suffix array $SA$ is given by the vector of the suffix ranks in the sorted order they occur in $M$, and is related to the ordering of characters in the first column $F$, while the BWT is given as the last column, $L$.
+If the input text has repetitive patterns, then these will tend to result in runs in the BWT that may be compressed using various schemes.
+To emulate traversal of the suffix tree, it is sufficient to construct a function $LF(i)$ which maps between indexes $L[i] = F[j]$ which represent the same character.
+This is done by the augmentation of the data structure with array $C$ such that $C[c]$ returns the number of characters in the text that are lexicographically smaller than $c$, and a function $rank(c,k)$ that yields the number of instances of $c$ in the prefix $L[1 \ldots k]$.
+Now, $LF(i)$ may be defined as $C[L[i]] + rank(L[i], i)$.
+By allowing the traversal of equivalencies between the suffix array and the BWT, $LF$ mapping enables ``backward search''.
+Because rotations of $S$ have been ordered in $M$, a given pattern will occur as the prefix of a particular contiguous range of $M$.
+We can find all occurrences of a given pattern by maintaining a range }\DIFdelend \DIFaddbegin \DIFadd{) are data structures which combine a compressed representation of the BWT with auxiliary data structures that support rank and select operations on it \mbox{%DIFAUXCMD
+\cite{ferragina2000opportunistic,ferragina2004alphabet,grossi2005compressed}}\hspace{0pt}%DIFAUXCMD
+.
+To support suffix array operations in this compressed context, including pattern matching and positional queries, standard implementations include additional auxiliary information, in particular a sampled subset of the entries }\DIFaddend in the suffix array\DIFdelbegin \DIFdel{within which a given pattern occurs, beginning at $s$ and ending at $e$, which we initially set as $s=0$ and $e=|L|-1$.
+To search for a pattern, we obtain $s' = C[c] + rank(s,c) + 1$ and $e' = C[c] + rank(e,c)$, walking backwards through the characters $c$ in our query $q$.
+Our search terminates when we complete our query or $e' - s' \leq 0$, which indicates that the previous step in the search did not match our target $S$.
+The various matches of $q$ in $S$ may now be obtained by the positions in $SA[s \ldots e]$.
+The addition of the longest common prefix (LCP) array on the sorted suffixes can be used to emulate all algorithms on suffix trees in this context \mbox{%DIFAUXCMD
+\cite{abouelhoda2004replacing}}\hspace{0pt}%DIFAUXCMD
+, and in turn this enables $O(|q|)$ search of queries against $S$.
+Of particular relevance to this work, when completing a phase of backward search we could use the LCP to traverse the suffix links in the suffix tree and continue with the next (partially overlapping) maximal exact match}\DIFdelend \DIFaddbegin \DIFadd{.
+See section \ref{sec:fmidx_csa} for a detailed review of the important features of these data structures as they relate to string matching}\DIFaddend .
+
+The FM-index is used in modern short-read aligners such as BWA \cite{li2009fast} and BOWTIE \cite{langmead2009ultrafast}, which \DIFdelbegin \DIFdel{used backtracking LF alignment }\DIFdelend \DIFaddbegin \DIFadd{apply a backtracking search algorithm }\DIFaddend to directly align sequences to the suffix array encoded in the FM-index.
+This \DIFdelbegin \DIFdel{backtracking search }\DIFdelend \DIFaddbegin \DIFadd{approach }\DIFaddend is fast, but has problems detecting indels (as these require exponentially more backtracks to infer) and performs less well with increasing read length.
 In response, the authors merged initial exact matching with a final DP step to yield ``long read'' capable aligners like BWA-SW \cite{li2010fast} and BOWTIE2 \cite{langmead2012fast}.
 Further refinements of this concept yielded BWA MEM \cite{li2013aligning}, which uses a heuristic algorithm to determine ``supermaximal exact matches'' (SMEMs) and reseed ``sub matches'' within them using a bidirectional FM-index (the FMD index).
 Due to its relative robustness to error and variation, the MEM concept has ultimately prevailed and as of the time of this writing BWA MEM can be seen as the industry standard method for aligning short reads to the genome.
@@ -506,7 +546,7 @@ Assembly and multiple sequence alignment methods have employed sequence graphs o
 The conceptual basis of the work I present here is the extension of the bidirectional DNA sequence graph with \emph{paths} that may be used to describe sequences as walks through the graph.
 In this way, the panel of reference genomes or sequences used to construct the graph may be related to the graph itself, and the relationships between them made evident in the structure of the graph.
 Existing knowledge expressed with respect to known sequences may thus be projected into the graphical pangenome model.
-Similarly, entities within the graph may be projected out into the space of a given path (as described in section \ref{sec:surjection}).
+Similarly, entities within the graph may be \DIFdelbegin \DIFdel{``surjected'' }\DIFdelend \DIFaddbegin \DIFadd{projected }\DIFaddend out into the space of a given path \DIFaddbegin \DIFadd{(as described in section \ref{sec:surjection})}\DIFaddend .
 These properties ensure that the pangenome fully encompasses existing reference technologies.
 In addition, maintaining the sequences in the space of the graph makes the graph lossless, in that it fully represents the input sequences without additional information.
 Perhaps most importantly, this feature resolves the exponential decay in mutual information which limits the applicability of Markovian models like the sequence graph to modeling natural sequences \cite{lin2017critical}.
@@ -514,7 +554,8 @@ I term this combination of a bidirectional sequence graph and paths a \emph{vari
 In chapter 2 I will formalize the variation graph model and important auxiliary data structures that enable its modification and use in resequencing.
 
 \section{Graphical techniques in sequence analysis}
-\label{sec:graphical_techinques}
+\DIFaddbegin \label{sec:graphical_techinques}
+\DIFaddend 
 
 Many genome analysis algorithms employ sequence graphs.
 I introduced the alignment algorithms described in \ref{sec:sequence_alignment} in terms of a matrix, but they may also be described as algorithms on graphs, although the nodes in these graphs correspond to matrix cells and thus alignment states rather than characters or sequences.
@@ -555,22 +596,30 @@ Given low sequence divergence, the cost of each step will approximate $L^2$.
 The algorithm thus has a lower bound of approximately $O(L^{2}N\log{N})$, which the authors confirmed with experiments demonstrating subquadratic scaling in the number of input sequences.
 
 Despite its use of an algorithm that scales cubically with the number of input sequences, T-COFFEE's higher accuracy has resulted in it receiving ten times the citations of POA.
-The low rate of use meant that the POA concept was ``rediscovered'' by participants in the 1000GP who needed a computationally inexpensive method to align sequences to VCF-based pangenomes.\footnote{Sequence to graph DAG alignment was one of Deniz Kural's main PhD projects. I worked with him in Gabor Marth's laboratory, and we applied his implementation of POA to generate accurate genotype likelihoods for indels and complex variation in the final phase of the 1000GP. We learned of the prior work later, when a reviewer pointed out that the algorithm was roughly equivalent to POA.}
+The low rate of use meant that the POA concept was ``rediscovered'' by participants in the 1000GP who needed a computationally inexpensive method to align sequences to VCF-based pangenomes\DIFdelbegin \footnote{\DIFdel{Sequence to graph DAG alignment was one of Deniz Kural's main PhD projects. I worked with him in Gabor Marth's laboratory, and we applied his implementation of POA to generate accurate genotype likelihoods for indels and complex variation in the final phase of the 1000GP. We learned of the prior work later, when a reviewer pointed out that the algorithm was roughly equivalent to POA.}}%DIFAUXCMD
+\addtocounter{footnote}{-1}%DIFAUXCMD
+\DIFdel{.}\DIFdelend \DIFaddbegin \DIFadd{.}\footnote{\DIFadd{Sequence to graph DAG alignment was one of Deniz Kural's main PhD projects. I worked with him in Gabor Marth's laboratory, and we applied his implementation of POA to generate accurate genotype likelihoods for indels and complex variation in the final phase of the 1000GP. We learned of the prior work later, when a reviewer pointed out that the algorithm was roughly equivalent to POA.}}
+\DIFaddend 
 
 Lee's POA model provides a simple pattern for thinking about pangenomes.
 However, POA MSAs are linear objects which cannot capture many natural kinds of genetic variation such as repeats or rearrangements without duplication of the rearranged sequences.
 Several methods have extended the MSA concept to unordered graphs, including the Threaded Blockset Aligner (TBA) \cite{blanchette2004aligning}, which models the MSA graph as a set of partially ordered MSAs linked by unordered larger scale connections, and the A-Bruijn Aligner (ABA), which models the MSA using a de Bruijn graph and represents a solution to problems in MSA using techniques that later become important to short read assembly \cite{raphael2004novel}.
 Variation graphs generalize these models without the limitations of order (as in POA and TBA) or $k$-mer based graph structures (as in ABA).
 
-The POA model also inspired the development of a graphical model that supports the comparison of various editions or versions of the same text in the field of textual criticism, the \emph{variant} graph \cite{schmidt2009data,haentjens2014computer}.
+\DIFaddbegin \DIFadd{The POA model also inspired the development of a graphical model that supports the comparison of various editions or versions of the same text in the field of textual criticism, the }\emph{\DIFadd{variant}} \DIFadd{graph \mbox{%DIFAUXCMD
+\cite{schmidt2009data,haentjens2014computer}}\hspace{0pt}%DIFAUXCMD
+.
 The variant graph can be understood as a POA DAG built from a collection of texts, whose nodes are labeled by the input texts that traverse them.
-\emph{Variant} graphs are very similar to the \emph{variation} graphs that I present in this thesis, but while variant graphs are specialized for linear written texts, variation graphs aim to model DNA and genomic variation.
-Although they have similar structure, these two models are in fact an unusual instance of interdisciplinary convergent naming.\footnote{I developed the term ``variation graph'' without knowledge of this prior work. I first become aware of it in the week before the initial submission of this thesis, when Daniel Bruder brought textual variant graphs to my attention. In practice, some researchers use both terms to refer to the model I present in this thesis.}
-Variant graphs are used mostly to reduce the effort required to collate and manually review different versions of texts.
-Recent work has focused on their visualization, resulting in techniques that are very similar to those developed for variation graphs which I present later in this thesis \cite{janicke2015traviz}.
+}\emph{\DIFadd{Variant}} \DIFadd{graphs are very similar to the }\emph{\DIFadd{variation}} \DIFadd{graphs that I present in this thesis, but while variant graphs are specialized for linear written texts, variation graphs aim to model DNA and genomic variation.
+Although they have similar structure, these two models are in fact an unusual instance of interdisciplinary convergent naming.}\footnote{\DIFadd{I developed the term ``variation graph'' without knowledge of this prior work. I first become aware of it in the week before the initial submission of this thesis, when Daniel Bruder brought textual variant graphs to my attention. In practice, some researchers use both terms to refer to the model I present in this thesis.}}
+\DIFadd{Variant graphs are used mostly to reduce the effort required to collate and manually review different versions of texts.
+Recent work has focused on their visualization, resulting in techniques that are very similar to those developed for variation graphs which I present later in this thesis \mbox{%DIFAUXCMD
+\cite{janicke2015traviz}}\hspace{0pt}%DIFAUXCMD
+.
+}
 
 
-\subsection{Assembly graphs}
+\DIFaddend \subsection{Assembly graphs}
 
 The problem of assembling large genomes is not dissimilar from that of multiple sequence alignment.
 MSA algorithms tend to be applied to the alignment of a single coherent genomic locus.
@@ -825,8 +874,11 @@ Short read alignment can be used to map the full reads back to these haplotypes 
 The authors demonstrate that this method can be applied to the human MHC, where high sequence diversity frustrates methods optimized for typical regions of the human genome.
 
 \subsubsection{Succinct pangenomic sequence indexes}
-\label{sec:pangenomic_sequence_indexes}
-%Given a sequence DAG 
+\DIFdelbegin %DIFDELCMD < 
+
+%DIFDELCMD < %%%
+\DIFdelend \DIFaddbegin \label{sec:pangenomic_sequence_indexes}
+\DIFaddend %Given a sequence DAG 
 % write the DAG into the index provided a number of structural limitations
 % problems with nesting (yes could be corrected) and cost of large alphabet WT based FM-index
 
@@ -857,11 +909,12 @@ Effectively, bubbles contain a number of alternate alleles that may be represent
 To build its vBWT index of the graph, gramtools linearizes the alt-bubble sequence DAG into an integer vector (the ``linear PRG'') in which DNA bases are represented normally while the structure of each bubble is encoded as a series of alternate alleles delimited by $i$, flanked by delimiters $i-1$.
 Each bubble gets a unique even integer $i$, requiring the use of alphabets with millions of symbols.
 A CSA-based FM-index is then built from the linear PRG.
-The use of a unique pair of integers for each bubble ensures that the alleles in the bubble will be sorted together in the CSA of the linear PRG.
-To support direct matching to the sequence DAG, the standard backwards search algorithm is augmented to consider the alternate alleles when it encounters an odd integer greater than 4 (the alphabet space allocated to DNA sequence encoding).
-On encountering a bubble, the search algorithm adds new suffix array intervals for each alternate allele to a heap of intervals that are extended together at each step.
-As this scheme results in an exponential increase in the number of suffix array intervals as a query traverses multiple variants, the input set of alleles must be structured in a way to reduce the density of bubbles.
-In their experiments the authors set an allele frequency threshold and merge alleles within a certain window size into larger haplotype alleles\footnote{The algorithm used to convert the input VCF into the haplotype bubble form appears to be similar to vcfgeno2haplo in vcflib: \url{https://github.com/vcflib/vcflib/blob/master/src/vcfgeno2haplo.cpp}.}.
+The \DIFdelbegin \DIFdel{backwards search algorithm is augmented to consider the alternate alleles when it encounters an odd integer greater than 4 (the alphabet space allocated to DNA sequence encoding).
+The }\DIFdelend use of a unique pair of integers for each bubble ensures that the alleles in the bubble will be sorted together in the CSA of the linear PRG.
+\DIFdelbegin \DIFdel{The encoded bubble structure allows backward search to furcate across the alternative alleles , and a }\DIFdelend \DIFaddbegin \DIFadd{To support direct matching to the sequence DAG, the standard backwards search algorithm is augmented to consider the alternate alleles when it encounters an odd integer greater than 4 (the alphabet space allocated to DNA sequence encoding).
+On encountering a bubble, the search algorithm adds }\DIFaddend new suffix array \DIFdelbegin \DIFdel{interval is added }\DIFdelend \DIFaddbegin \DIFadd{intervals for each alternate allele }\DIFaddend to a heap of intervals that are extended together at each step.
+As this scheme results in an exponential increase in the number of suffix array intervals \DIFaddbegin \DIFadd{as a query traverses multiple variants}\DIFaddend , the input set of alleles must be structured in a way to reduce the density of bubbles.
+In their experiments the authors set an allele frequency threshold and merge alleles within a certain window size into larger haplotype alleles\footnote{The algorithm used to convert the input VCF into the haplotype bubble form appears to be \DIFdelbegin \DIFdel{the same as in }\DIFdelend \DIFaddbegin \DIFadd{similar to }\DIFaddend vcfgeno2haplo in vcflib: \url{https://github.com/vcflib/vcflib/blob/master/src/vcfgeno2haplo.cpp}.}.
 It is perhaps due to this exponential factor that gramtools' query performance is many times slower than BWBBLE and around 1000 times slower than bwa mem on a linear version of the same reference \cite{maciuca2016natural}.
 In effect, the method trades exponentially expensive construction for exponentially expensive queries.
 Gramtools does not implement any local alignment model, and to demonstrate the method's conceptual utility, the authors apply it to infer the most-likely linear genome for a given query set, to which the read set is ultimately mapped using a standard aligner.

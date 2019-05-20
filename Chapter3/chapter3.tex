@@ -3,7 +3,8 @@
 %****************************** Third Chapter **********************************
 %*******************************************************************************
 \chapter{Applications}
-\label{chapter:applications}
+\DIFaddbegin \label{chapter:applications}
+\DIFaddend 
 
 % **************************** Define Graphics Path **************************
 \ifpdf
@@ -32,7 +33,7 @@ I show that alignment against a pangenome graph ameliorates this issue.
 {\tt vg} can be applied to any kind of variation graph.
 To demonstrate the utility of this, I use de Bruijn assemblers to generate reference variation graphs from collections of raw sequencing reads in the absence of a prior reference.
 I recreate a classical pangenomic analysis of core and accessory pangenome by analyzing the coverage of alignments mapped to an assembly graph built from 10 \emph{Escheria coli} strains.
-To illustrate the application of {\tt vg} to metagenomic data containing unknown source genomes, I show that {\tt vg} enables the full length alignment of reads to a complex assembly graph built from an arctic viral metagenome, and similarly improves alignment to an assembly graph built from a human gut microbiome.
+To illustrate the application of \DIFdelbegin \DIFdel{vg }\DIFdelend \DIFaddbegin {\tt \DIFadd{vg}} \DIFaddend to metagenomic data containing unknown source genomes, I show that {\tt vg} enables the full length alignment of reads to a complex assembly graph built from an arctic viral metagenome, and similarly improves alignment to an assembly graph built from a human gut microbiome.
 Finally, I demonstrate that the data models and indexes in {\tt vg} are capable of encoding splicing graphs, and that aligning to these splicing graphs allows the direct observation of the transcriptome.
 
 \section{Yeast}
@@ -101,17 +102,23 @@ A small fraction of reads (0.46\%) map better to the linear than to the pangenom
 \label{fig:NCYC_SGD_SGRP2}
 \end{figure}
 
-\subsection{Cactus yeast variation graph}
+\subsection{Cactus \DIFdelbegin \DIFdel{progressive assembly}\DIFdelend \DIFaddbegin \DIFadd{yeast variation graph}\DIFaddend }
 %*0.5p 0.5h*
 \label{sec:yeast_cactus}
 
 Variation graphs are generic objects capable of representing any kind of alignment between genomes or assembly of read data from them.
-To test the ability of {\tt vg} to use graphs of complex topology, we constructed a variation graph from the whole genome alignment of \emph{de novo} assemblies produced from PacBio sequencing of seven strains of \emph{S. cerevisiae}.
-To build this graph, each chromosome of each assembly in \cite{yue2017contrasting} was aligned using LASTZ \cite{harris2007improved} according to a phylogenetic guide tree.
-The resulting alignment set was reduced to a variation graph using the Cactus reference-free whole genome multiple alignment method \cite{Paten:2011fva}, which internally maintains a sequence graph equivalent to a VG.
-Its output was then converted to {\tt vg} format using the hal2vg utility\footnote{\url{https://github.com/ComparativeGenomicsToolkit/hal2vg}}.
+To test the ability of {\tt vg} to use graphs of complex topology, we constructed a \DIFaddbegin \DIFadd{variation graph from the }\DIFaddend whole genome alignment \DIFdelbegin \DIFdel{graph }\DIFdelend of \emph{de novo} assemblies produced from PacBio sequencing of seven strains of \emph{S. cerevisiae}.
+\DIFdelbegin \DIFdel{In this assembly }\DIFdelend \DIFaddbegin \DIFadd{To build this graph, }\DIFaddend each chromosome of each assembly in \cite{yue2017contrasting} was \DIFdelbegin \DIFdel{progressively aligned using the }\DIFdelend \DIFaddbegin \DIFadd{aligned using LASTZ \mbox{%DIFAUXCMD
+\cite{harris2007improved} }\hspace{0pt}%DIFAUXCMD
+according to a }\DIFaddend phylogenetic guide tree\DIFdelbegin \DIFdel{methodology implemented in Cactus \mbox{%DIFAUXCMD
+\cite{Paten:2011fva}}\hspace{0pt}%DIFAUXCMD
+}\DIFdelend \DIFaddbegin \DIFadd{.
+The resulting alignment set was reduced to a variation graph using the Cactus reference-free whole genome multiple alignment method \mbox{%DIFAUXCMD
+\cite{Paten:2011fva}}\hspace{0pt}%DIFAUXCMD
+, which internally maintains a sequence graph equivalent to a VG.
+Its output was then converted to }{\tt \DIFadd{vg}} \DIFadd{format using the hal2vg utility}\footnote{\url{https://github.com/ComparativeGenomicsToolkit/hal2vg}}\DIFaddend .
 As illustrated in figure \ref{fig:cactus_yeast_zoom}, this graph encodes a complex global topology that captures the structural variation between the species also reported in \cite{yue2017contrasting} as well as a local DAG-like topology which we expect when homologous sequences are represented compactly in a graph.
-This illustrates the ability of {\tt vg} to represent paths corresponding to both collinear (inset) and structurally rearranged (main figure) regions of genomic variation.
+This illustrates the ability of \DIFdelbegin \DIFdel{vg }\DIFdelend \DIFaddbegin {\tt \DIFadd{vg}} \DIFaddend to represent paths corresponding to both collinear (inset) and structurally rearranged (main figure) regions of genomic variation.
 
 \begin{figure}[htbp!]
   \centering
@@ -127,20 +134,20 @@ This illustrates the ability of {\tt vg} to represent paths corresponding to bot
 \end{figure}
 
 A simulation study based on the SK1 strain provides some insight into the capabilities of {\tt vg} and tradeoffs inherent in different graph designs.
-I compared four variation graphs: a linear reference graph from the standard S288c strain, a linear reference from the SK1 strain, a pangenome graph of all seven strains, and a ``drop SK1'' variation graph in which all sequence private to the strain SK1 was removed from the pangenome graph.
-The multiple genome graphs were based on that first constructed with Cactus, as described above, and then filtered down to the various subgraphs using path subsetting facilities in {\tt vg mod}.
+I compared four \DIFdelbegin \DIFdel{vg }\DIFdelend \DIFaddbegin \DIFadd{variation }\DIFaddend graphs: a linear reference graph from the standard S288c strain, a linear reference from the SK1 strain, a pangenome graph of all seven strains, and a ``drop SK1'' variation graph in which all sequence private to the strain SK1 was removed from the pangenome graph.
+The multiple genome graphs were \DIFdelbegin \DIFdel{constructed with the Cactusprogressive aligner, which generates graphs that typically contain cycles and are not partially ordered}\DIFdelend \DIFaddbegin \DIFadd{based on that first constructed with Cactus, as described above}\DIFaddend , and then filtered down to the various subgraphs using path subsetting facilities in {\tt vg mod}.
 
 \begin{figure}[htbp!]
   \centering
   \includegraphics[width=1.0\textwidth]{Chapter3/Figs/e68fc338_test_sim_yeast_cactus-roc.pdf}
-  \caption[Cactus yeast simulation]{Mapping short reads with {\tt vg} to yeast genome references.
-    ROC curves obtained by mapping 100,000 simulated SK1 yeast strain 150bp paired-end reads against a variety of references described in the text.
+  \caption[Cactus yeast simulation]{Mapping short reads with \DIFaddbeginFL {\tt \DIFaddendFL vg\DIFaddbeginFL } \DIFaddendFL to yeast genome references.
+    ROC curves obtained by mapping 100,000 simulated SK1 yeast strain \DIFdelbeginFL \DIFdelFL{150-bp }\DIFdelendFL \DIFaddbeginFL \DIFaddFL{150bp }\DIFaddendFL paired-end reads against a variety of references described in the text.
     Reprinted from \cite{garrison2018variation}.}
   \label{fig:cactus_yeast_sim}
 \end{figure}
 
 
-We simulated 100,000 150bp paired-end reads from the SK1 reference, modeling sequencing errors, and mapped them to the four references (ROC curves, Figure \ref{fig:cactus_yeast_sim}).
+We simulated 100,000 \DIFdelbegin \DIFdel{150-bp }\DIFdelend \DIFaddbegin \DIFadd{150bp }\DIFaddend paired-end reads from the SK1 reference, modeling sequencing errors, and mapped them to the four references (ROC curves, Figure \ref{fig:cactus_yeast_sim}).
 Not surprisingly, the best performance was obtained by mapping to a linear reference of the SK1 strain from which the data were simulated, with substantially higher sensitivity and specificity compared to mapping to the standard linear reference from the strain S288c with either {\tt vg} or {\tt bwa mem}.
 Mapping to the variation graphs gave intermediate performance, with >1\% more sensitivity and lower false-positive rates than mapping to the standard reference.
 There was surprisingly little difference between mapping to graphs with and without the SK1 private variation, probably because much of what is novel in SK1 compared to the reference is also seen in other strains.
@@ -171,7 +178,7 @@ Cactus & 31 & 13243056 & 1059173 & 1304205 & 580 \\
 \caption[\emph{S. cerevisiae} variation graphs]{
   A summary of seven different variation graphs constructed to represent variation in \emph{S. cerevisiae}.
   As described in section \ref{sec:SGRP2_graph}, the SGD\_2010 graph is built from the reference, while SGRP2 adds SNPs in the SGRP2 population survey.
-  The Illumina data from \cite{yue2017contrasting} was used to build the minia unitigs and minia contigs graphs, while the whole genome, chromosome-resolved PacBio assemblies from the same work were used to build the Cactus and {\tt vg msga} variation graphs.
+  The Illumina data from \cite{yue2017contrasting} was used to build the minia unitigs and minia contigs graphs, while the whole genome, chromosome-resolved PacBio assemblies from the same work were used to build the Cactus and {\tt vg msga} \DIFdelbeginFL \DIFdelFL{progressive assemblies}\DIFdelendFL \DIFaddbeginFL \DIFaddFL{variation graphs}\DIFaddendFL .
   S288c is the \emph{de novo} assembly of the reference strain produced in \cite{yue2017contrasting}.
 }
 \label{table:yeast_graphs}
@@ -181,7 +188,7 @@ Three of the graphs are effectively linear or DAG-like, except for their mitocho
 SGD\_2010 and S288c represent two assemblies of the reference genome, the former from the SGD genome sequencing project, and the latter is a \emph{de novo} assembly from \cite{yue2017contrasting}.
 The difference in quality between the two approaches will be made apparent in the subsequent section.
 As described in section \ref{sec:SGRP2_graph}, the SGRP2 graph adds SNP variation from the population survey in \cite{bergstrom2014high} to build a pangenome reference.
-The SGD\_2010 reference contains the mitochondria and 6kbp plasmid sequence, while the S288c assembly excludes them due to the sequencing protocol, where size selection in the library preparation stage removed these short sequences, so to enable direct comparison in later tests these were added to the S288c graph.
+The SGD\_2010 reference contains the mitochondria and \DIFdelbegin \DIFdel{6 kbp }\DIFdelend \DIFaddbegin \DIFadd{6kbp }\DIFaddend plasmid sequence, while the S288c assembly excludes them due to the sequencing protocol, where size selection in the library preparation stage removed these short sequences, so to enable direct comparison in later tests these were added to the S288c graph.
 
 The remaining four graphs are different forms of assembly graph.
 Using the Illumina data published in \cite{yue2017contrasting}, I build two assemblies with minia3, using a $k$-mer size of 51 and a high abundance threshold (50) to limit the resulting graph complexity.
@@ -197,10 +204,10 @@ I conclude that further tuning of the parameters used during \emph{de novo} asse
 Finally, I used the whole genome \emph{de novo} assemblies of long read data from \cite{yue2017contrasting} to build whole genome alignment graphs using Cactus (as described in section \ref{sec:yeast_cactus}) and {\tt vg msga}.
 The multiple sequence to graph alignment (MSGA) process implemented in {\tt vg msga} is akin to the progressive POA method, but generalized to arbitrary graphs of any size.
 Rather than using a local alignment algorithm to expand the graph, the long read alignment algorithm described in section \ref{sec:chunked_alignment} allows the direct alignment of whole chromosomes to the graph.
-Where the Cactus variation graph uses a phylogenetic guide tree to structure its construction, {\tt vg msga} simply aligns the chromosomes in order from longest to shortest to the growing graph.
+Where the Cactus \DIFdelbegin \DIFdel{progressive assembly }\DIFdelend \DIFaddbegin \DIFadd{variation graph }\DIFaddend uses a phylogenetic guide tree to structure its construction, {\tt vg msga} simply aligns the chromosomes in order from longest to shortest to the growing graph.
 The long read alignment in {\tt vg} is structured to enforce long range synteny, and the resulting graph is substantially different in structure than that of Cactus.
 I find that {\tt vg msga} is less likely to collapse repeats than Cactus, at least in the configuration used for this assembly.
-We can see this in figure \ref{fig:yeast_bandage}, where the Cactus variation graph (\ref{subfig:cactus_yeast_bandage}) shows two dense repeat structures in its core connected by loops of unique sequence, while the {\tt vg msga} graph appears to have much longer loops, with collapsed repeats embedded in these loops.
+We can see this in figure \ref{fig:yeast_bandage}, where the Cactus \DIFaddbegin \DIFadd{variation }\DIFaddend graph (\ref{subfig:cactus_yeast_bandage}) shows two dense repeat structures in its core connected by loops of unique sequence, while the {\tt vg msga} graph appears to have much longer loops, with collapsed repeats embedded in these loops.
 This observation is supported by the length statistics in table \ref{table:yeast_graphs}, with {\tt vg msga} producing a graph that is 550,899bp longer than that of Cactus.
 At the same time, the node count of the {\tt vg msga} graph is higher, which perhaps reflects a different local alignment result.
 
@@ -208,11 +215,11 @@ At the same time, the node count of the {\tt vg msga} graph is higher, which per
   \centering
   \begin{subfigure}[t]{0.85\textwidth}
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/cactus_yeast.png}
-    \caption{Cactus variation graph} \label{subfig:cactus_yeast_bandage}
+    \caption{Cactus \DIFdelbeginFL \DIFdelFL{assembly}\DIFdelendFL \DIFaddbeginFL \DIFaddFL{variation graph}\DIFaddendFL } \label{subfig:cactus_yeast_bandage}
   \end{subfigure}
   \begin{subfigure}[t]{0.85\textwidth}
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/vg_msga_yeast.png}
-    \caption{{\tt vg msga} variation graph} \label{subfig:msga_yeast_bandage}
+    \caption{{\tt vg msga} \DIFdelbeginFL \DIFdelFL{assembly}\DIFdelendFL \DIFaddbeginFL \DIFaddFL{variation graph}\DIFaddendFL } \label{subfig:msga_yeast_bandage}
   \end{subfigure}
   \caption[Whole genome alignment graphs for \emph{S. cerevisiae}]{
     Whole genome alignment graphs for \emph{S. cerevisiae} visualized using Bandage.
@@ -257,8 +264,8 @@ The alignment algorithm will attempt more alignments for each band where there i
     (Bottom left) the minia contig graph vs. the S288c assembly.
     (Bottom middle) the minia unitig graph vs. the S288c assembly.
     \emph{Whole genome alignment graphs}:
-    (Top right) the Cactus variation graph vs. the S288c assembly.
-    (Bottom right) the {\tt vg msga} variation graph vs. the S288c assembly.
+    (Top right) the Cactus \DIFdelbeginFL \DIFdelFL{alignment }\DIFdelendFL \DIFaddbeginFL \DIFaddFL{variation graph }\DIFaddendFL vs. the S288c assembly.
+    (Bottom right) the {\tt vg msga} \DIFdelbeginFL \DIFdelFL{alignment }\DIFdelendFL \DIFaddbeginFL \DIFaddFL{variation graph }\DIFaddendFL vs. the S288c assembly.
   }
   \label{fig:pacbio_yeast}
 \end{figure}
@@ -267,7 +274,7 @@ The alignment algorithm will attempt more alignments for each band where there i
 \section{Human}
 %*0.5p 0.5h*
 
-For a species such as human, with only 0.1\% nucleotide divergence on average between individual genome sequences, over 90\% of 100bp reads will derive from sequence exactly matching the reference.
+For a species such as human, with only 0.1\% nucleotide divergence on average between individual genome sequences, over 90\% of \DIFdelbegin \DIFdel{100-bp }\DIFdelend \DIFaddbegin \DIFadd{100bp }\DIFaddend reads will derive from sequence exactly matching the reference.
 Therefore, new mappers should perform at least as well for linear reference mapping as the current standard, which we take to be {\tt bwa mem} with default parameters.
 We show that {\tt vg} does this, and then that {\tt vg} maps more informatively around divergent sites.
 
@@ -291,7 +298,7 @@ GRCh37 & 0 & 1:09:54 & 1.76 & 23:30:41 & 25.11 & 33:34 & 28:33 \\
 1000GP AF0.1 & 6.8 & 1:23:04 & 1.97 & 26:06:38 & 27.79 & 32:35 & 28:43 \\
 \hline
 \end{tabular}
-\caption[1000GP variation graphs]{Numbers of variants, file sizes in gigabytes (GB) and build and search times in hours:minutes:seconds for various human {\tt vg} graphs and associated indexes. Reference sets are the linear reference GRCh37, the full 1000 Genomes Project set 1000GP AF0, and subsets of 1000GP AF0 including only variants with allele frequency above thresholds 0.001 (0.1\%), 0.01 (1\%) and 0.1 (10\%) respectively.  The number of variants in millions for each of these data sets is shown.  Search times are for 10 million 2x150bp read pairs simulated from NA24385.
+\caption[1000GP variation graphs]{Numbers of variants, file sizes in gigabytes (GB) and build and search times in hours:minutes:seconds for various human {\tt vg} graphs and associated indexes. Reference sets are the linear reference GRCh37, the full 1000 Genomes Project set 1000GP AF0, and subsets of 1000GP AF0 including only variants with allele frequency above thresholds 0.001 (0.1\%), 0.01 (1\%) and 0.1 (10\%) respectively.  The number of variants in millions for each of these data sets is shown.  Search times are for 10 million \DIFdelbeginFL \DIFdelFL{150+150bp }\DIFdelendFL \DIFaddbeginFL \DIFaddFL{2x150bp }\DIFaddendFL read pairs simulated from NA24385.
     Reprinted from \cite{garrison2018variation}.
 }
 \label{table:1000GP}
@@ -300,7 +307,7 @@ GRCh37 & 0 & 1:09:54 & 1.76 & 23:30:41 & 25.11 & 33:34 & 28:33 \\
 \subsection{Simulations based on phased HG002}
 \label{sec:1000GP_sim}
 
-We next aligned ten million 150bp paired-end reads simulated with errors\footnote{SNP errors are introduced at a rate of 0.01 per base and indels at a rate of 0.002 per base.} from the parentally phased haplotypes of an Ashkenazim male NA24385, sequenced by the Genome in a Bottle (GIAB) Consortium \cite{zook2016extensive} and not included in the 1000GP sample set, to each of these graphs as well as to the linear reference using {\tt bwa mem}.
+We next aligned ten million \DIFdelbegin \DIFdel{150-bp }\DIFdelend \DIFaddbegin \DIFadd{150bp }\DIFaddend paired-end reads simulated with errors\footnote{SNP errors are introduced at a rate of 0.01 per base and indels at a rate of 0.002 per base.} from the parentally phased haplotypes of an Ashkenazim male NA24385, sequenced by the Genome in a Bottle (GIAB) Consortium \cite{zook2016extensive} and not included in the 1000GP sample set, to each of these graphs as well as to the linear reference using {\tt bwa mem}.
 Figure \ref{fig:HG002_1000GP_sim} shows the accuracy of these alignments compared with {\tt bwa mem} for the full range of frequency thresholded graphs, in terms of receiver operating characteristic (ROC) curves.
 
 Reads that come from parts of the sequence without differences from the reference (middle panels of Figure \ref{fig:HG002_1000GP_sim}) mapped slightly better to the reference sequence (green) than to the 1000GP graph (red), which we attribute to a combination of the increase in options for alternative places to map reads provided by the variation graph, and the fact that we needed to prune some search index $k$-mers in the most complex regions of the graph.
@@ -324,7 +331,7 @@ Overall, {\tt vg} performed at least as well as {\tt bwa mem}, even on reference
 
 \subsection{Aligning and analyzing a real genome}
 
-We also mapped a real human genome read set with $\sim$50× coverage of Illumina 150bp paired-end reads from the NA24385 sample to the 1000GP graph. {\tt vg} produced mappings for 98.7\% of the reads, 88.7\%
+We also mapped a real human genome read set with $\sim$50× coverage of Illumina \DIFdelbegin \DIFdel{150-bp }\DIFdelend \DIFaddbegin \DIFadd{150bp }\DIFaddend paired-end reads from the NA24385 sample to the 1000GP graph. {\tt vg} produced mappings for 98.7\% of the reads, 88.7\%
 with reported mapping quality score 30 on the Phred scale, and 76.8\% with perfect, full-length sequence identity to the reported path on the graph.
 For comparison, we also used {\tt vg} to map these reads to the linear reference.
 Similar proportions of reads mapped (98.7\%) and with reported quality score 30 (88.8\%), but considerably fewer with perfect identity (67.6\%).
@@ -332,7 +339,7 @@ Markedly different mappings were found for 1.0\% of reads (0.9\% mapping to wide
 The reads mapping to widely separated positions were strongly enriched for repetitive DNA. For example, the linear reference mappings for 27.5\% of these read pairs overlapped various types of satellite DNA identified by RepeatMasker, compared to 3.0\% of all read pairs.
 
 To illustrate the consequences of mapping to a reference graph rather than a linear reference, we stratified the sites independently called as heterozygous in NA24385 by deletion or insertion length (0 for single-nucleotide variants) and by whether the site was present in 1000GP, and measured the fraction of reads mapped to the alternate allele for each category.
-The results show that mapping with {\tt vg} to the population graph when the variant was present in 1000GP (95.4\% of sites) gave nearly balanced coverage of alternate and reference alleles independent of variant size, whereas mapping to the linear reference either with {\tt vg} or {\tt bwa mem} led to a progressively increasing bias with increasing deletion and (especially) insertion length (Figure \ref{fig:HG002_indels}), so that for insertions around 30bp, a majority of insertions containing reads were missing (there were over twice as many reference reads as alternate reads).
+The results show that mapping with {\tt vg} to the population graph when the variant was present in 1000GP (95.4\% of sites) gave nearly balanced coverage of alternate and reference alleles independent of variant size, whereas mapping to the linear reference either with {\tt vg} or {\tt bwa mem} led to a progressively increasing bias with increasing deletion and (especially) insertion length (Figure \ref{fig:HG002_indels}), so that for insertions around \DIFdelbegin \DIFdel{30 bp}\DIFdelend \DIFaddbegin \DIFadd{30bp}\DIFaddend , a majority of insertions containing reads were missing (there were over twice as many reference reads as alternate reads).
 
 \begin{figure}[htbp!] 
 \centering    
@@ -503,25 +510,30 @@ A different parameterization of the aligner might need to be used to reconstruct
 
 \begin{figure}[htbp!]
   \includegraphics[width=1.0\textwidth]{Chapter3/Figs/MHC_vg-msga_v1_9_0-115-gc20e80f_gfa.png}
-  \caption[{\tt vg msga} progressive alignment of the MHC in GRCh38.]{
-    Variation graph of the MHC in GRCh38 constructed by progressive alignment with {\tt vg msga} and visualized by Bandage.
+  \DIFdelbeginFL %DIFDELCMD < \caption[{\tt vg msga} assembly of the MHC in GRCh38.]{%%%
+\DIFdelendFL \DIFaddbeginFL \caption[{\tt vg msga} progressive alignment of the MHC in GRCh38.]{\DIFaddendFL 
+    \DIFdelbeginFL %DIFDELCMD < {\tt %%%
+\DIFdelFL{vg msga}%DIFDELCMD < } %%%
+\DIFdelFL{assembly }\DIFdelendFL \DIFaddbeginFL \DIFaddFL{Variation graph }\DIFaddendFL of the MHC in GRCh38 \DIFdelbeginFL \DIFdelFL{as }\DIFdelendFL \DIFaddbeginFL \DIFaddFL{constructed by progressive alignment with }{\tt \DIFaddFL{vg msga}} \DIFaddFL{and }\DIFaddendFL visualized by Bandage.
   }
   \label{fig:vg_msga_mhc}
 \end{figure}
 
-To appreciate the effect of repeat collapse on the resulting graph, I applied {\tt vg dotplot}, which generates path-coincidence dotplots from indexed variation graphs, to compare the in-graph alignments of the same pair of sequences in both the {\tt seqwish} and {\tt vg msga} graphs.
+To appreciate the effect of repeat collapse on the resulting graph, I applied {\tt vg dotplot}, which generates \DIFaddbegin \DIFadd{path-coincidence }\DIFaddend dotplots from indexed variation graphs, to compare the in-graph alignments of the same pair of sequences in both the {\tt seqwish} and {\tt vg msga} graphs.
 These results are presented in figure \ref{fig:mhc_dotplots}.
+\DIFaddbegin 
 
-{\tt vg dotplot} does not make a dotplot in the same manner as is done to represent pairwise alignments.
+{\tt \DIFadd{vg dotplot}} \DIFadd{does not make a dotplot in the same manner as is done to represent pairwise alignments.
 Rather, it produces plots that represents the relationship between pairs of sequences as they are embedded in the variation graph.
-For a given pair of paths embedded in the graph, {\tt vg dotplot} renders a dot for each instance where both paths traverse the same graph position.
+For a given pair of paths embedded in the graph, }{\tt \DIFadd{vg dotplot}} \DIFadd{renders a dot for each instance where both paths traverse the same graph position.
 The dot is shown at a position $(x,y)$ where $x$ corresponds to the position in one path, and $y$ in the other.
 In the case of a graph built from the pairwise alignment of two sequences, the resulting path-coincidence dotplot would be equivalent to a traditional dotplot made from the alignments.
 However, for progressive alignments, we cannot be guaranteed the same structure for any given pair, due to the order dependence of the inclusion of each sequence.
+}
 
-It is clear (in \ref{subfig:seqwish_mhc_dotplot}) that the {\tt minimap2} based alignment process encorages the collapse of repeats, which results in the large off-diagonal blocks of graph positional matches between the sequences.
-{\tt minimap2} allows for the multiple mapping of parts of its query sequences, but no filtering was completed on the input alignments to reduce the impact of multimapping on the resulting graph.
-In contrast, figure \ref{subfig:vg_msga_mhc_dotplot} shows that a different alignment model allow the sequences to align through the graph in an approximately linear fashion, with little repeat collapse.
+\DIFaddend It is clear (in \ref{subfig:seqwish_mhc_dotplot}) that the {\tt minimap2} based alignment process encorages the collapse of repeats, which results in the large off-diagonal blocks of graph positional matches between the sequences.
+\DIFaddbegin {\tt \DIFadd{minimap2}} \DIFadd{allows for the multiple mapping of parts of its query sequences, but no filtering was completed on the input alignments to reduce the impact of multimapping on the resulting graph.
+}\DIFaddend In contrast, \DIFdelbegin \DIFdel{(panel \ref{subfig:vg_msga_mhc_dotplot} ) shows that the sequences can naturally }\DIFdelend \DIFaddbegin \DIFadd{figure \ref{subfig:vg_msga_mhc_dotplot} shows that a different alignment model allow the sequences to }\DIFaddend align through the graph in an approximately linear fashion, with little repeat collapse.
 This linearity is enforced by setting a high alignment chain model ``bandwidth'' parameter ({\tt -J 16384}) (described in section \ref{sec:chunked_alignment}), which limits the size of an insertion or deletion that can be tolerated in collinear chaining.
 With a primary alignment chunk size of 512 and overlap of 64, this yields an alignment chain model bandwidth of approximately 6Mb, which roughly covers the entire MHC for any input sequence.
 Setting a shorter bandwidth allows repeat collapse to occur in a manner similar to what occurs when inducing the graph from the {\tt minimap2} alignments.
@@ -537,13 +549,14 @@ Setting a shorter bandwidth allows repeat collapse to occur in a manner similar 
     \caption{{\tt vg msga}}
     \label{subfig:vg_msga_mhc_dotplot}
   \end{subfigure}
-  \caption[Path-coincidence dotplots from variation graphs of the MHC in GRCh38.]{
-    Comparing {\tt seqwish} and {\tt vg msga} variation graphs built for the MHC in GRCh38.
-    In both panels we see a path-coincidence dotplot between GI568335954 ($x$-axis) and GI568335994 ($y$-axis) as they are embedded in each graph, with \ref{subfig:seqwish_mhc_dotplot} showing the plot for {\tt seqwish} and \ref{subfig:vg_msga_mhc_dotplot} that for {\tt vg msga}.
-    In these plots, we render a dot for each pair of path positions that coincide in the graph.
-    The repeated positions in the {\tt seqwish} plot, which appear as dark verticals banded regions in the plot, represent repeats that have triggered the collapse of multiple positions in each path onto the same graph position.
-    In contrast, the {\tt vg msga} plot shows a relatively linear relationship between the two sequences in the graph, with large indels and a few gaps, but no off-diagonal relationships that might suggest repeat collapse or structural variation.
-  }
+  \DIFdelbeginFL %DIFDELCMD < \caption[Dotplots from assemblies of the MHC in GRCh38.]{%%%
+\DIFdelendFL \DIFaddbeginFL \caption[Path-coincidence dotplots from variation graphs of the MHC in GRCh38.]{\DIFaddendFL 
+    Comparing {\tt seqwish} and {\tt vg msga} \DIFdelbeginFL \DIFdelFL{assemblies of }\DIFdelendFL \DIFaddbeginFL \DIFaddFL{variation graphs built for }\DIFaddendFL the MHC in GRCh38.
+    In both panels we see a \DIFaddbeginFL \DIFaddFL{path-coincidence }\DIFaddendFL dotplot between GI568335954 ($x$-axis) and GI568335994 ($y$-axis) as they are embedded in each graph, with \ref{subfig:seqwish_mhc_dotplot} showing the \DIFdelbeginFL \DIFdelFL{dotplot }\DIFdelendFL \DIFaddbeginFL \DIFaddFL{plot }\DIFaddendFL for {\tt seqwish} and \ref{subfig:vg_msga_mhc_dotplot} that for {\tt vg msga}.
+    \DIFaddbeginFL \DIFaddFL{In these plots, we render a dot for each pair of path positions that coincide in the graph.
+    The repeated positions in the }{\tt \DIFaddFL{seqwish}} \DIFaddFL{plot, which appear as dark verticals banded regions in the plot, represent repeats that have triggered the collapse of multiple positions in each path onto the same graph position.
+    In contrast, the }{\tt \DIFaddFL{vg msga}} \DIFaddFL{plot shows a relatively linear relationship between the two sequences in the graph, with large indels and a few gaps, but no off-diagonal relationships that might suggest repeat collapse or structural variation.
+  }\DIFaddendFL }
   \label{fig:mhc_dotplots}
 \end{figure}
 
@@ -551,8 +564,8 @@ Setting a shorter bandwidth allows repeat collapse to occur in a manner similar 
 %*1p 1h*
 
 The removal of mapping bias is important when working with functional genomics data such as ChIP-seq data, where allele-specific expression analysis can reveal genetic variation that affects function but is confounded by reference mapping bias \cite{mcdaniell2010heritable}, especially given that read lengths are typically shorter for these experiments.
-We compared mapping with {\tt bwa mem} and {\tt vg} for data set ENCFF000ATK from the ENCODE project \cite{encode2012integrated}, which contains 14.9 million 51bp ChIP-seq reads for the H3K4me1 histone methylation mark from the NA12878 cell line.
-When mapping with bwa the ratio of reference to alternate allele matches at heterozygous sites was 1.20, whereas with {\tt vg} to the 1000GP graph the ratio was 1.01, effectively eliminating reference bias.
+We compared mapping with {\tt bwa mem} and {\tt vg} for data set ENCFF000ATK from the ENCODE project \cite{encode2012integrated}, which contains 14.9 million \DIFdelbegin \DIFdel{51-bp }\DIFdelend \DIFaddbegin \DIFadd{51bp }\DIFaddend ChIP-seq reads for the H3K4me1 histone methylation mark from the NA12878 cell line.
+When mapping with bwa the ratio of reference to alternate allele matches at heterozygous sites was 1.20, whereas with \DIFdelbegin \DIFdel{vg }\DIFdelend \DIFaddbegin {\tt \DIFadd{vg}} \DIFaddend to the 1000GP graph the ratio was 1.01, effectively eliminating reference bias.
 
 \begin{figure}[htbp!] 
   \centering
@@ -566,15 +579,16 @@ When mapping with bwa the ratio of reference to alternate allele matches at hete
     \caption{Alternate observations}
     \label{subfig:chip_seq_alt_obs}
   \end{subfigure}
-  \caption[Resolving reference bias in 36bp CHiP-seq]{
-    Resolving reference bias in 36bp CHiP-seq data from ENCODE sample ENCDO115AAA, using CHiP-seq targeting H3K4me1 (experiment ENCFF000ATK).
+  \DIFdelbeginFL %DIFDELCMD < \caption[Resolving reference bias in 36-bp CHiP-seq]{%%%
+\DIFdelendFL \DIFaddbeginFL \caption[Resolving reference bias in 36bp CHiP-seq]{\DIFaddendFL 
+    Resolving reference bias in \DIFdelbeginFL \DIFdelFL{36-bp }\DIFdelendFL \DIFaddbeginFL \DIFaddFL{36bp }\DIFaddendFL CHiP-seq data from ENCODE sample ENCDO115AAA, using CHiP-seq targeting H3K4me1 (experiment ENCFF000ATK).
     We compare the counts of reference-supporting (panel \ref{subfig:chip_seq_ref_obs}) or alternate-supporting (panel \ref{subfig:chip_seq_alt_obs}) alignments between {\tt vg map} and {\tt bwa mem} at sites called as heterozygous in the sample which were also polymorphic in the 1000GP.
     To shown density we have jittered the points in the unit square centered on the integral values taken by the counts.
    }
 \label{fig:chip_seq}
 \end{figure}
 
-The effect is dramatically stronger when using 36bp reads.
+The effect is dramatically stronger when using \DIFdelbegin \DIFdel{36-bp }\DIFdelend \DIFaddbegin \DIFadd{36bp }\DIFaddend reads.
 To illustrate, I aligned the ultra-short reads from ENCODE experiment ENCSR290YLQ\footnote{\url{https://www.encodeproject.org/experiments/ENCSR290YLQ/}} to the full 1000GP graph using {\tt vg map} and to the GRCh37 reference genome using {\tt bwa mem}.
 To simplify analysis, the {\tt vg} mappings were surjected to the GRCh37 reference.
 This sample came from an adult donor, and so we have no ``truth'' set as with NA12878, but we can use a subset of sites called as variable using {\tt freebayes} which also are known to be polymorphic in the 1000GP to examine the effect of reference bias.
@@ -669,28 +683,28 @@ This is not the case for those called alleles (N $\approx$ 300K) which are not i
   \label{fig:yamnaya_het_violins}
 \end{figure}
 
-\begin{figure}[htbp!]
+\DIFaddbegin \begin{figure}[htbp!]
   \centering
   \begin{subfigure}[t]{0.49\textwidth}
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/aDNA_d_stats_absolute.pdf}
-    \caption{$D$-statistic absolute values}
+    \caption{\DIFaddFL{$D$-statistic absolute values}}
     \label{subfig:aDNA_dstats_absolute}
   \end{subfigure}
   \begin{subfigure}[t]{0.49\textwidth}
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/aDNA_d_stats_z_score.pdf}
-    \caption{$D$-statistic z-scores}
+    \caption{\DIFaddFL{$D$-statistic z-scores}}
     \label{subfig:aDNA_dstats_zscore}
   \end{subfigure}
   \caption[$D$-statistic based ABBA-BABA test of reference bias in aDNA]{
-    $D$-statistic based ABBA-BABA test of reference bias in aDNA.
+    \DIFaddFL{$D$-statistic based ABBA-BABA test of reference bias in aDNA.
     Panel \ref{subfig:aDNA_dstats_absolute} provides the absolute values for the given $D$-statistic, calculated as described in the text, while panel \ref{subfig:aDNA_dstats_zscore} shows estimated significance level for the various samples.
-    On both panels, points to the left of the dashed line at 0 indicate excess allele sharing between {\tt bwa} alignments of the samples and GRCh37 (the ABBA pattern), while those to the right indicate an excess of sharing between {\tt vg} alignments and GRCh37 (the BABA pattern).
+    On both panels, points to the left of the dashed line at 0 indicate excess allele sharing between }{\tt \DIFaddFL{bwa}} \DIFaddFL{alignments of the samples and GRCh37 (the ABBA pattern), while those to the right indicate an excess of sharing between }{\tt \DIFaddFL{vg}} \DIFaddFL{alignments and GRCh37 (the BABA pattern).
     The two patterns are illustrated by the trees above the panels, where $A$ alleles are given as blue lines on the tree and $B$ alleles that arose between the split with the outgroup (Chimpanzee) are shown in red.
-  }
+  }}
 \label{fig:aDNA_dstats}
 \end{figure}
 
-We expect reference bias of the degree demonstrated in these experiments to affect population genetic inference.
+\DIFaddend We expect reference bias of the degree demonstrated in these experiments to affect population genetic inference.
 To evaluate this, we apply the ABBA BABA test of phylogenetic tree topology based on Patterson's $D$-statistic of population relationship \cite{green2010draft}.
 To do so, we used the Human Origins dataset distributed with \cite{lazaridis2014ancient}.
 For each sample we ran samtools pileup yielding $\sim$1.2 million SNPs.
@@ -699,7 +713,45 @@ This was done 5 times, generating 5 replicates of randomly selected alleles for 
 We then filtered by genotyping rate, excluding poorly genotyped SNPs\footnote{We used the plink filter {\tt --geno 0.05}.}, resulting in 1,142,867 SNPs.
 Finally, we merged individual plink files with those for GRCh37 and Chimpanzee, converted plink to eigenstrat format using {\tt convertf} and calculated $D$-statistics using qpDstat \cite{patterson2012ancient} of the form $D(\text{vg}, \text{bwa}; \text{GRCh37}, \text{Chimp})$ to test for excess of shared alleles between {\tt vg} and {\tt bwa}-aligned samples with the reference.
 
-Our results, summarized in figure \ref{fig:aDNA_dstats}, indicate an excess of allele sharing between the {\tt bwa}-aligned samples and GRCh37 relative to the {\tt vg}-aligned ones and GRCh37.
+\DIFdelbegin %DIFDELCMD < \begin{figure}[htbp!]
+%DIFDELCMD <   \centering
+%DIFDELCMD <   \begin{subfigure}[t]{0.49\textwidth}
+%DIFDELCMD <     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/aDNA_d_stats_absolute.pdf}
+%DIFDELCMD <     %%%
+%DIFDELCMD < \caption{%
+{%DIFAUXCMD
+\DIFdelFL{$D$-statistic absolute values}}
+    %DIFAUXCMD
+%DIFDELCMD < \label{subfig:aDNA_dstats_absolute}
+%DIFDELCMD <   \end{subfigure}
+%DIFDELCMD <   \begin{subfigure}[t]{0.49\textwidth}
+%DIFDELCMD <     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/aDNA_d_stats_z_score.pdf}
+%DIFDELCMD <     %%%
+%DIFDELCMD < \caption{%
+{%DIFAUXCMD
+\DIFdelFL{$D$-statistic z-scores}}
+    %DIFAUXCMD
+%DIFDELCMD < \label{subfig:aDNA_dstats_zscore}
+%DIFDELCMD <   \end{subfigure}
+%DIFDELCMD <   %%%
+%DIFDELCMD < \caption[$D$-statistic based ABBA-BABA test of reference bias in aDNA]{%
+{%DIFAUXCMD
+\DIFdelFL{$D$-statistic based ABBA-BABA test of reference bias in aDNA.
+    Panel \ref{subfig:aDNA_dstats_absolute} provides the absolute values for the given $D$-statistic, calculated as described in the text, while panel \ref{subfig:aDNA_dstats_zscore} shows estimated significance level for the various samples.
+    On both panels, points to the left of the dashed line at 0 indicate excess allele sharing between }%DIFDELCMD < {\tt %%%
+\DIFdelFL{bwa}%DIFDELCMD < } %%%
+\DIFdelFL{alignments of the samples and GRCh37 (the ABBA pattern), while those to the right indicate an excess of sharing between }%DIFDELCMD < {\tt %%%
+\DIFdelFL{vg}%DIFDELCMD < } %%%
+\DIFdelFL{alignments and GRCh37 (the BABA pattern).
+    The two patterns are illustrated by the trees above the panels, where $A$ alleles are given as blue lines on the tree and $B$ alleles that arose between the split with the outgroup (Chimpanzee) are shown in red.
+  }}
+%DIFAUXCMD
+%DIFDELCMD < \label{fig:aDNA_dstats}
+%DIFDELCMD < \end{figure}
+%DIFDELCMD < 
+
+%DIFDELCMD < %%%
+\DIFdelend Our results, summarized in figure \ref{fig:aDNA_dstats}, indicate an excess of allele sharing between the {\tt bwa}-aligned samples and GRCh37 relative to the {\tt vg}-aligned ones and GRCh37.
 All but a handful of replicates have negative $D$-statistics, which implies that alignment against GRCh37 makes the samples appear more like the reference (subfigure \ref{subfig:aDNA_dstats_absolute}).
 We conclude that reference bias is strong enough to affect common population genetic analysis completed with ancient DNA, and this can be mitigated at least for known alleles by aligning against a pangenomic reference.
 
@@ -770,7 +822,7 @@ To obtain coverage counts per sample across the graph I then applied the {\tt vg
   \centering
   \begin{subfigure}[t]{1.0\textwidth}
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/ecoli_10strain_cov_col_pos_4400000_100k.png}
-    \caption{Per-strain coverage across 100kbp of the \emph{E. coli} pangenome}
+    \caption{Per-strain coverage across \DIFdelbeginFL \DIFdelFL{100 kbp }\DIFdelendFL \DIFaddbeginFL \DIFaddFL{100kbp }\DIFaddendFL of the \emph{E. coli} pangenome}
     \label{subfig:ecoli_cov_100k}
   \end{subfigure}
   \begin{subfigure}[t]{0.49\textwidth}
@@ -838,15 +890,17 @@ Indexing yielded a 119MB {\tt xg} index and 158MB {\tt GCSA2} index.
   \centering
   \includegraphics[width=1.0\textwidth]{Chapter3/Figs/svalbard_metagenome_minia_k51_m3_contigs_gfa.png}
   \caption[An arctic freshwater viral metagenome]{
-    An arctic freshwater viral metagenome graph, built with {\tt minia} as described in the text.
+    An arctic freshwater viral metagenome \DIFdelbeginFL \DIFdelFL{visualized }\DIFdelendFL \DIFaddbeginFL \DIFaddFL{graph, built }\DIFaddendFL with \DIFaddbeginFL {\tt \DIFaddFL{minia}} \DIFaddFL{as described in the text.
     As in other Bandage visualizations, colored splines in this figure represent contigs or nodes in the assembly graph, with edges represented by junctions connecting the ends of these splines.
-    The width of the nodes corresponds to the coverage measured by {\tt minia} during the assembly process.
-    Bandage renders graphs with many small contigs with a vertical order related to the size of each weakly connected component, so the nodes at the bottom are smaller than those at the top.
+    The width of the nodes corresponds to the coverage measured by }{\tt \DIFaddFL{minia}} \DIFaddFL{during the assembly process.
+    }\DIFaddendFL Bandage \DIFaddbeginFL \DIFaddFL{renders graphs with many small contigs with a vertical order related to the size of each weakly connected component, so the nodes at the bottom are smaller than those at the top.
     The presence of many small, often circular contigs in this figure demonstrates the viral origin of the DNA sample used to build the graph.
-    We should expect these to represent fully assembled viral genomes \cite{de2015biodiversity}.
+    We should expect these to represent fully assembled viral genomes \mbox{%DIFAUXCMD
+\cite{de2015biodiversity}}\hspace{0pt}%DIFAUXCMD
+.
     The fact that no giant component emerges in this graph indicates that there is sufficient sequence divergence between the viral species to prevent collapse in the $k=51$ order de Bruijn graph.
     The widely varying width of the nodes in the graph indicate that some viral species are vastly more abundant than others.
-    We can see that there are few very short contigs (at the bottom of the rendering) with high coverage, which may indicate that these represent partial assemblies, rare species, or contaminants from non-viral sources.
+    We can see that there are few very short contigs (at the bottom of the rendering) with high coverage, which may indicate that these represent partial assemblies, rare species, or contaminants from non-viral sources}\DIFaddendFL .
   }
   \label{fig:viral_metagenome_bandage}
 \end{figure}
@@ -864,8 +918,8 @@ Although both methods mapped $\sim$96\% of the reads, {\tt vg} had an average id
   \centering
   \includegraphics[width=0.7\textwidth]{Chapter3/Figs/ERR414817_holdout_bwa_vs_vg_k51_m3.png}
   \caption[Comparing {\tt vg} and {\tt bwa} alignment to the viral metagenome]{
-    Comparison of alignment score between {\tt vg map} and {\tt bwa mem} when aligning against the pangenome graph or assembled contig set of the graph.
-    The region of higher density seen below the diagonal in the upper right of the plot indicates an increase in alignment score when mapping against the full assembly graph (with {\tt vg map}) relative to mapping to the linearized contig set (with {\tt bwa mem}).
+    Comparison of alignment score between {\tt vg map} and {\tt bwa mem} when aligning against the pangenome graph or assembled contig set of the graph\DIFaddbeginFL \DIFaddFL{.
+    The region of higher density seen below the diagonal in the upper right of the plot indicates an increase in alignment score when mapping against the full assembly graph (with }{\tt \DIFaddFL{vg map}}\DIFaddFL{) relative to mapping to the linearized contig set (with }{\tt \DIFaddFL{bwa mem}}\DIFaddFL{)}\DIFaddendFL .
   }
   \label{fig:viral_metagenome_scatter}
 \end{figure}
