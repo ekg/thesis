@@ -33,7 +33,7 @@ Finally, I will discuss how variation graphs can provide normalized basis spaces
     A step in the progressive construction of a variation graph from homologous fragments of four haplotypes in the GRCh38 alternate allele set for the HLA gene DQB1-3119.
     (A) shows the variation graph constructed by progressive alignment of three sequences labeled \emph{a}, \emph{b}, and \emph{c}.
     The graph topology is shown at the top of the panel, with nodes represented by black bars, labeled by their node IDs (white numbers), and with edge connections between nodes shown by arcs above.
-    Paths are indicated in the colored bars below, with a identifying name to the left.
+    Paths are indicated in the colored bars below, with an identifying name to the left.
     This graph is partially ordered, without cycles, and so the sequences of paths may be enumerated by concatenating the node sequences above the filled portions of each of the path rows.
     A fourth sequence \emph{z} has been aligned to the graph, and is shown in a checkerboard magenta pattern.
     It contains a single SNP relative to the graph, which is shown by the black {\tt T} matching the fifth position of the first node.
@@ -416,13 +416,14 @@ Two main varieties have proved useful.
 In $k$-mer indexes, short subsequences of length $k$ are recorded in a hash table or equivalent data structure that allows efficient lookup.
 The keys in this table are the $k$-mers, while the values are typically a list of strand-oriented positions in the target set of sequences.
 BWT-based indexes emulate the suffix tree of their input text in small space, and allow $O(l)$ time queries for sequences of length $l$, irrespective of the size of the target corpus.
-Implementations of the popular FM-index \cite{fmindex2000,fmindex2005} and the functionally equivalent compressed suffix array (CSA) \cite{grossi2005compressed} compress the BWT using encodings that allow fast decompression or direct operation on the compressed data (compressed for example with with run-length compression, or that of Raman, Raman, and Rao \cite{raman2002succinct}), and augment the BWT with positional information that allows the index to be used for substring matching.
+Implementations of the popular FM-index \cite{fmindex2000,fmindex2005} and the functionally equivalent compressed suffix array (CSA) \cite{grossi2005compressed} compress the BWT using encodings that allow fast decompression or direct operation on the compressed data (compressed for example with run-length compression, or that of Raman, Raman, and Rao \cite{raman2002succinct}), and augment the BWT with positional information that allows the index to be used for substring matching.
 
 Indexing the sequence space of variation graphs requires a generalization of the principles behind these indexing techniques.
 Junctions allow for the representation of alternative sequences, with an exponential size relative to the number of furcations in the graph.
 This introduces problems of representation and scale which have required substantial work to resolve.
-In {\tt vg}, I was ultimately able to use and encourage the development and use of a practical implementation of a succinct data structure akin the the CSA, but generalized to operate in any kind of bidirectional sequence graph, the GCSA2.
+In {\tt vg}, I was ultimately to encourage the development of and use a practical implementation of a succinct data structure akin to the CSA, the GCSA2.
 This model was developed within the context of {\tt vg}, and is the first sequence index specifically designed to work on variation graphs.
+It generalizes concepts and algorithms from the CSA to any kind of bidirectional sequence graph.
 Here, I will provide a description of related data structures from which this model draws inspiration, as well as a careful summary of the GCSA2 and the features which make it ideal as the core sequence index to drive a short read to variation graph mapper.
 Due to space, I will not fully elaborate this model, as it is not among my contributions.
 Readers are encouraged to examine the cited works if they seek a complete description of this and related data structures.
@@ -464,7 +465,7 @@ We take all rotations of this string, and lexicographically order them to form a
 The first column of this matrix is $F$, and lists the characters in the source text in lexicographic order.
 We can compactly represent it as a vector of counts $C$ of characters that are lexicographically smaller than a given one, indexed by the characters as encoded in a compact set of integers.
 The last column of the BWM is the Burrows Wheeler transform (BWT) of the source text.
-The order in which the rotations (or equivalently, suffixes) appear in the sort is the suffix array (SA) of the text
+The order in which the rotations (or equivalently, suffixes) appear in the sort is the suffix array (SA) of the text.
 Assume a function $rank_{BWT}(c, i)$ which returns the number of characters equal to $c$ in the prefix of $BWT[0\ldots i]$.
 The function $LF(i) = C[c] + rank_{BWT}(c, i) - 1$ reconstructs the mapping between the same character in the BWT and $F$, thus provides a way to unwind the permutation generated by the sort and reconstruct the source text.
 These construction steps are illustrated in Figure \ref{fig:bwt_construction}.
@@ -477,14 +478,14 @@ These construction steps are illustrated in Figure \ref{fig:bwt_construction}.
     The Burrows Wheeler Matrix (BWM) shows all rotations of the string (appended with terminal marker {\tt \$}) in lexicographical order.
     $SA$ provides the suffix array, which lists the suffixes relative to the original string in their sorted order in the BWM.
     The first column of the BWM corresponds to vector $F$, which contains a series of runs of single characters in their lexicographic order, and is compactly represented in $C$.
-    The last column of the BWM corresponds to the $BWT$.
+    We find the $BWT$ in the last column of the BWM.
     The function $LF(i)$ is shown for each position in the $BWT$, and lines drawn between $F$ and $BWT$ show the characters in the system that have the same identity in the source text.
     Produced using \url{https://github.com/ekg/drawbwt}.
   }
   \label{fig:bwt_construction}
 \end{figure}
 
-We can use $LF$ mapping in an iterative way to execute search on the BWT.
+We can iteratively apply $LF$ mapping to execute search on the BWT.
 Algorithm \ref{alg:bwt_find} defines the function $find(Q)$, which returns the suffix array interval (or lexicographic range) in which suffixes are prefixed by $Q$, should it exist, and an empty interval if $Q$ is not a substring of $T$.
 We begin our search by looking at the SA interval prefixed by the last character in our pattern, which is trivially obtained from array $C$.
 The body of the loop constitutes one step of backward searching.
@@ -541,7 +542,7 @@ In contrast to $k$-mer based indexes, generalizations of the CSA to graphs have 
 But, they have yielded compact, efficient data structures that require similar space to their linear counterparts while supporting a wide array of query patterns.
 
 Most generalizations of succinct self indexes from strings to graphs draw on the XBW transform \cite{ferragina2005structuring}, which provides a compressed self index of trees based on a generalization of the FM-index \cite{ferragina2009compressing}.
-In the XBW transform (figure \ref{fig:xbw}), rather than considering all suffixes of a linear sequence in the construction of the BWT, we sort all concatenated paths from the root to leaves of each node in the tree and use this as the basis for the BWT in a manner analogous to the use of sorted suffixes for a linear sequences.
+In the XBW transform (figure \ref{fig:xbw}), rather than considering all suffixes of a linear sequence in the construction of the BWT, we sort all concatenated paths from the root to leaves of each node in the tree and use this as the basis for the BWT in a manner analogous to the use of sorted suffixes for a linear sequence.
 To record the topology of the tree and support its navigation relative to the resulting BWT, auxiliary bitvectors record which edges connect to leaf nodes $e$ (or equivalently, an expanded alphabet as originally presented in \cite{ferragina2005structuring}), and which are the last edge among their siblings: ${\cal F}$.
 Rank and select queries on these bitvectors allow the generalization of the \emph{LF-mapping} (last-first) permutation and its inverse $\Psi$ to work on the tree.
 The lexicographic ranks of the standard versions of these functions are mapped into the appropriate BWT ranges using rank and select queries on ${\cal F}$.
@@ -611,7 +612,7 @@ Thus, to provide equivalent functionality for an automaton, we must ensure that 
 This implies a transformation of the automaton that ensures that each prefix of a path through the graph is the only way to generate a suffix with the particular prefix.
 Sir\'{e}n implements this prefix-sorting transform in an algorithm that $k$-prefix-sorts the graph for a given $k$.
 The process is iterated for $k' = 2k$ until $k'$ is greater than the length of the longest path in the automaton.
-At this point, it is possible to enumerate and sort the suffixes of the given automaton, build the corresponding BWT, and augment the data structure with bitvector ${\cal F}$, which allows a single node to have multiple predecessors, and bitvector ${\cal M}$, which records the number of successors or outgoing edges from each nodes in the automaton.
+At this point, it is possible to enumerate and sort the suffixes of the given automaton, build the corresponding BWT, and augment the data structure with bitvector ${\cal F}$, which allows a single node to have multiple predecessors, and bitvector ${\cal M}$, which records the number of successors or outgoing edges from each node in the automaton.
 Backward searching in this structure ($LF$) uses a similar principle to the XBW and succinct DBG models.
 We first use bitvector ${\cal F}$ to convert lexicographic ranks to a BWT range, and then we use ${\cal M}$ to convert the edge range to lexicographic ranks.
 
@@ -873,7 +874,7 @@ When backward search breaks, we step back to the last matching interval and use 
 The GCSA2's {\tt LCPArray} extension allows interrogation of the suffix tree structure, which in turn this allows us to remove the invariant sequence from the end of our previous matched range and continue search for the next maximal match.
 Algorithm \ref{alg:mem_find} provides a sketch of this process as it relates to the GCSA2 FM-index encoding and LCPArray.
 
-Not shown in this algorithm sketch are a series of ``reseeding'' passes where by long MEMs are used as the basis for further exact match finding, but with a maximum limit to the detected match size.
+Not shown in this algorithm sketch are a series of ``reseeding'' passes whereby long MEMs are used as the basis for further exact match finding, but with a maximum limit to the detected match size.
 When backward search yields an exact match of this size, we use the same suffix tree operation to reset our match range with the next possible match.
 This reseeding operation is required to obtain high sensitivity via MEM based alignment seed lookup.
 At sufficient frequency to frustrate our mapping sensitivity in real genomes, a long MEM can mask out shorter sub-matches that might be contained within it, and which correspond to the correct mapping location.
@@ -1112,7 +1113,7 @@ The resulting graph is acyclic and supports queries up to length $k$ on the orig
     This minimum distance is tracked using a min-sum DP algorithm that is updated at each copy step by assigning a new minimum length for each node equal to the minimum of the previous minimum length among nodes in the previous SCC copy that it is connected to, plus their sequence label length.
     In panels \ref{subfig:dagify_k10}, \ref{subfig:dagify_k17}, and \ref{subfig:dagify_k25}, we see the unrolled SCC forming a braid in the middle of the rendered graphs, whose length increases with the increase in $k$.
     This algorithm is not optimal, as can be seen by the duplication of paths connecting in and out of the component.
-    However it is linear, and requires only $O(kc)$ time and space, with $c$ representing a constant factor related to the size of the SCCs in the original graph.
+    However, it is linear, and requires only $O(kc)$ time and space, with $c$ representing a constant factor related to the size of the SCCs in the original graph.
   }
 \label{fig:dagify}
 \end{figure}
@@ -1355,7 +1356,7 @@ The resulting path is expressed in reverse order relative to our traceback.
 
 Alignments to graphs that include linear reference sequences as paths can be transformed into alignments against those paths.
 Alignment \emph{surjection} projects alignments to the full graph \emph{onto} the subgraph defined by a given set of paths in the graph.
-This transformation is used to convert graph based alignments to alignments to the linear reference, and is of great utility in the application of {\tt vg} in resequencing based analyses, where it supports a lossy translation between {\tt vg}'s native GAM format and BAM.
+This transformation is used to project graph based alignments onto the linear reference, and is of great utility in the application of {\tt vg} in resequencing based analyses, where it supports a lossy translation between {\tt vg}'s native GAM format and BAM.
 
 In surjection, portions of the alignment that already map to the path specific graph subset are left unchanged.
 However, regions of the original alignment to parts of the graph that are not in the selected path subset are mapped onto the nearest suitable node, with additional edits to specify the differences between the alignment and the graph subset defined by the target paths.
@@ -1513,7 +1514,7 @@ This can still capture the overall structure of the graph as seen in figure \ref
     The same hash function is used to determine the color and emoji combination used to label each path.
     Each mapping in each path corresponds to one such node id / emoji label, and it is connected to the previous and subsequent steps by a line of the same color.
     A hidden edge connects each of these path steps to the node it corresponds to.
-    This link causes the force directed layout algorithm to draw each each path mapping node close to the node it refers to.
+    This link causes the force directed layout algorithm to draw each path mapping node close to the node it refers to.
     Note that the graphviz data input here rendered by {\tt neato} is the same as that given to {\tt dot} in \ref{fig:vg_view_dot}.
 }
 \label{fig:vg_view_neato}
@@ -1739,7 +1740,7 @@ Simplification has a number of potential applications, for instance in reducing 
 \section{Graphs as basis spaces for sequence data}
 \label{sec:basis_space}
 
-If we can construct a graph which embeds all the sequences of all genomes which we are interested in, we resolves the separation between reference sequence and variation that is present in standard resequencing.
+If we can construct a graph which embeds all the sequences of all genomes which we are interested in, we resolve the separation between reference sequence and variation that is present in standard resequencing.
 This suggests that the intermediate steps in resequencing may be made redundant.
 If variation is already available during alignment then there is no need for a variant detection phase.
 However, if the graph does not include variation in our samples, then variant calling is required.
