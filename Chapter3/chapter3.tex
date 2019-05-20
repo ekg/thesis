@@ -134,13 +134,13 @@ The multiple genome graphs were based on that first constructed with Cactus, as 
   \centering
   \includegraphics[width=1.0\textwidth]{Chapter3/Figs/e68fc338_test_sim_yeast_cactus-roc.pdf}
   \caption[Cactus yeast simulation]{Mapping short reads with {\tt vg} to yeast genome references.
-    ROC curves obtained by mapping 100,000 simulated SK1 yeast strain 150-bp paired-end reads against a variety of references described in the text.
+    ROC curves obtained by mapping 100,000 simulated SK1 yeast strain 150bp paired-end reads against a variety of references described in the text.
     Reprinted from \cite{garrison2018variation}.}
   \label{fig:cactus_yeast_sim}
 \end{figure}
 
 
-We simulated 100,000 150-bp paired-end reads from the SK1 reference, modeling sequencing errors, and mapped them to the four references (ROC curves, Figure \ref{fig:cactus_yeast_sim}).
+We simulated 100,000 150bp paired-end reads from the SK1 reference, modeling sequencing errors, and mapped them to the four references (ROC curves, Figure \ref{fig:cactus_yeast_sim}).
 Not surprisingly, the best performance was obtained by mapping to a linear reference of the SK1 strain from which the data were simulated, with substantially higher sensitivity and specificity compared to mapping to the standard linear reference from the strain S288c with either {\tt vg} or {\tt bwa mem}.
 Mapping to the variation graphs gave intermediate performance, with >1\% more sensitivity and lower false-positive rates than mapping to the standard reference.
 There was surprisingly little difference between mapping to graphs with and without the SK1 private variation, probably because much of what is novel in SK1 compared to the reference is also seen in other strains.
@@ -181,7 +181,7 @@ Three of the graphs are effectively linear or DAG-like, except for their mitocho
 SGD\_2010 and S288c represent two assemblies of the reference genome, the former from the SGD genome sequencing project, and the latter is a \emph{de novo} assembly from \cite{yue2017contrasting}.
 The difference in quality between the two approaches will be made apparent in the subsequent section.
 As described in section \ref{sec:SGRP2_graph}, the SGRP2 graph adds SNP variation from the population survey in \cite{bergstrom2014high} to build a pangenome reference.
-The SGD\_2010 reference contains the mitochondria and 6 kbp plasmid sequence, while the S288c assembly excludes them due to the sequencing protocol, where size selection in the library preparation stage removed these short sequences, so to enable direct comparison in later tests these were added to the S288c graph.
+The SGD\_2010 reference contains the mitochondria and 6kbp plasmid sequence, while the S288c assembly excludes them due to the sequencing protocol, where size selection in the library preparation stage removed these short sequences, so to enable direct comparison in later tests these were added to the S288c graph.
 
 The remaining four graphs are different forms of assembly graph.
 Using the Illumina data published in \cite{yue2017contrasting}, I build two assemblies with minia3, using a $k$-mer size of 51 and a high abundance threshold (50) to limit the resulting graph complexity.
@@ -225,7 +225,7 @@ At the same time, the node count of the {\tt vg msga} graph is higher, which per
 \label{sec:yeast_long_read}
 
 In this section I evaluate the graphs I constructed in section \ref{sec:constructing_yeast_graphs} and simultaneously demonstrate the ability of {\tt vg} to align long reads to graphs of any type.
-For each of the seven graphs I aligned a set of 43,337 Pacific Biosciences SK1 reads (mean length 4.7 kbp) from \cite{yue2017contrasting} to the graph.
+For each of the seven graphs I aligned a set of 43,337 Pacific Biosciences SK1 reads (mean length 4.7kbp) from \cite{yue2017contrasting} to the graph.
 We can then compare the alignment identity for each read across the various graphs.
 I do so using the same dot plot technique used to demonstrate alignment quality improvement using the Illumina data from the NCYC strains.
 In figure \ref{fig:pacbio_yeast} I present a number of pairwise comparisons based on this read set.
@@ -267,7 +267,7 @@ The alignment algorithm will attempt more alignments for each band where there i
 \section{Human}
 %*0.5p 0.5h*
 
-For a species such as human, with only 0.1\% nucleotide divergence on average between individual genome sequences, over 90\% of 100-bp reads will derive from sequence exactly matching the reference.
+For a species such as human, with only 0.1\% nucleotide divergence on average between individual genome sequences, over 90\% of 100bp reads will derive from sequence exactly matching the reference.
 Therefore, new mappers should perform at least as well for linear reference mapping as the current standard, which we take to be {\tt bwa mem} with default parameters.
 We show that {\tt vg} does this, and then that {\tt vg} maps more informatively around divergent sites.
 
@@ -276,7 +276,7 @@ We show that {\tt vg} does this, and then that {\tt vg} maps more informatively 
 
 The final phase of the 1000 Genomes Project (1000GP) produced a data set of $\sim$80 million variants in 2,504 humans \cite{1000g2015}.
 We made a series of {\tt vg} graphs containing all variants or those above minor allele frequency thresholds of 0.1\%, 1\%, or 10\%, as well as a graph corresponding to the standard GRCh37 linear reference sequence without any variation.
-The full {\tt vg} graph uses 3.92 GB when serialized to disk, and contains 3.181 Gbp of sequence, which is exactly equivalent to the length of the input reference plus the length of the novel alleles in the VCF file.
+The full {\tt vg} graph uses 3.92 GB when serialized to disk, and contains 3.181Gbp of sequence, which is exactly equivalent to the length of the input reference plus the length of the novel alleles in the VCF file.
 Complete file sizes including indices range from 25 GB to 63 GB, with details including build and mapping times given in table \ref{table:1000GP}.
 
 \begin{table}[h]
@@ -291,7 +291,7 @@ GRCh37 & 0 & 1:09:54 & 1.76 & 23:30:41 & 25.11 & 33:34 & 28:33 \\
 1000GP AF0.1 & 6.8 & 1:23:04 & 1.97 & 26:06:38 & 27.79 & 32:35 & 28:43 \\
 \hline
 \end{tabular}
-\caption[1000GP variation graphs]{Numbers of variants, file sizes in gigabytes (GB) and build and search times in hours:minutes:seconds for various human {\tt vg} graphs and associated indexes. Reference sets are the linear reference GRCh37, the full 1000 Genomes Project set 1000GP AF0, and subsets of 1000GP AF0 including only variants with allele frequency above thresholds 0.001 (0.1\%), 0.01 (1\%) and 0.1 (10\%) respectively.  The number of variants in millions for each of these data sets is shown.  Search times are for 10 million 150+150bp read pairs simulated from NA24385.
+\caption[1000GP variation graphs]{Numbers of variants, file sizes in gigabytes (GB) and build and search times in hours:minutes:seconds for various human {\tt vg} graphs and associated indexes. Reference sets are the linear reference GRCh37, the full 1000 Genomes Project set 1000GP AF0, and subsets of 1000GP AF0 including only variants with allele frequency above thresholds 0.001 (0.1\%), 0.01 (1\%) and 0.1 (10\%) respectively.  The number of variants in millions for each of these data sets is shown.  Search times are for 10 million 2x150bp read pairs simulated from NA24385.
     Reprinted from \cite{garrison2018variation}.
 }
 \label{table:1000GP}
@@ -300,7 +300,7 @@ GRCh37 & 0 & 1:09:54 & 1.76 & 23:30:41 & 25.11 & 33:34 & 28:33 \\
 \subsection{Simulations based on phased HG002}
 \label{sec:1000GP_sim}
 
-We next aligned ten million 150-bp paired-end reads simulated with errors\footnote{SNP errors are introduced at a rate of 0.01 per base and indels at a rate of 0.002 per base.} from the parentally phased haplotypes of an Ashkenazim male NA24385, sequenced by the Genome in a Bottle (GIAB) Consortium \cite{zook2016extensive} and not included in the 1000GP sample set, to each of these graphs as well as to the linear reference using {\tt bwa mem}.
+We next aligned ten million 150bp paired-end reads simulated with errors\footnote{SNP errors are introduced at a rate of 0.01 per base and indels at a rate of 0.002 per base.} from the parentally phased haplotypes of an Ashkenazim male NA24385, sequenced by the Genome in a Bottle (GIAB) Consortium \cite{zook2016extensive} and not included in the 1000GP sample set, to each of these graphs as well as to the linear reference using {\tt bwa mem}.
 Figure \ref{fig:HG002_1000GP_sim} shows the accuracy of these alignments compared with {\tt bwa mem} for the full range of frequency thresholded graphs, in terms of receiver operating characteristic (ROC) curves.
 
 Reads that come from parts of the sequence without differences from the reference (middle panels of Figure \ref{fig:HG002_1000GP_sim}) mapped slightly better to the reference sequence (green) than to the 1000GP graph (red), which we attribute to a combination of the increase in options for alternative places to map reads provided by the variation graph, and the fact that we needed to prune some search index $k$-mers in the most complex regions of the graph.
@@ -324,7 +324,7 @@ Overall, {\tt vg} performed at least as well as {\tt bwa mem}, even on reference
 
 \subsection{Aligning and analyzing a real genome}
 
-We also mapped a real human genome read set with $\sim$50× coverage of Illumina 150-bp paired-end reads from the NA24385 sample to the 1000GP graph. {\tt vg} produced mappings for 98.7\% of the reads, 88.7\%
+We also mapped a real human genome read set with $\sim$50× coverage of Illumina 150bp paired-end reads from the NA24385 sample to the 1000GP graph. {\tt vg} produced mappings for 98.7\% of the reads, 88.7\%
 with reported mapping quality score 30 on the Phred scale, and 76.8\% with perfect, full-length sequence identity to the reported path on the graph.
 For comparison, we also used {\tt vg} to map these reads to the linear reference.
 Similar proportions of reads mapped (98.7\%) and with reported quality score 30 (88.8\%), but considerably fewer with perfect identity (67.6\%).
@@ -332,7 +332,7 @@ Markedly different mappings were found for 1.0\% of reads (0.9\% mapping to wide
 The reads mapping to widely separated positions were strongly enriched for repetitive DNA. For example, the linear reference mappings for 27.5\% of these read pairs overlapped various types of satellite DNA identified by RepeatMasker, compared to 3.0\% of all read pairs.
 
 To illustrate the consequences of mapping to a reference graph rather than a linear reference, we stratified the sites independently called as heterozygous in NA24385 by deletion or insertion length (0 for single-nucleotide variants) and by whether the site was present in 1000GP, and measured the fraction of reads mapped to the alternate allele for each category.
-The results show that mapping with {\tt vg} to the population graph when the variant was present in 1000GP (95.4\% of sites) gave nearly balanced coverage of alternate and reference alleles independent of variant size, whereas mapping to the linear reference either with {\tt vg} or {\tt bwa mem} led to a progressively increasing bias with increasing deletion and (especially) insertion length (Figure \ref{fig:HG002_indels}), so that for insertions around 30 bp, a majority of insertions containing reads were missing (there were over twice as many reference reads as alternate reads).
+The results show that mapping with {\tt vg} to the population graph when the variant was present in 1000GP (95.4\% of sites) gave nearly balanced coverage of alternate and reference alleles independent of variant size, whereas mapping to the linear reference either with {\tt vg} or {\tt bwa mem} led to a progressively increasing bias with increasing deletion and (especially) insertion length (Figure \ref{fig:HG002_indels}), so that for insertions around 30bp, a majority of insertions containing reads were missing (there were over twice as many reference reads as alternate reads).
 
 \begin{figure}[htbp!] 
 \centering    
@@ -551,7 +551,7 @@ Setting a shorter bandwidth allows repeat collapse to occur in a manner similar 
 %*1p 1h*
 
 The removal of mapping bias is important when working with functional genomics data such as ChIP-seq data, where allele-specific expression analysis can reveal genetic variation that affects function but is confounded by reference mapping bias \cite{mcdaniell2010heritable}, especially given that read lengths are typically shorter for these experiments.
-We compared mapping with {\tt bwa mem} and {\tt vg} for data set ENCFF000ATK from the ENCODE project \cite{encode2012integrated}, which contains 14.9 million 51-bp ChIP-seq reads for the H3K4me1 histone methylation mark from the NA12878 cell line.
+We compared mapping with {\tt bwa mem} and {\tt vg} for data set ENCFF000ATK from the ENCODE project \cite{encode2012integrated}, which contains 14.9 million 51bp ChIP-seq reads for the H3K4me1 histone methylation mark from the NA12878 cell line.
 When mapping with bwa the ratio of reference to alternate allele matches at heterozygous sites was 1.20, whereas with {\tt vg} to the 1000GP graph the ratio was 1.01, effectively eliminating reference bias.
 
 \begin{figure}[htbp!] 
@@ -566,15 +566,15 @@ When mapping with bwa the ratio of reference to alternate allele matches at hete
     \caption{Alternate observations}
     \label{subfig:chip_seq_alt_obs}
   \end{subfigure}
-  \caption[Resolving reference bias in 36-bp CHiP-seq]{
-    Resolving reference bias in 36-bp CHiP-seq data from ENCODE sample ENCDO115AAA, using CHiP-seq targeting H3K4me1 (experiment ENCFF000ATK).
+  \caption[Resolving reference bias in 36bp CHiP-seq]{
+    Resolving reference bias in 36bp CHiP-seq data from ENCODE sample ENCDO115AAA, using CHiP-seq targeting H3K4me1 (experiment ENCFF000ATK).
     We compare the counts of reference-supporting (panel \ref{subfig:chip_seq_ref_obs}) or alternate-supporting (panel \ref{subfig:chip_seq_alt_obs}) alignments between {\tt vg map} and {\tt bwa mem} at sites called as heterozygous in the sample which were also polymorphic in the 1000GP.
     To shown density we have jittered the points in the unit square centered on the integral values taken by the counts.
    }
 \label{fig:chip_seq}
 \end{figure}
 
-The effect is dramatically stronger when using 36-bp reads.
+The effect is dramatically stronger when using 36bp reads.
 To illustrate, I aligned the ultra-short reads from ENCODE experiment ENCSR290YLQ\footnote{\url{https://www.encodeproject.org/experiments/ENCSR290YLQ/}} to the full 1000GP graph using {\tt vg map} and to the GRCh37 reference genome using {\tt bwa mem}.
 To simplify analysis, the {\tt vg} mappings were surjected to the GRCh37 reference.
 This sample came from an adult donor, and so we have no ``truth'' set as with NA12878, but we can use a subset of sites called as variable using {\tt freebayes} which also are known to be polymorphic in the 1000GP to examine the effect of reference bias.
@@ -770,7 +770,7 @@ To obtain coverage counts per sample across the graph I then applied the {\tt vg
   \centering
   \begin{subfigure}[t]{1.0\textwidth}
     \includegraphics[width=1.0\textwidth]{Chapter3/Figs/ecoli_10strain_cov_col_pos_4400000_100k.png}
-    \caption{Per-strain coverage across 100 kbp of the \emph{E. coli} pangenome}
+    \caption{Per-strain coverage across 100kbp of the \emph{E. coli} pangenome}
     \label{subfig:ecoli_cov_100k}
   \end{subfigure}
   \begin{subfigure}[t]{0.49\textwidth}

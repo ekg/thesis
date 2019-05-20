@@ -435,7 +435,7 @@ Problematically, the $k$-mer space of a graph can grow exponentially where varia
 To mitigate this issue, we can short-circuit the $k$-mers enumeration when a given number of edges are crossed within $k$ characters.
 Another way to mitigate the limitations posed by the exponential number of $k$-mers in the graph is to build the index on disk, rather than using main memory.
 In the early stages of the {\tt vg} project, I implemented a $k$-mer based index using a disk-backed system (see section \ref{sec:generic_disk_backed_indexes}).
-By sorting the $k$-mers, the index could be efficiently compressed, but still the graph for the human 1000 Genomes Project required over 200GB of memory, and was unusably slow unless cached in main memory.
+By sorting the $k$-mers, the index could be efficiently compressed, but still the graph for the human 1000 Genomes Project required over 200GB of memory, and was too slow to use unless cached in main memory.
 This index formed the basis for the first prototypes of the {\tt vg} mapper, but is impractical due to its time and memory requirements.
 
 \subsubsection{The FM-index and Compressed Suffix Array (CSA)}
@@ -537,11 +537,11 @@ In {\tt vg}, an equivalent generalization is used to enable the determination of
 
 \subsubsection{BWT-based tree and graph sequence indexes}
 
-In contrast to $k$-mer based indexes, generalizations of the CSA to graphs have required substantial conceptual developement to produce.
+In contrast to $k$-mer based indexes, generalizations of the CSA to graphs have required substantial conceptual development to produce.
 But, they have yielded compact, efficient data structures that require similar space to their linear counterparts while supporting a wide array of query patterns.
 
 Most generalizations of succinct self indexes from strings to graphs draw on the XBW transform \cite{ferragina2005structuring}, which provides a compressed self index of trees based on a generalization of the FM-index \cite{ferragina2009compressing}.
-In the XBW transform (figure \ref{fig:xbw}), rather than considering all suffixes of a linear sequence in the construction of the BWT, we sort all concatenated paths from the root to leaves of each node in the tree and use this as the basis for the BWT in a manner analagous to the use of sorted suffixes for a linear sequences.
+In the XBW transform (figure \ref{fig:xbw}), rather than considering all suffixes of a linear sequence in the construction of the BWT, we sort all concatenated paths from the root to leaves of each node in the tree and use this as the basis for the BWT in a manner analogous to the use of sorted suffixes for a linear sequences.
 To record the topology of the tree and support its navigation relative to the resulting BWT, auxiliary bitvectors record which edges connect to leaf nodes $e$ (or equivalently, an expanded alphabet as originally presented in \cite{ferragina2005structuring}), and which are the last edge among their siblings: ${\cal F}$.
 Rank and select queries on these bitvectors allow the generalization of the \emph{LF-mapping} (last-first) permutation and its inverse $\Psi$ to work on the tree.
 The lexicographic ranks of the standard versions of these functions are mapped into the appropriate BWT ranges using rank and select queries on ${\cal F}$.
@@ -552,7 +552,7 @@ The lexicographic ranks of the standard versions of these functions are mapped i
   \includegraphics[width=0.6\textwidth]{Chapter2/Figs/xbw_viz.pdf}
   \caption[The XBW transform]{
     The XBW transform and the $LF$ function computed for the given graph.
-    Nodes are stored in $W$, while bitvector $e$ marks the leaf nodes (whose LF mapping is $\emptyset$), and bitvector ${\cal F}$ marks the last nodes in each set of siblings.
+    Nodes are stored in $W$, while bitvector $e$ marks the leaf nodes (whose LF-mapping is $\emptyset$), and bitvector ${\cal F}$ marks the last nodes in each set of siblings.
     By construction, siblings are sorted together in the set of sorted paths.
     Paths are not stored, but are shown here for clarity.
     Example adapted from a public talk by Alex Bowe, posted at \url{https://pdfs.semanticscholar.org/e42a/daab2806d5c0d715cb812c3a10aa26a2c75a.pdf}.
@@ -630,12 +630,12 @@ GCSA2 brings together ideas from succinct DBGs and the GCSA model.
 At a high level, we can consider it to be a compact de Bruijn graph $k$-mer index of a variation graph.
 However, in implementation several transformations are required to maintain acceptable bounds on the space required by this model.
 The de Bruijn graph is \emph{pruned} by using strings smaller than $k$ characters as nodes so long as the shorter strings still uniquely identify the corresponding paths in the graph.
-GCSA2 transforms the pruned DBG into a BWT, using additional bitvectors $IN$ and $OUT$ analgous to $F$ and $L$ in SDBG to record the graph topology in a generalization of the FM-index.
+GCSA2 transforms the pruned DBG into a BWT, using additional bitvectors $IN$ and $OUT$ analogous to $F$ and $L$ in SDBG to record the graph topology in a generalization of the FM-index.
 The full data structure includes extensions to allow suffix tree operations that are important for finding maximal exact matches during sequence search.
 
 The GCSA2 model is more flexible with respect to the complexity of input graphs than GCSA.
 GCSA2 uses disk backed construction methods to allow the indexing process to scale to very large graphs.
-The $k$-mer length limitation of the index allows it to be applied to any variation graph, including those that have cycles or other regions of topological compexity, with the caveat that we cannot search for sequences of length greater than $k$ without the risk of finding false positives.
+The $k$-mer length limitation of the index allows it to be applied to any variation graph, including those that have cycles or other regions of topological complexity, with the caveat that we cannot search for sequences of length greater than $k$ without the risk of finding false positives.
 Denser graphs may be indexed by limiting the maximum query length.
 The DBG transformation provides flexibility by decoupling the graph we are indexing from the index structure itself.
 For instance, edge pruning can be applied to the input graph to remove regions of local complexity, yet it is still possible to generate an index from such fragmented subgraphs because we can always generate a DBG by enumerating $k$-paths through a variation graph.
@@ -670,7 +670,7 @@ To do so, we store a set of positional samples as: a vector $B_S$, which indicat
 Positional samples are stored at the case of branches in the pruned DBG, or at some configurable frequency otherwise.
 In linear regions of the pruned DBG, it is possible to use graph DBG graph traversal operations to compute un-sampled positions, thus trading off time and space as is typically done in FM-index implementations on linear strings.
 
-The GCSA2 encoding is highly efficienct on real data sets.
+The GCSA2 encoding is highly efficient on real data sets.
 When including the suffix tree extensions, GCSA2 uses around 1 bit per $k$-mer in indexes of the 1000GP pangenome graph for $k=128$, which is favorable with comparison to SDBG indexes \cite{siren2017indexing}.
 To appreciate the costs of indexing a human genome sized graph\footnote{Precise sizes are given later in the discussion of results.}, the order-256 GCSA2 index of the 1000GP variation graph may be constructed using less than 500GB of scratch space, to and from which are written approximately 3TB during construction, all while requiring less than 50GB of RAM.
 This puts GCSA2's indexing resource requirements well within the specifications of standard commodity compute servers.
@@ -952,7 +952,7 @@ The \emph{MEM Chain Model} is a DAG, $G_\textsc{MemChain} = (N, E)$, in which ea
 \includegraphics[width=1.0\textwidth]{Chapter2/Figs/memchain_dag.pdf}
 \caption[The MEM Chain Model]{
   Establishing collinear chains of MEMs to drive sequence read mapping.
-  Above: a set of MEMs derived from a perfect read simulated from a 1 Mbp test region from the 1000GP graph of chr20, using a maximum MEM length of 40bp to generate multiple MEMs for exposition.
+  Above: a set of MEMs derived from a perfect read simulated from a 1Mbp test region from the 1000GP graph of chr20, using a maximum MEM length of 40bp to generate multiple MEMs for exposition.
   Below: the first evaluation of the MEM Chain Model for this set of MEMs.
   The model is shown in full, with the scores established as described in the text.
   Each node refers to a single MEM, its positions in the graph, and the score derived from the first pass of the max-sum algorithm.
@@ -997,7 +997,7 @@ If we are establishing $G_\textsc{MemChain}$ based on MEMs derived from a read p
 
 These node and edge weights relate to the alignment score that we would obtain by passing through a series of MEMs.
 We expect a positive score due to an exact match, so we apply a positive weight to each node as it represents a MEM.
-Transtions between MEMs may encode gaps or mismatches.
+Transitions between MEMs may encode gaps or mismatches.
 We cannot estimate mismatch counts for the read from the set of MEMs obtained for our query, but we can use our position index and the function $dist(b,d)$ to estimate gap lengths.
 We take the score of a pseudoalignment ${\cal P} = n_i \ldots n_j$ in the model to be:
 
@@ -1226,8 +1226,8 @@ The result is an approach that is more sensitive than the antidiagonal banded al
 \includegraphics[width=1.0\textwidth]{Chapter2/Figs/xdrop.pdf}
 \caption[The \emph{dozeu} X-drop alignment algorithm]{
   Evaluation of the \emph{dozeu} X-drop alignment algorithm for an example graph.
-  Grey cells represent the part of the score matrix for which our X-drop parameter would allow evaluation if we were calculating the matrix one cell at a time.
-  8-cell wide black rectangles that contain the full set of grey cells represent the region of the score matrix for which we calculate scores when using a SIMD-based accelerated version of the algorithm.
+  Gray cells represent the part of the score matrix for which our X-drop parameter would allow evaluation if we were calculating the matrix one cell at a time.
+  8-cell wide black rectangles that contain the full set of gray cells represent the region of the score matrix for which we calculate scores when using a SIMD-based accelerated version of the algorithm.
   Traceback and per-cell scores are not shown.
   This figure is meant to illustrate the adaptive banding property of the X-drop algorithm and how that can be used in a SIMD-based acceleration of the algorithm.
   Adapted with permission from \url{https://github.com/ocxtal/dozeu}.
@@ -1257,8 +1257,8 @@ Then, to obtain multiple alignments, we mask out this path, re-score, and take t
 After they have been extracted from the model, alignments are ``patched'' using local alignment of unaligned regions anchored in the graph near the end of previous mapped regions, so that sub-alignments which may have been misaligned due to repeats may be locally aligned correctly.
 This model allows {\tt vg} to map noisy reads of arbitrary length, and is used as a core component in the long read progressive assembler {\tt vg msga}.
 
-Although the development of $G_\textsc{AlignChain}$ is very similar to $G_\textsc{MemChain}$, but a number of important differences distinguish the two models.
-For clarity, I will fully exposit the chunked alignment chaining model here, despite its strong similarity to the MEM chaining model.
+Although the development of $G_\textsc{AlignChain}$ is very similar to $G_\textsc{MemChain}$, a number of important differences distinguish the two models.
+I will fully describe the chunked alignment chaining model here so that it may stand apart from the MEM chaining model.
 
 \begin{figure}[htbp!]
 \centering
@@ -1283,7 +1283,7 @@ As each subalignment is part of the full alignment that we'll derive by finding 
 Each alignment node $n_i$ has a set of graph start and end positions $graph\_start\_pos(n_i) = \{ b_1 \ldots b_m \}$, $graph\_end\_pos(n_i) = \{ b_1 \ldots b_m \}$.
 We use these to provide weights for the edges in the alignment chain model.
 Edges $e_{ij}$ in $G_\textsc{AlignChain}$ represent possible transitions between sub-alignments, and are weighted (${\cal W}_{e_{ij}}$) by the minimum estimated distance between the given graph positions for each alignment end, times the gap open and extension costs.
-The alignment bands overlap during the alignment of each sub-alignment, but at the point when we establish the model, we have trimmed the overlaps butween successive sub-alignments and re-calculated the alignment score, so we do not need to consider them here.
+The alignment bands overlap during the alignment of each sub-alignment, but at the point when we establish the model, we have trimmed the overlaps between successive sub-alignments and re-calculated the alignment score, so we do not need to consider them here.
 Unlike the MEM chaining model, which is driven entirely by approximate distances, when we obtain an estimated distance less than the length of the alignment chunk, we walk the graph using a depth first search in order to obtain a precise minimum value for the distance.
 
 \begin{equation}
@@ -1490,7 +1490,7 @@ The resulting layout tends to look like a kind of multiple alignment matrix, as 
   The graph topology of nodes and edges is represented above, with node ids and sequences labeled the rectangular nodes, and edges connecting the upper corners of nodes representing the edge topology relative to the forward strand of the graph.
   Below, paths in the graph are represented in a matrix-like format, with each mapping in the path represented by a node id and a colored emoji, and subsequent steps connected by a colored line.
   The emoji/color combination is determined by a hash function applied to the path name.
-  A hidden edge connecting each path mapping step and the correpsonding node in the graph topology is used to force the rendering to place them at the same horizontal position, increasingly legibility.
+  A hidden edge connecting each path mapping step and the corresponding node in the graph topology is used to force the rendering to place them at the same horizontal position, increasingly legibility.
 }
 \label{fig:vg_view_dot}
 \end{figure}
