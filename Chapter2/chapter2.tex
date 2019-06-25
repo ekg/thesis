@@ -228,7 +228,7 @@ By making this graph bidirectional, and thus equivalent in information content w
 Aligners that produce data formats of this type, such as Cactus \cite{Paten:2011fva}, can thus be used to produce VGs, so long as the relationship between the input sequences and the graph is recorded and can be converted into a path description.
 In section \ref{sec:yeast_cactus} I discuss the use of this method to build a pangenomic reference system for a diverse set of yeast strains.
 
-\subsection{From overlap assembly and deBruijn graphs}
+\subsection{From overlap assembly and de Bruijn graphs}
 %*2p 1.5h*
 
 Overlap-based sequence graphs used in assembly, described in sections \ref{sec:overlap_graphs}, \ref{sec:de_bruijn_graphs}, and \ref{sec:string_graphs}, are nearly identical to variation graphs.
@@ -562,7 +562,7 @@ The lexicographic ranks of the standard versions of these functions are mapped i
 \end{figure}
 
 
-Succinct deBruijn graphs (SDBG) extend the XBW model to support DBGs by recording both in and out degree for each node \cite{bowe2012succinct,muggli2017succinct}.\footnote{See \url{https://alexbowe.com/succinct-debruijn-graphs/} for a high-level overview of Bowe's initial model for succinct DBGs, which explains in detail how the various graph traversal and query operations are implemented.}
+Succinct de Bruijn graphs (SDBG) extend the XBW model to support DBGs by recording both in and out degree for each node \cite{bowe2012succinct,muggli2017succinct}.\footnote{See \url{https://alexbowe.com/succinct-debruijn-graphs/} for a high-level overview of Bowe's initial model for succinct DBGs, which explains in detail how the various graph traversal and query operations are implemented.}
 In {\tt vg}, we do not use the SDBG model directly, but it is important to describe here as the GCSA2 model draws heavily on its design.
 
 To construct the SDBG (illustrated in figure \ref{fig:sdbg}), we build two sorted lists of tuples representing the edge and $k$-mer space of the DBG $G = (N, E)$.

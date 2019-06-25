@@ -71,7 +71,7 @@ In this work I repurpose the assembly graph data model to build a pangenomic ref
 Assembly graphs are designed to represent the full set of genomic information to which they are applied, so it is natural to use them to develop coherent reference systems for unbiased sequence analysis.
 By building a conceptual framework and data structures that enable resequencing against this structure, we can mirror the patterns and workflows that have already been developed for resequencing.
 This allows us to retain the benefits of parallel analysis even while we resolve the issue of reference bias.
-By recording genomic sequences as paths through this graph I provide anchors for existing annotations and positional systems within the pangenome.
+By recording genomic sequences as paths through this graph, I provide anchors for existing annotations and positional systems within the pangenome.
 I call these bidirectional sequence graphs with paths \emph{variation graphs}.
 
 
@@ -107,7 +107,7 @@ In the first part of the twentieth century, these ideas about heredity grew into
 It was understood that DNA encoded the information that gave rise to biological structures \cite{avery1944studies}.
 The discovery of the structure of DNA in the 1950s \cite{watson1953molecular} made clear the nature of that information and the mechanism for its faithful transmission from generation to generation.
 This knowledge, coupled with the sequencing and synthesis of proteins, which demonstrated that they had distinct polymeric chemical identities \cite{sanger1951amino} led to Crick's postulation of the ``central dogma'' of biology \cite{crick1958protein,crick1970central}.
-Simply stated, the ``dogma'' argues that in living systems' information is transcribed from DNA to RNA and ultimately translated into proteins, which guide and structure the cell and thus living organisms.
+Simply stated, the ``dogma'' argues that in living systems information is transcribed from DNA to RNA and ultimately translated into proteins, which guide and structure the cell and thus living organisms.
 The central dogma clarifies the significance of the sequence of the genome, and over the following decades a series of projects scaled up the throughput and fidelity of DNA sequencing until \emph{genome inference} became a practical and everyday reality in biology.
 
 \subsection{Reading DNA}
@@ -535,7 +535,7 @@ Further improvements to the quality of the MSA can be gained by guiding the prog
 
 The progressive alignment in MSA algorithms like CLUSTAL may be represented graphically.
 In the late 1980s Eugene Myers and Webb Miller developed algorithms to optimally align sequences to sequence graphs, and sequence graphs (in the form of regular expressions) to each other in $O(MN)$ time (where $M$ and $N$ are the sequence length of the graphs) \cite{myers1989approximate,wu1995subquadratic}.
-Unfortunately, to my knowledge were never implemented in publicly available software for sequence analysis\footnote{Myers was unable to provide related source code on request.}.
+Unfortunately, to my knowledge these were never implemented in publicly available software for sequence analysis\footnote{Myers was unable to provide related source code on request.}.
 A recent implementation of sequence to graph alignment \cite{rautiainen2018bit} transforms a sequence graph into an alignable graph which is acyclic and partially ordered, on which a bit-parallel alignment algorithm is applied to achieve high performance when aligning long noisy reads to arbitrary sequence graphs.
 This work is related to that of Wu, Manber and Myers \cite{wu1995subquadratic}, wherein the authors provide an algorithm for the alignment of pairs of regular expressions using a transformation of the regexes to NFAs and bit-parallel resolution of the final alignment.
 Later in chapter 2 I will present and evaluate a similar approach to align reads to arbitrary bidirectional sequence graphs through transformation of the graph into an ordered graph against which accelerated sequence to graph alignment may be run.
@@ -576,8 +576,10 @@ The problem of assembling large genomes is not dissimilar from that of multiple 
 MSA algorithms tend to be applied to the alignment of a single coherent genomic locus.
 Their input sequences might be expected to have approximately the same length, and maintain synteny between them.
 In contrast, whole genome shotgun assembly methods cannot rely on such assumptions, as reads of a large genome rarely overlap, and both strands of DNA will be sampled, yielding ambiguity about relative orientation.
-Thus, the graphical models used in assembly must maintain bidirectional structure.
-OLC assembly methods in some sense began their evolution with the set of compromises that MSA algorithms ended theirs, with thrifty heuristic methods being used to establish the overlaps between all pairs of sequence reads from a given genome, and the resulting overlap set subsequently represented graphically.
+Thus, the graphical models used in assembly must maintain bidirectional structure, which distinguishes them from those used in multiple sequence alignment.
+%OLC assembly methods use akin to those used in MSA.
+%They apply thrifty heuristic methods to establish the overlaps between sequence reads from a genome and use graphical 
+%OLC assembly methods in some sense began their evolution with the set of compromises with which MSA algorithms ended theirs, applying thrifty heuristic methods to establish the overlaps between all pairs of sequence reads from a given genome, and representing the resulting overlap set as a graph.
 Earlier in section \ref{sec:genome_assembly} I gave a historical outline of the development of these methods in response to changes in available sequencing technology.
 Here, I provide deeper technical detail to describe these methods and illustrate their relationship to the variation graph model.
 
@@ -764,7 +766,7 @@ So that the alignments may be used downstream in standard approaches, they may b
 In order to report their results relative to the reference, assembly methods require the ability to align the reference genome into the sequence graph they have generated \emph{de novo} \cite{iqbal2012novo,simpson2012efficient}, although this can be achieved through the alignment of the assembly graph's unitigs to the reference genome \cite{li2015fermikit}, which results in greater sensitivity to small variation but may also increase bias towards the reference genome.
 Aligning external sequence to an assembly graph is equivalent to extending the assembly to include the sequence and recording the path through the assembly graph that represents it.
 
-The deBruijn Graph Aligner (deBGA) inverts this approach by enabling the alignment of short reads to a reference DBG (RdBG) \cite{liu2016debga}.
+The de Bruijn Graph Aligner (deBGA) inverts this approach by enabling the alignment of short reads to a reference DBG (RdBG) \cite{liu2016debga}.
 An RdBG is a compacted DBG in which one or more reference genomes have been embedded, and the authors of deBGA enable alignment against it through a $k$-mer index that is used to drive a kind of MEM-based seed and extend alignment.
 The alignment process itself attempts to link patterns of $k$-mer hits in unitigs in the graph into larger alignments, finally producing a local alignment by applying Smith-Waterman-Gotoh to the read and the particular reference genome region to which it aligns.
 While deBGA uses a DBG to structure alignment, it can output a BAM file against the linear reference genome for use in variant calling or other analyses.
