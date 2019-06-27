@@ -1103,7 +1103,7 @@ wish to left align your text}
 
 
 \newenvironment{abstract} {
-\ifPHD@abstract
+%\ifPHD@abstract
 % Separate abstract as per Student Registry guidelines
   \thispagestyle{empty}
   \setsinglecolumn
@@ -1111,13 +1111,13 @@ wish to left align your text}
     { \Large {\bfseries {\@title}} \par}
     {{\large \vspace*{1em} \@author} \par}
   \end{center}
-\else
+%\else
 % Normal abstract in the thesis
-  \cleardoublepage
-  \setsinglecolumn
-  \chapter*{\centering \Large Abstract}
-  \thispagestyle{empty}
-\fi
+%  \cleardoublepage
+%  \setsinglecolumn
+%  \chapter*{\centering \Large Abstract}
+%  \thispagestyle{empty}
+%\fi
 }
 
 
